@@ -32,14 +32,8 @@ module home_agent_mshr_wrap(
 
     input wire clk,
     input wire rst_n,
-`ifdef NO_L2_CAM_MSHR
-    input wire pipe_rd_sel,
-`endif // L2_CAM_MSHR
     input wire pipe_wr_sel,
 
-`ifdef NO_L2_CAM_MSHR
-    input wire rd_en1,
-`endif // L2_CAM_MSHR
     input wire cam_en1,
     input wire wr_state_en1,
     input wire wr_data_en1,
@@ -47,43 +41,19 @@ module home_agent_mshr_wrap(
     input wire [`L2_MSHR_STATE_BITS-1:0] state_in1,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_in1,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in1,
-`ifdef NO_L2_CAM_MSHR
-    input wire [`L2_MSHR_INDEX_WIDTH-1:0] rd_index_in1,
-`endif // L2_CAM_MSHR
     input wire [`L2_MSHR_INDEX_WIDTH-1:0] inv_counter_rd_index_in1,
     input wire [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in1,
     input wire [`L2_MSHR_ADDR_IN_WIDTH-1:0] addr_in1,
 
-`ifdef NO_L2_CAM_MSHR
-    input wire rd_en2,
-    input wire cam_en2,
-`endif // L2_CAM_MSHR
     input wire wr_state_en2,
     input wire wr_data_en2,
-`ifdef NO_L2_CAM_MSHR
-    input wire pending_ready2,
-`endif // L2_CAM_MSHR
     input wire inc_counter_en2,
     input wire [`L2_MSHR_STATE_BITS-1:0] state_in2,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_in2,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in2,
     input wire [`L2_MSHR_INDEX_WIDTH-1:0] rd_index_in2,
     input wire [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in2,
-`ifdef NO_L2_CAM_MSHR
-    input wire [`L2_MSHR_ADDR_IN_WIDTH-1:0] addr_in2,
-`endif // L2_CAM_MSHR
 
-`ifdef NO_L2_CAM_MSHR
-    output wire hit,
-    output wire [`L2_MSHR_INDEX_WIDTH-1:0] hit_index,
-    output wire [`L2_MSHR_STATE_BITS-1:0] state_out,
-    output wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_out,
-    output wire [`L2_OWNER_BITS-1:0] inv_counter_out,
-    output wire [`L2_MSHR_INDEX_WIDTH:0] empty_slots,
-    output wire pending,
-    output wire [`L2_MSHR_INDEX_WIDTH-1:0] pending_index,
-    output wire [`L2_MSHR_INDEX_WIDTH-1:0] empty_index
-`else
     output reg hit,
     output reg [`L2_MSHR_INDEX_WIDTH-1:0] hit_index,
     output reg [`L2_MSHR_STATE_BITS-1:0] rd_state_out,
@@ -96,51 +66,14 @@ module home_agent_mshr_wrap(
     output reg pending,
     output reg [`L2_MSHR_INDEX_WIDTH-1:0] pending_index,
     output reg [`L2_MSHR_INDEX_WIDTH-1:0] empty_index
-`endif // L2_CAM_MSHR
 );
 
-`ifdef NO_L2_CAM_MSHR
-reg rd_en;
-reg cam_en;
-`endif // L2_CAM_MSHR
 reg wr_state_en;
 reg wr_data_en;
-`ifdef NO_L2_CAM_MSHR
-reg pending_ready;
-`endif // L2_CAM_MSHR
 reg [`L2_MSHR_STATE_BITS-1:0] state_in;
 reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_in;
 reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in;
-`ifdef NO_L2_CAM_MSHR
-reg [`L2_MSHR_INDEX_WIDTH-1:0] rd_index_in;
-`endif // L2_CAM_MSHR
 reg [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in;
-`ifdef NO_L2_CAM_MSHR
-reg [`L2_MSHR_ADDR_IN_WIDTH-1:0] addr_in;
-`endif // L2_CAM_MSHR
-
-
-`ifdef NO_L2_CAM_MSHR
-always @ *
-begin
-    if (pipe_rd_sel)
-    begin
-        rd_en = rd_en2;
-        cam_en = cam_en2;
-        pending_ready = pending_ready2;
-        rd_index_in = rd_index_in2;
-        addr_in = addr_in2;
-    end
-    else
-    begin
-        rd_en = rd_en1;
-        cam_en = cam_en1;
-        pending_ready = pending_ready1;
-        rd_index_in = rd_index_in1;
-        addr_in = addr_in1;
-    end
-end
-`endif // L2_CAM_MSHR
 
 always @ *
 begin
@@ -165,35 +98,6 @@ begin
 end
 
 
-`ifdef NO_L2_CAM_MSHR
-home_agent_mshr home_agent_mshr(
-    .clk                        (clk),
-    .rst_n                      (rst_n),
-    .rd_en                      (rd_en),
-    .cam_en                     (cam_en),
-    .wr_state_en                (wr_state_en),
-    .wr_data_en                 (wr_data_en),
-    .pending_ready              (pending_ready),
-    .inc_counter_en             (inc_counter_en2),
-    .state_in                   (state_in),
-    .data_in                    (data_in),
-    .data_mask_in               (data_mask_in),
-    .rd_index_in                (rd_index_in),
-    .inv_counter_rd_index_in    (inv_counter_rd_index_in1),
-    .wr_index_in                (wr_index_in),
-    .addr_in                    (addr_in),
-    .hit                        (hit),
-    .hit_index                  (hit_index),
-    .state_out                  (state_out),
-    .data_out                   (data_out),
-    .inv_counter_out            (inv_counter_out), 
-    .empty_slots                (empty_slots),
-    .pending                    (pending),
-    .pending_index              (pending_index),
-    .empty_index                (empty_index)
-);
-
-`else
 
 <%
 L2_MSHR_ENTRIES = 8
@@ -441,6 +345,5 @@ for i in range(L2_MSHR_ENTRIES):
         data_mem_f[wr_index_in] <= data_mem_f[wr_index_in];
     end
 end
-`endif // L2_CAM_MSHR
 
 endmodule

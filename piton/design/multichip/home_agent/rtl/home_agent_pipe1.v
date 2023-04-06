@@ -62,12 +62,8 @@ module home_agent_pipe1(
     input wire global_stall_S4,
 
     input wire mshr_hit,
-`ifdef NO_L2_CAM_MSHR
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] mshr_data_out,
-`else
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] cam_mshr_data_out,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] pending_mshr_data_out,
-`endif // L2_CAM_MSHR
     input wire [`L2_OWNER_BITS-1:0] mshr_inv_counter_out,
     input wire [`L2_MSHR_INDEX_WIDTH:0] mshr_empty_slots,
     input wire mshr_pending,
@@ -148,22 +144,7 @@ wire [`MSG_SRC_FBITS_WIDTH-1:0] msg_src_fbits;
 wire [`MSG_SDID_WIDTH-1:0] msg_sdid;
 wire [`MSG_LSID_WIDTH-1:0] msg_lsid;
 
-`ifdef NO_L2_CAM_MSHR
-wire [`MSG_TYPE_WIDTH-1:0] mshr_msg_type;
-wire [`MSG_MSHRID_WIDTH-1:0] mshr_mshrid;
-wire [`MSG_DATA_SIZE_WIDTH-1:0] mshr_data_size;
-wire [`MSG_CACHE_TYPE_WIDTH-1:0] mshr_cache_type;
-wire [`PHY_ADDR_WIDTH-1:0] mshr_addr;
-wire [`L2_WAYS_WIDTH-1:0] mshr_way;
-wire [`MSG_L2_MISS_BITS-1:0] mshr_l2_miss;
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] mshr_src_chipid;
-wire [`MSG_SRC_X_WIDTH-1:0] mshr_src_x;
-wire [`MSG_SRC_Y_WIDTH-1:0] mshr_src_y;
-wire [`MSG_SRC_FBITS_WIDTH-1:0] mshr_src_fbits;
-wire [`MSG_SDID_WIDTH-1:0] mshr_sdid;
-wire [`MSG_LSID_WIDTH-1:0] mshr_lsid;
-wire [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid;
-`else
+
 wire [`MSG_TYPE_WIDTH-1:0] cam_mshr_msg_type;
 wire [`MSG_MSHRID_WIDTH-1:0] cam_mshr_mshrid;
 wire [`MSG_DATA_SIZE_WIDTH-1:0] cam_mshr_data_size;
@@ -178,10 +159,7 @@ wire [`MSG_SRC_FBITS_WIDTH-1:0] cam_mshr_src_fbits;
 wire [`MSG_SDID_WIDTH-1:0] cam_mshr_sdid;
 wire [`MSG_LSID_WIDTH-1:0] cam_mshr_lsid;
 wire [`MSG_LSID_WIDTH-1:0] cam_mshr_miss_lsid;
-`endif // L2_CAM_MSHR
-`ifdef NO_L2_CAM_MSHR
-wire mshr_recycled;
-`else
+
 wire cam_mshr_recycled;
 
 wire [`MSG_TYPE_WIDTH-1:0] pending_mshr_msg_type;
@@ -199,7 +177,6 @@ wire [`MSG_SDID_WIDTH-1:0] pending_mshr_sdid;
 wire [`MSG_LSID_WIDTH-1:0] pending_mshr_lsid;
 wire [`MSG_LSID_WIDTH-1:0] pending_mshr_miss_lsid;
 wire pending_mshr_recycled;
-`endif // L2_CAM_MSHR
 
 wire msg_header_valid;
 wire [`L2_P1_HEADER_BUF_IN_WIDTH-1:0] msg_header;
@@ -357,28 +334,6 @@ home_agent_decoder decoder(
     .msg_lsid           (msg_lsid)
 );
 
-`ifdef NO_L2_CAM_MSHR
-home_agent_mshr_decoder mshr_decoder(
-
-    .data_in            (mshr_data_out),
-    .addr_out           (mshr_addr),
-    .way_out            (mshr_way),
-    .mshrid_out         (mshr_mshrid),
-    .cache_type_out     (mshr_cache_type),
-    .data_size_out      (mshr_data_size),
-    .msg_type_out       (mshr_msg_type),
-    .msg_l2_miss_out    (mshr_l2_miss),
-    .src_chipid_out     (mshr_src_chipid),
-    .src_x_out          (mshr_src_x),
-    .src_y_out          (mshr_src_y),
-    .src_fbits_out      (mshr_src_fbits),
-    .sdid_out           (mshr_sdid),
-    .lsid_out           (mshr_lsid),
-    .miss_lsid_out      (mshr_miss_lsid),
-    .recycled           (mshr_recycled),
-    .inv_fwd_pending    ()
-);
-`else
 
 home_agent_mshr_decoder cam_mshr_decoder(
     .data_in            (cam_mshr_data_out),
@@ -419,7 +374,6 @@ home_agent_mshr_decoder pending_mshr_decoder(
     .recycled           (pending_mshr_recycled),
     .inv_fwd_pending    ()
 );
-`endif // L2_CAM_MSHR
 
 home_agent_pipe1_ctrl ctrl(
 
@@ -442,26 +396,17 @@ home_agent_pipe1_ctrl ctrl(
     .msg_data_size_S1           (msg_data_size),
     .msg_cache_type_S1          (msg_cache_type),
     .mshr_hit_S1                (mshr_hit),
-`ifdef NO_L2_CAM_MSHR
-    .mshr_msg_type_S1           (mshr_msg_type),
-    .mshr_l2_miss_S1            (mshr_l2_miss),
-    .mshr_data_size_S1          (mshr_data_size),
-    .mshr_cache_type_S1         (mshr_cache_type),
-`else
     .cam_mshr_msg_type_S1       (cam_mshr_msg_type),
     .cam_mshr_l2_miss_S1        (cam_mshr_l2_miss),
     .cam_mshr_data_size_S1      (cam_mshr_data_size),
     .cam_mshr_cache_type_S1     (cam_mshr_cache_type), 
-`endif // L2_CAM_MSHR
     .mshr_pending_S1            (mshr_pending),
     .mshr_pending_index_S1      (mshr_pending_index),
     .mshr_empty_slots_S1        (mshr_empty_slots),
-`ifndef NO_L2_CAM_MSHR
     .pending_mshr_msg_type_S1           (pending_mshr_msg_type),
     .pending_mshr_l2_miss_S1            (pending_mshr_l2_miss),
     .pending_mshr_data_size_S1          (pending_mshr_data_size),
     .pending_mshr_cache_type_S1         (pending_mshr_cache_type), 
-`endif // L2_CAM_MSHR
     .msg_data_valid_S1          (msg_data_valid),
     .addr_S1                    (addr_S1),
    
@@ -598,19 +543,6 @@ home_agent_pipe1_dpath dpath(
     .rst_n                      (rst_n),
     .smt_base_addr              (smt_base_addr),
     
-`ifdef NO_L2_CAM_MSHR
-    .mshr_addr_S1               (mshr_addr),
-    .mshr_mshrid_S1             (mshr_mshrid),
-    .mshr_way_S1                (mshr_way),
-    .mshr_src_chipid_S1         (mshr_src_chipid),
-    .mshr_src_x_S1              (mshr_src_x),
-    .mshr_src_y_S1              (mshr_src_y),
-    .mshr_src_fbits_S1          (mshr_src_fbits),
-    .mshr_sdid_S1               (mshr_sdid),
-    .mshr_lsid_S1               (mshr_lsid),
-    .mshr_miss_lsid_S1          (mshr_miss_lsid),
-    .mshr_recycled_S1           (mshr_recycled),
-`else
     .cam_mshr_addr_S1           (cam_mshr_addr),
     .cam_mshr_mshrid_S1         (cam_mshr_mshrid),
     .cam_mshr_way_S1            (cam_mshr_way),
@@ -635,7 +567,6 @@ home_agent_pipe1_dpath dpath(
     .pending_mshr_lsid_S1       (pending_mshr_lsid),
     .pending_mshr_miss_lsid_S1  (pending_mshr_miss_lsid),
     .pending_mshr_recycled_S1   (pending_mshr_recycled),
-`endif // L2_CAM_MSHR
 
     .dis_flush_S1               (dis_flush_S1),
     .msg_addr_S1                (msg_addr),

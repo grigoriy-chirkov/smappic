@@ -35,7 +35,6 @@ home_agent_decoder.v
 home_agent_dir.v
 home_agent_dir_wrap.v
 home_agent_encoder.v
-home_agent_mshr.v
 home_agent_mshr_decoder.v
 home_agent_mshr_wrap.v 
 home_agent_pipe1.v

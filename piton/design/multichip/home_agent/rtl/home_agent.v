@@ -78,15 +78,10 @@ wire [`L2_MSHR_INDEX_WIDTH-1:0] mshr_wr_index_in_p2;
 
 wire mshr_hit;
 wire [`L2_MSHR_INDEX_WIDTH-1:0] mshr_hit_index;
-`ifdef NO_L2_CAM_MSHR
-wire [`L2_MSHR_STATE_BITS-1:0] mshr_state_out;
-wire [`L2_MSHR_ARRAY_WIDTH-1:0] mshr_data_out;
-`else
 wire [`L2_MSHR_STATE_BITS-1:0] rd_mshr_state_out;
 wire [`L2_MSHR_ARRAY_WIDTH-1:0] rd_mshr_data_out;
 wire [`L2_MSHR_ARRAY_WIDTH-1:0] cam_mshr_data_out;
 wire [`L2_MSHR_ARRAY_WIDTH-1:0] pending_mshr_data_out;
-`endif
 
 wire [`L2_OWNER_BITS-1:0] mshr_inv_counter_out;
 wire [`L2_MSHR_INDEX_WIDTH:0] mshr_empty_slots;
@@ -222,14 +217,8 @@ home_agent_config_regs config_regs(
 home_agent_mshr_wrap mshr_wrap(
     .clk                    (clk),
     .rst_n                  (rst_n),
-`ifdef NO_L2_CAM_MSHR
-    .pipe_rd_sel            (active_S1),
-`endif
     .pipe_wr_sel            (active_S3),
 
-`ifdef NO_L2_CAM_MSHR
-    .rd_en1                 (1'b0),
-`endif
     .cam_en1                (mshr_cam_en_p1),
     .wr_state_en1           (mshr_wr_state_en_p1),
     .wr_data_en1            (mshr_wr_data_en_p1),
@@ -237,44 +226,25 @@ home_agent_mshr_wrap mshr_wrap(
     .state_in1              (mshr_state_in_p1),
     .data_in1               (mshr_data_in_p1),
     .data_mask_in1          (mshr_data_mask_in_p1),
-`ifdef NO_L2_CAM_MSHR
-    .rd_index_in1           ({`L2_MSHR_INDEX_WIDTH{1'b0}}),
-`endif
     .inv_counter_rd_index_in1(mshr_inv_counter_rd_index_in_p1),
     .wr_index_in1           (mshr_wr_index_in_p1),
     .addr_in1               (mshr_addr_in_p1),
 
-`ifdef NO_L2_CAM_MSHR
-    .rd_en2                 (mshr_rd_en_p2),
-    .cam_en2                (1'b0),
-`endif
     .wr_state_en2           (mshr_wr_state_en_p2),
     .wr_data_en2            (mshr_wr_data_en_p2),
-`ifdef NO_L2_CAM_MSHR
-    .pending_ready2         (1'b0), 
-`endif
     .inc_counter_en2        (mshr_inc_counter_en_p2),
     .state_in2              (mshr_state_in_p2),
     .data_in2               (mshr_data_in_p2),
     .data_mask_in2          (mshr_data_mask_in_p2),
     .rd_index_in2           (mshr_rd_index_in_p2),
     .wr_index_in2           (mshr_wr_index_in_p2),
-`ifdef NO_L2_CAM_MSHR
-    .addr_in2               ({`L2_MSHR_ADDR_IN_WIDTH{1'b0}}),
-`endif
 
     .hit                    (mshr_hit),
     .hit_index              (mshr_hit_index),
-`ifdef NO_L2_CAM_MSHR
-    .state_out              (mshr_state_out),
-    .data_out               (mshr_data_out),
-`else
     .rd_state_out           (rd_mshr_state_out),
     .rd_data_out            (rd_mshr_data_out),
-    // .cam_state_out       (cam_mshr_state_out),
     .cam_data_out           (cam_mshr_data_out),
     .pending_data_out       (pending_mshr_data_out),
-`endif
     .inv_counter_out        (mshr_inv_counter_out), 
     .empty_slots            (mshr_empty_slots),
     .pending                (mshr_pending),
@@ -410,12 +380,8 @@ home_agent_pipe1 pipe1(
     .global_stall_S4        (active_S3),
 
     .mshr_hit               (mshr_hit),
-`ifdef NO_L2_CAM_MSHR
-    .mshr_data_out          (mshr_data_out),
-`else
     .cam_mshr_data_out      (cam_mshr_data_out),
     .pending_mshr_data_out  (pending_mshr_data_out),
-`endif
     .mshr_inv_counter_out   (mshr_inv_counter_out),
     .mshr_empty_slots       (mshr_empty_slots),
     .mshr_pending           (mshr_pending),
@@ -489,13 +455,8 @@ home_agent_pipe2 pipe2(
     .noc_data_in            (noc3_data_in),
     .noc_ready_in           (noc3_ready_in),
 
-`ifdef NO_L2_CAM_MSHR
-    .mshr_state_out         (mshr_state_out),
-    .mshr_data_out          (mshr_data_out),
-`else
     .mshr_state_out         (rd_mshr_state_out),
     .mshr_data_out          (rd_mshr_data_out),
-`endif
 
     .state_data_out         (state_data_out),
     .tag_data_out           (tag_data_out),
