@@ -173,10 +173,10 @@ assign resp_got_next = resp_got + resp_go;
 
 always @(posedge clk) begin
     if(~rst_n) begin
-        req_sent <= 0;
-        resp_got <= 0;
-        outstanding <= 0;
-        init_calib_complete_out <= 0;
+        req_sent <= `AXI4_ADDR_WIDTH'b0;
+        resp_got <= `AXI4_ADDR_WIDTH'b0;
+        outstanding <= 4'b0;
+        init_calib_complete_out <= 1'b0;
     end 
     else begin
         req_sent <= req_sent_next;

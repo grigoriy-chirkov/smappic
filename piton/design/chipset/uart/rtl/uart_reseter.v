@@ -63,7 +63,7 @@ assign uart_rst_out_n = !(state == RESET);
 
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        state <= 0;
+        state <= 5'b0;
     end 
     else begin
         if (waiting & axi_rgo) begin
@@ -134,13 +134,13 @@ end
 
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        waiting <= 0;
+        waiting <= 1'b0;
     end 
     else begin
         if (axi_argo & (axi_araddr == `UART_RBR) & !waiting) 
-            waiting <= 1;
+            waiting <= 1'b1;
         else if (axi_rgo & waiting)
-            waiting <= 0;
+            waiting <= 1'b0;
         else
             waiting <= waiting; //should never be here
     end

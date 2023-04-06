@@ -493,9 +493,9 @@ module chip (
        if(~rst_n_inter_sync_f)
 `endif
        begin
-           intf_chip_data_inter_buf_f <= 0;
-           intf_chip_channel_inter_buf_f <= 0;
-           chip_intf_credit_back_inter_buf_f <= 0;
+           intf_chip_data_inter_buf_f <= 32'b0;
+           intf_chip_channel_inter_buf_f <= 2'b0;
+           chip_intf_credit_back_inter_buf_f <= 3'b0;
        end
        else
        begin

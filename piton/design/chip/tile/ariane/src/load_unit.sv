@@ -361,9 +361,9 @@ module load_unit import ariane_pkg::*; #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : p_regs
         if (~rst_ni) begin
-            idx_q     <= 0;
-            signed_q  <= 0;
-            fp_sign_q <= 0;
+            idx_q     <= 3'b0;
+            signed_q  <= 1'b0;
+            fp_sign_q <= 1'b0;
         end else begin
             idx_q     <= idx_d;
             signed_q  <= signed_d;

@@ -65,11 +65,11 @@ assign out_val = (state == SEND);
 always @(posedge clk) begin
   if(~rst_n) begin
     state <= ACCEPT_W1;
-    remaining_flits <= 0;
-    pkt_w1 <= 0;
-    pkt_w2 <= 0;
-    pkt_w3 <= 0;
-    num_data_flits <= 0;
+    remaining_flits <= `MSG_LENGTH_WIDTH'b0;
+    pkt_w1 <= `NOC_DATA_WIDTH'b0;
+    pkt_w2 <= `NOC_DATA_WIDTH'b0;
+    pkt_w3 <= `NOC_DATA_WIDTH'b0;
+    num_data_flits <= `MSG_LENGTH_WIDTH'b0;
   end 
   else begin
     case (state)
@@ -108,7 +108,6 @@ always @(posedge clk) begin
         if (flit_in_go) begin
           if (remaining_flits == 0) begin
             state <= SEND;
-            remaining_flits <= 0;
           end
           else begin
             state <= ACCEPT_DATA;
@@ -129,7 +128,6 @@ always @(posedge clk) begin
         if (flit_in_go) begin
           if (remaining_flits == 0) begin
             state <= SEND;
-            remaining_flits <= 0;
           end
           else begin
             state <= ACCEPT_DATA;
@@ -148,11 +146,11 @@ always @(posedge clk) begin
       SEND: begin
         if (out_rdy) begin
           state <= ACCEPT_W1;
-          remaining_flits <= 0;
-          pkt_w1 <= 0;
-          pkt_w2 <= 0;
-          pkt_w3 <= 0;
-          num_data_flits <= 0;
+          remaining_flits <= `MSG_LENGTH_WIDTH'b0;
+          pkt_w1 <= `NOC_DATA_WIDTH'b0;
+          pkt_w2 <= `NOC_DATA_WIDTH'b0;
+          pkt_w3 <= `NOC_DATA_WIDTH'b0;
+          num_data_flits <= `MSG_LENGTH_WIDTH'b0;
         end
         else begin
           state <= state;
@@ -182,7 +180,7 @@ generate
   for (i = 0; i < `PAYLOAD_LEN; i = i + 1) begin
     always @(posedge clk) begin
       if(~rst_n) begin
-        in_data_buf[i] <= 0;
+        in_data_buf[i] <= `NOC_DATA_WIDTH'b0;
       end 
       else begin
         in_data_buf[i] <= (i == remaining_flits) & flit_in_val & (state == ACCEPT_DATA) ? flit_in 

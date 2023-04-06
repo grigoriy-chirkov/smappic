@@ -192,8 +192,6 @@ begin
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_NON_CACHEABLE] = l15_noc1buffer_req_non_cacheable;
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_SIZE] = l15_noc1buffer_req_size;
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_PREFETCH] = l15_noc1buffer_req_prefetch;
-      // command_buffer_next[command_wrindex][`L15_NOC1BUFFER_BLKSTORE] = l15_noc1buffer_req_blkstore;
-      // command_buffer_next[command_wrindex][`L15_NOC1BUFFER_BLKINITSTORE] = l15_noc1buffer_req_blkinitstore;
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_DATA_INDEX] = data_wrindex;
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_CSM_TICKET] = l15_noc1buffer_req_csm_ticket;
       command_buffer_next[command_wrindex][`L15_NOC1BUFFER_HOMEID] = l15_noc1buffer_req_homeid;

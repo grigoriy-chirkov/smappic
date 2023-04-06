@@ -87,7 +87,7 @@ always @(posedge clk) begin
         if (flit_out_rdy) begin
           if (resp_header[`MSG_LENGTH] == 0) begin
             state <= ACCEPT;
-            remaining_flits <= 0;
+            remaining_flits <= `MSG_LENGTH_WIDTH'b0;
           end
           else begin
             state <= SEND_DATA;
@@ -140,13 +140,13 @@ always @(posedge clk) begin
             end
             `MSG_TYPE_STORE_MEM: begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_STORE_MEM_ACK;
-              resp_header[`MSG_LENGTH  ]     <= 0;
+              resp_header[`MSG_LENGTH  ]     <= `MSG_LENGTH_WIDTH'b0;
             end
             `MSG_TYPE_NC_LOAD_REQ: begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_NC_LOAD_MEM_ACK;
               `ifdef L2_SEND_NC_REQ
               if (header_in[`MSG_DATA_SIZE] < `MSG_DATA_SIZE_8B)
-                resp_header[`MSG_LENGTH  ]   <= 1;
+                resp_header[`MSG_LENGTH  ]   <= `MSG_LENGTH_WIDTH'd1;
               else 
                 resp_header[`MSG_LENGTH  ]   <= (1 << (header_in[`MSG_DATA_SIZE] - 1)) / (`NOC_DATA_WIDTH / 8);
               `else 
@@ -155,12 +155,12 @@ always @(posedge clk) begin
            end
             `MSG_TYPE_NC_STORE_REQ: begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_NC_STORE_MEM_ACK;
-              resp_header[`MSG_LENGTH  ]     <= 0;
+              resp_header[`MSG_LENGTH  ]     <= `MSG_LENGTH_WIDTH'b0;
             end
             default: begin
               // shouldn't end up herere
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_WIDTH'b0;
-              resp_header[`MSG_LENGTH  ]     <= 0;
+              resp_header[`MSG_LENGTH  ]     <= `MSG_LENGTH_WIDTH'b0;
             end
           endcase // header_in[`MSG_TYPE]
         end

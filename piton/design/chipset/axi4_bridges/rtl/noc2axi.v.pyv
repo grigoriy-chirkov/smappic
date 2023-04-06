@@ -246,25 +246,25 @@ wire wr_dispatch;
 always @(posedge axi_clk) begin
   if(~axi_rst_n) begin
     buf1 <= `NOC_DATA_WIDTH'h0;
-    buf1_val <= 0;
+    buf1_val <= 1'b0;
     buf2 <= `NOC_DATA_WIDTH'h0;
-    buf2_val <= 0;
+    buf2_val <= 1'b0;
     buf3 <= `NOC_DATA_WIDTH'h0;
-    buf3_val <= 0;
+    buf3_val <= 1'b0;
   end 
   else begin
-    buf1_val <= noc1_go                     ? 1
-              : (buf1_chosen & wr_dispatch) ? 0
+    buf1_val <= noc1_go                     ? 1'b1
+              : (buf1_chosen & wr_dispatch) ? 1'b0
               :                               buf1_val;
     buf1 <= noc1_go ? noc1_data_synced : buf1;
 
-    buf2_val <= noc2_go                     ? 1
-              : (buf2_chosen & wr_dispatch) ? 0
+    buf2_val <= noc2_go                     ? 1'b1
+              : (buf2_chosen & wr_dispatch) ? 1'b0
               :                               buf2_val;
     buf2 <= noc2_go ? noc2_data_synced : buf2;
 
-    buf3_val <= noc3_go                     ? 1
-              : (buf3_chosen & wr_dispatch) ? 0
+    buf3_val <= noc3_go                     ? 1'b1
+              : (buf3_chosen & wr_dispatch) ? 1'b0
               :                               buf3_val;
     buf3 <= noc3_go ? noc3_data_synced : buf3;
   end
@@ -273,12 +273,12 @@ end
 
 always @(posedge axi_clk) begin
   if(~axi_rst_n) begin
-    buf1_chipid <= 0;
-    buf2_chipid <= 0;
-    buf3_chipid <= 0;
-    noc1_flits_left <= 0;
-    noc2_flits_left <= 0;
-    noc3_flits_left <= 0;
+    buf1_chipid <= `NOC_CHIPID_WIDTH'b0;
+    buf2_chipid <= `NOC_CHIPID_WIDTH'b0;
+    buf3_chipid <= `NOC_CHIPID_WIDTH'b0;
+    noc1_flits_left <= `MSG_LENGTH_WIDTH'b0;
+    noc2_flits_left <= `MSG_LENGTH_WIDTH'b0;
+    noc3_flits_left <= `MSG_LENGTH_WIDTH'b0;
   end 
   else begin
 <%
@@ -385,23 +385,23 @@ assign m_axi_wlast   = 1'b1;
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
         m_axi_awaddr <= `AXI4_ADDR_WIDTH'b0;
-        m_axi_awvalid <= 0;
+        m_axi_awvalid <= 1'b0;
         m_axi_wdata <= `AXI4_DATA_WIDTH'h0;
-        m_axi_wvalid <= 0;
+        m_axi_wvalid <= 1'b0;
     end
     else begin
         if (wr_dispatch) begin
             m_axi_awaddr <= wr_addr;
-            m_axi_awvalid <= 1;
-            m_axi_wvalid <= 1;
+            m_axi_awvalid <= 1'b1;
+            m_axi_wvalid <= 1'b1;
             m_axi_wdata <= wdata;
         end
         else begin
             if (axi_aw_go) begin
-                m_axi_awvalid <= 0;
+                m_axi_awvalid <= 1'b0;
             end
             if (axi_w_go) begin
-                m_axi_wvalid <= 0;
+                m_axi_wvalid <= 1'b0;
             end
         end
     end

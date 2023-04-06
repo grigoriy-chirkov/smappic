@@ -87,7 +87,6 @@ reg [2:0] pcxdecoder_l15_size_pmesh_standard;
 always @ *
 begin
    pcxdecoder_l15_val = pcxbuf_pcxdecoder_valid && message[`PCX_VLD] && is_message_new;
-   // pcxdecoder_l15_val = pcxbuf_pcxdecoder_valid;
    pcxdecoder_pcxbuf_ack = l15_pcxdecoder_ack || (pcxbuf_pcxdecoder_valid && !message[`PCX_VLD]);
    pcxdecoder_l15_csm_data = pcxbuf_pcxdecoder_csm_data;
 

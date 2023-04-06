@@ -97,7 +97,7 @@ module tag_cmp #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (~rst_ni) begin
-            id_q <= 0;
+            id_q <= NR_PORTS'b0;
         end else begin
             id_q <= id_d;
         end

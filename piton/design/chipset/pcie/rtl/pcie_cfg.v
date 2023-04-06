@@ -89,7 +89,7 @@ assign rdata = (pcie_cfg_axi_araddr == RST_ADDR) ? {paddings [`AXIL_DATA_WIDTH-1
 always @(posedge pcie_cfg_axi_clk) begin
     if(~pcie_cfg_axi_resetn) begin
         sw_reg <= `PITONSYS_SW_WIDTH'b0;
-        rstn_reg <= 1;
+        rstn_reg <= 1'b1;
     end 
     else begin
         if (wgo) begin
@@ -113,7 +113,7 @@ end
 
 always @(posedge pcie_cfg_axi_clk) begin
     if(~pcie_cfg_axi_resetn) begin
-        pcie_cfg_axi_bvalid <= 0;
+        pcie_cfg_axi_bvalid <= 1'b0;
     end 
     else begin
         pcie_cfg_axi_bvalid <= wgo ? 1 : pcie_cfg_axi_bready ? 0 : pcie_cfg_axi_bvalid;
@@ -124,8 +124,8 @@ end
 // Reads
 always @(posedge pcie_cfg_axi_clk) begin
     if(~pcie_cfg_axi_resetn) begin
-        pcie_cfg_axi_rvalid <= 0;
-        pcie_cfg_axi_rdata <= 0;
+        pcie_cfg_axi_rvalid <= 1'b0;
+        pcie_cfg_axi_rdata <= `AXIL_DATA_WIDTH'b0;
     end 
     else begin
         pcie_cfg_axi_rvalid <= pcie_cfg_axi_arvalid ? 1 : pcie_cfg_axi_rready ? 0 : pcie_cfg_axi_rvalid;

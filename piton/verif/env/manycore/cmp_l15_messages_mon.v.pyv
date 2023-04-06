@@ -295,12 +295,6 @@ begin
                 `L15_AMO_OP_CAS2:
                     $write("PCX_REQTYPE_AMO - L15_AMO_OP_CAS2");
             endcase
-        //`PCX_REQTYPE_CAS1:
-        //    $write("PCX_REQTYPE_CAS1");
-        //`PCX_REQTYPE_CAS2:
-        //    $write("PCX_REQTYPE_CAS2");
-        //`PCX_REQTYPE_SWP_LOADSTUB:
-        //    $write("PCX_REQTYPE_SWP_LOADSTUB");
         `PCX_REQTYPE_INTERRUPT:
             $write("PCX_REQTYPE_INTERRUPT");
         `PCX_REQTYPE_FP1:
@@ -401,18 +395,7 @@ begin
             $display("   CSM CHIPID: %d, X: %d, Y: %d", `L15_PIPE0.pcxdecoder_l15_csm_data[`TLB_CSM_CHIPID], `L15_PIPE0.pcxdecoder_l15_csm_data[`TLB_CSM_X],`L15_PIPE0.pcxdecoder_l15_csm_data[`TLB_CSM_Y]);
         end
         $display("   CSM Data: 0x%x", `L15_PIPE0.pcxdecoder_l15_csm_data);
-        /*
-        if (noc2decoder_l15_reqtype == `PCX_REQTYPE_STORE)
-        if (noc2decoder_l15_reqtype == `PCX_REQTYPE_CAS1)
-        begin
-        $display("   Cmp.data: 0x%x", `L15_PIPE0.pcxdecoder_l15_data);
-        $display("   Swp.data: 0x%x", `L15_PIPE0.pcxdecoder_l15_data_next_entry);
-        end
-        if (noc2decoder_l15_reqtype == `PCX_REQTYPE_SWP_LOADSTUB)
-        begin
-        $display("   Swp.data: 0x%x", `L15_PIPE0.pcxdecoder_l15_data);
-        end
-        */
+
         if (`L15_PIPE0.pcxdecoder_l15_rqtype == `PCX_REQTYPE_INTERRUPT && `L15_PIPE0.pcxdecoder_l15_data[63] == 1'b0)
         begin
             pcx_interrupt_type = `L15_PIPE0.pcxdecoder_l15_data[17:16];

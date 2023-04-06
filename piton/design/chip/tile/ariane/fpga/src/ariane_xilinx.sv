@@ -444,7 +444,7 @@ axi_master_connect i_axi_master_connect_ariane (.axi_req_i(axi_ariane_req), .axi
 // divide clock by two
 always_ff @(posedge clk or negedge ndmreset_n) begin
   if (~ndmreset_n) begin
-    rtc <= 0;
+    rtc <= 1'b0;
   end else begin
     rtc <= rtc ^ 1'b1;
   end

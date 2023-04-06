@@ -224,7 +224,7 @@ begin
     if (!jtag_rst_l)
     begin
         scratch_reg <= `JTAG_SCRATCH_WIDTH'b0;
-        idcode <= 0;
+        idcode <= 32'b0;
     end
     else
     begin
@@ -262,7 +262,7 @@ always @ (posedge jtag_clk)
 begin
     if (!jtag_rst_l)
     begin
-        ctap_reg_sel <= 0;
+        ctap_reg_sel <= `CTAP_REG_SEL_WIDTH'b0;
     end
     else
         ctap_reg_sel <= ctap_reg_sel_next;

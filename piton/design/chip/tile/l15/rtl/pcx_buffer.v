@@ -61,7 +61,6 @@ module pcx_buffer(
    output reg [`PCX_WIDTH-1:0] pcxbuf_pcxdecoder_data_buf1,
    output reg [`TLB_CSM_WIDTH-1:0] pcxbuf_pcxdecoder_csm_data,
    output reg pcxbuf_pcxdecoder_valid
-   // output reg pcx_req_squashed
    );
 
 reg [`PCX_WIDTH-1:0]   buffer[0:1];
@@ -69,9 +68,6 @@ reg [`PCX_WIDTH-1:0]   buffer_next[0:1];
 reg                    buffer_atomic[0:1];
 reg                    buffer_atomic_next[0:1];
 reg                    buffer_atomic_next_next;
-// reg [`PCX_WIDTH-1:0]   buf0, buf1;
-// wire [`PCX_WIDTH-1:0] buf0_next, buf1_next;
-// wire               buf0_val, buf1_val;
 reg [`PCX_WIDTH-1:0]   buffer_csm_data[0:1];
 reg [`PCX_WIDTH-1:0]   buffer_csm_data_next[0:1];
 
@@ -91,13 +87,8 @@ reg write_req;
 reg write_req_next;
 reg read_ack;
 
-// reg invalid_packet;
-// reg invalid_packet_next;
-// reg invalid_packet_acked;
-
 reg is_buffer_full;
 reg is_buffer_full_1back;
-// reg is_buffer_full_2back;
 reg is_req_squashed;
 reg [4:0] uncore_spc_grant_next;
 
@@ -105,8 +96,6 @@ reg [4:0] uncore_spc_grant_next;
 always @ (posedge clk)
 if (~rst_n)
 begin
-   // buf0 <= 1'b0;
-   // buf1 <= 1'b0;
    buffer[0] <= 1'b0;
    buffer[1] <= 1'b0;
    read_pos <= 1'b0;
@@ -119,36 +108,27 @@ begin
    buffer_atomic_next_next <= 1'b0;
    atomic_req_second_packet_coming <= 1'b0;
    atomic_ack_second <= 1'b0;
-   // invalid_packet <= 1'b0;
-   // is_buffer_full_2back <= 1'b0;
    is_buffer_full_1back <= 1'b0;
    uncore_spc_grant <= 0;
 end
 else
 begin
-   // if (buf0_val && pcxdecoder_pcxbuf_ack)
-   // begin
-      // buf0 <= buf0_next;
-      // buf1 <= buf1_next;
-      buffer[0] <= buffer_next[0];
-      buffer[1] <= buffer_next[1];
-      buffer_csm_data[0] <= buffer_csm_data_next[0];
-      buffer_csm_data[1] <= buffer_csm_data_next[1];
-      read_pos <= read_pos_next;
-      write_pos <= write_pos_next;
-      write_req <= write_req_next;
-      buffer_val[0] <= buffer_val_next[0];
-      buffer_val[1] <= buffer_val_next[1];
-      buffer_atomic[0] <= buffer_atomic_next[0];
-      buffer_atomic[1] <= buffer_atomic_next[1];
-      buffer_atomic_next_next <= spc_uncore_atomic_req && !is_req_squashed;
-      atomic_req_second_packet_coming <= atomic_req_second_packet_coming_next;
-      atomic_ack_second <= atomic_ack_second_next;
-      // invalid_packet <= invalid_packet_next;
-      // is_buffer_full_2back <= is_buffer_full_1back;
-      is_buffer_full_1back <= is_buffer_full;
-      uncore_spc_grant <= uncore_spc_grant_next;
-   // end
+   buffer[0] <= buffer_next[0];
+   buffer[1] <= buffer_next[1];
+   buffer_csm_data[0] <= buffer_csm_data_next[0];
+   buffer_csm_data[1] <= buffer_csm_data_next[1];
+   read_pos <= read_pos_next;
+   write_pos <= write_pos_next;
+   write_req <= write_req_next;
+   buffer_val[0] <= buffer_val_next[0];
+   buffer_val[1] <= buffer_val_next[1];
+   buffer_atomic[0] <= buffer_atomic_next[0];
+   buffer_atomic[1] <= buffer_atomic_next[1];
+   buffer_atomic_next_next <= spc_uncore_atomic_req && !is_req_squashed;
+   atomic_req_second_packet_coming <= atomic_req_second_packet_coming_next;
+   atomic_ack_second <= atomic_ack_second_next;
+   is_buffer_full_1back <= is_buffer_full;
+   uncore_spc_grant <= uncore_spc_grant_next;
 end
 
 // Combinational
@@ -201,9 +181,7 @@ begin
    // move this to the end of the process
    // otherwise msim complains about potentially uninitialized "write_pos_next"
    is_buffer_full = (write_pos_next == read_pos) && (buffer_val[read_pos] == 1'b1) && (uncore_spc_grant[0] != 1'b1);
-   // is_buffer_full = (write_pos_next == read_pos) && (buffer_val[read_pos] == 1'b1);
    is_req_squashed = is_buffer_full && spc_uncore_req[0];
-   // pcx_req_squashed = is_req_squashed;
    atomic_req_second_packet_coming_next = spc_uncore_atomic_req && !is_req_squashed;
    pcxbuf_pcxdecoder_data = buffer[read_pos];
    pcxbuf_pcxdecoder_data_buf1 = buffer[read_pos^1'b1];

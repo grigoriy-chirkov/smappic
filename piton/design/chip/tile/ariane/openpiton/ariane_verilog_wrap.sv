@@ -103,7 +103,7 @@ module ariane_verilog_wrap #(
 
   always_ff @(posedge clk_i or negedge reset_l) begin : p_regs
     if(~reset_l) begin
-      wake_up_q <= 0;
+      wake_up_q <= 1'b0;
     end else begin
       wake_up_q <= wake_up_d;
     end
@@ -133,7 +133,7 @@ module ariane_verilog_wrap #(
 
   always_ff @(posedge clk_i or negedge reset_l) begin : p_regs
     if(~reset_l) begin
-      wake_up_cnt_q <= 0;
+      wake_up_cnt_q <= 16'b0;
     end else begin
       wake_up_cnt_q <= wake_up_cnt_d;
     end

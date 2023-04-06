@@ -230,16 +230,16 @@ module axi_riscv_amos #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if(~rst_ni) begin
-            aw_valid <= 0;
-            aw_ready <= 0;
-            w_valid  <= 0;
-            w_ready  <= 0;
-            b_valid  <= 0;
-            b_ready  <= 0;
-            ar_valid <= 0;
-            ar_ready <= 0;
-            r_valid  <= 0;
-            r_ready  <= 0;
+            aw_valid <= 1'b0;
+            aw_ready <= 1'b0;
+            w_valid  <= 1'b0;
+            w_ready  <= 1'b0;
+            b_valid  <= 1'b0;
+            b_ready  <= 1'b0;
+            ar_valid <= 1'b0;
+            ar_ready <= 1'b0;
+            r_valid  <= 1'b0;
+            r_ready  <= 1'b0;
         end else begin
             aw_valid <= mst_aw_valid_o;
             aw_ready <= mst_aw_ready_i;

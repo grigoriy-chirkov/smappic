@@ -650,8 +650,6 @@ begin
         `MSG_TYPE_LOAD_REQ              : $write("    ld_req     ");
         `MSG_TYPE_PREFETCH_REQ          : $write("   pref_req    ");
         `MSG_TYPE_STORE_REQ             : $write("    st_req     ");
-        `MSG_TYPE_BLK_STORE_REQ         : $write("  blk_st_req   ");
-        `MSG_TYPE_BLKINIT_STORE_REQ     : $write(" blkinit_st_req");
         `MSG_TYPE_CAS_REQ               : $write("    cas_req    ");
         `MSG_TYPE_CAS_P1_REQ            : $write("  cas_p1_req   ");
         `MSG_TYPE_CAS_P2Y_REQ           : $write("  cas_p2y_req  ");

@@ -86,7 +86,7 @@ module cdc_2phase_src #(
   // The req_src and data_src registers change when a new data item is accepted.
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      req_src_q  <= 0;
+      req_src_q  <= 1'b0;
       data_src_q <= '0;
     end else if (valid_i && ready_o) begin
       req_src_q  <= ~req_src_q;
@@ -97,8 +97,8 @@ module cdc_2phase_src #(
   // The ack_src and ack registers act as synchronization stages.
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      ack_src_q <= 0;
-      ack_q     <= 0;
+      ack_src_q <= 1'b0;
+      ack_q     <= 1'b0;
     end else begin
       ack_src_q <= async_ack_i;
       ack_q     <= ack_src_q;
@@ -137,7 +137,7 @@ module cdc_2phase_dst #(
   // The ack_dst register changes when a new data item is accepted.
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      ack_dst_q  <= 0;
+      ack_dst_q  <= 1'b0;
     end else if (valid_o && ready_i) begin
       ack_dst_q  <= ~ack_dst_q;
     end
@@ -156,9 +156,9 @@ module cdc_2phase_dst #(
   // The req_dst and req registers act as synchronization stages.
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      req_dst_q <= 0;
-      req_q0    <= 0;
-      req_q1    <= 0;
+      req_dst_q <= 1'b0;
+      req_q0    <= 1'b0;
+      req_q1    <= 1'b0;
     end else begin
       req_dst_q <= async_req_i;
       req_q0    <= req_dst_q;

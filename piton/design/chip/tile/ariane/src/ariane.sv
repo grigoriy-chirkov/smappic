@@ -787,7 +787,7 @@ module ariane #(
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
-      cycles <= 0;
+      cycles <= 64'b0;
     end else begin
       string mode = "";
       if (debug_mode) mode = "D";

@@ -517,8 +517,8 @@ assign mc_rst_n = sys_rst_n;
 
 always @(posedge ui_clk) begin
     if(ui_clk_sync_rst) begin
-        sys_rst_n_f <= 0;
-        sys_rst_n_ff <= 0;
+        sys_rst_n_f <= 1'b0;
+        sys_rst_n_ff <= 1'b0;
     end else begin
         sys_rst_n_f <= sys_rst_n;
         sys_rst_n_ff <= sys_rst_n_f;
@@ -1440,8 +1440,8 @@ mig_7series_axi4 u_mig_7series_axi4 (
 
 always @(posedge sys_clk) begin
     if(~mc_rst_n) begin
-        init_calib_complete_f <= 0;
-        init_calib_complete_ff <= 0;
+        init_calib_complete_f <= 1'b0;
+        init_calib_complete_ff <= 1'b0;
     end 
     else begin
         `ifdef PITONSYS_MEM_ZEROER

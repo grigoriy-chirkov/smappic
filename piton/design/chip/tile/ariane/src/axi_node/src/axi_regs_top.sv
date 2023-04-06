@@ -193,8 +193,8 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      wdata_done_reg_dly  <= 0;
-      awaddr_done_reg_dly <= 0;
+      wdata_done_reg_dly  <= 1'b0;
+      awaddr_done_reg_dly <= 1'b0;
     end
     else
     begin
@@ -208,22 +208,22 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      awaddr_done_reg <= 0;
-      waddr_reg       <= 0;
-      awready         <= 1;
+      awaddr_done_reg <= 1'b0;
+      waddr_reg       <= C_S_AXI_ADDR_WIDTH'b0;
+      awready         <= 1'b1;
     end
     else
     begin
       if (awready && s_axi_awvalid)
       begin
-        awready   <= 0;
-        awaddr_done_reg <= 1;
+        awready   <= 1'b0;
+        awaddr_done_reg <= 1'b1;
         waddr_reg <= {2'b00,s_axi_awaddr[31:2]};
       end
       else if (awaddr_done_reg && wresp_done_reg)
       begin
         awready   <= 1;
-        awaddr_done_reg <= 0;
+        awaddr_done_reg <= 1'b0;
       end
     end
   end
@@ -233,24 +233,24 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      wdata_done_reg <= 0;
-      wready         <= 1;
-      wdata_reg      <= 0;
-      wstrb_reg      <= 0;
+      wdata_done_reg <= 1'b0;
+      wready         <= 1'b1;
+      wdata_reg      <= C_S_AXI_DATA_WIDTH'b0;
+      wstrb_reg      <= C_S_AXI_DATA_WIDTH'b0;
     end
     else
     begin
       if (wready && s_axi_wvalid)
       begin
-        wready   <= 0;
-        wdata_done_reg <= 1;
+        wready   <= 1'b0;
+        wdata_done_reg <= 1'b1;
         wdata_reg <= s_axi_wdata;
         wstrb_reg <= s_axi_wstrb;
       end
       else if (wdata_done_reg && wresp_done_reg)
       begin
-        wready   <= 1;
-        wdata_done_reg <= 0;
+        wready   <= 1'b1;
+        wdata_done_reg <= 1'b0;
       end
     end
   end
@@ -260,9 +260,9 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      bvalid            <= 0;
-      wresp_done_reg    <= 0;
-      wresp_running_reg <= 0;
+      bvalid            <= 1'b0;
+      wresp_done_reg    <= 1'b0;
+      wresp_running_reg <= 1'b0;
     end
     else
     begin
@@ -275,16 +275,16 @@ module axi_regs_top
         end
         else if (s_axi_bready)
         begin
-          bvalid         <= 0;
-          wresp_done_reg <= 1;
-          wresp_running_reg <= 0;
+          bvalid         <= 1'b0;
+          wresp_done_reg <= 1'b1;
+          wresp_running_reg <= 1'b0;
         end
       end
       else
       begin
-        bvalid         <= 0;
-        wresp_done_reg <= 0;
-        wresp_running_reg <= 0;
+        bvalid         <= 1'b0;
+        wresp_done_reg <= 1'b0;
+        wresp_running_reg <= 1'b0;
       end
     end
   end
@@ -294,22 +294,22 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      araddr_done_reg <= 0;
-      arready         <= 1;
-      raddr_reg       <= 0;
+      araddr_done_reg <= 1'b0;
+      arready         <= 1'b1;
+      raddr_reg       <= C_S_AXI_ADDR_WIDTH'b0;
     end
     else
     begin
       if (arready && s_axi_arvalid)
       begin
-        arready   <= 0;
-        araddr_done_reg <= 1;
+        arready   <= 1'b0;
+        araddr_done_reg <= 1'b1;
         raddr_reg <= s_axi_araddr;
       end
       else if (araddr_done_reg && rresp_done_reg)
       begin
-        arready   <= 1;
-        araddr_done_reg <= 0;
+        arready   <= 1'b1;
+        araddr_done_reg <= 1'b0;
       end
     end
   end
@@ -320,9 +320,9 @@ module axi_regs_top
   begin
     if (!s_axi_aresetn)
     begin
-      rresp_done_reg    <= 0;
-      rvalid            <= 0;
-      rresp_running_reg <= 0;
+      rresp_done_reg    <= 1'b0;
+      rvalid            <= 1'b0;
+      rresp_running_reg <= 1'b0;
     end
     else
     begin
@@ -335,16 +335,16 @@ module axi_regs_top
         end
         else if (s_axi_rready)
         begin
-          rvalid            <= 0;
-          rresp_done_reg    <= 1;
-          rresp_running_reg <= 0;
+          rvalid            <= 1'b0;
+          rresp_done_reg    <= 1'b1;
+          rresp_running_reg <= 1'b0;
         end
       end
       else
       begin
-        rvalid         <= 0;
-        rresp_done_reg <= 0;
-        rresp_running_reg <= 0;
+        rvalid         <= 1'b0;
+        rresp_done_reg <= 1'b0;
+        rresp_running_reg <= 1'b0;
       end
     end
   end

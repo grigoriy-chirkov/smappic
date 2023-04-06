@@ -58,8 +58,6 @@ module noc1encoder(
    input wire noc1buffer_noc1encoder_req_non_cacheable,
    input wire [`PCX_SIZE_WIDTH-1:0] noc1buffer_noc1encoder_req_size,
    input wire noc1buffer_noc1encoder_req_prefetch,
-   // input wire noc1buffer_noc1encoder_req_blkstore,
-   // input wire noc1buffer_noc1encoder_req_blkinitstore,
    input wire [`PACKET_HOME_ID_WIDTH-1:0] noc1buffer_noc1encoder_req_homeid,
    input wire [`MSG_SDID_WIDTH-1:0] noc1buffer_noc1encoder_req_csm_sdid,
    input wire [`MSG_LSID_WIDTH-1:0] noc1buffer_noc1encoder_req_csm_lsid,
@@ -190,8 +188,6 @@ begin
       req_type = noc1buffer_noc1encoder_req_type;
       req_prefetch = noc1buffer_noc1encoder_req_prefetch;
       req_nc = noc1buffer_noc1encoder_req_non_cacheable;
-      // req_blkstore = 1'b0; // All block stores are translated to normal stores
-      // req_blkinitstore = 1'b0;
       req_data0 = noc1buffer_noc1encoder_req_data_0;
       req_data1 = noc1buffer_noc1encoder_req_data_1;
       req_address = noc1buffer_noc1encoder_req_address;
@@ -326,10 +322,6 @@ begin
          // can be nc store, blkstore, or blkinitstore
          if (req_nc)
             msg_type = `MSG_TYPE_NC_STORE_REQ;
-         // else if (req_blkstore)
-            // msg_type = `MSG_TYPE_BLKINIT_STORE_REQ;
-         // else if (req_blkinitstore)
-            // msg_type = `MSG_TYPE_BLK_STORE_REQ;
          msg_cache_type = `MSG_CACHE_TYPE_DATA;
          msg_length = 3; // 2 extra headers + 1 data
       end

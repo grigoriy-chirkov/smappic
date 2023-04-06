@@ -1,0 +1,278 @@
+// ========== Copyright Header Begin ============================================
+// Copyright (c) 2023 Princeton University
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Princeton University nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL PRINCETON UNIVERSITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// ========== Copyright Header End ============================================
+
+`include "axi_defines.vh"
+`include "define.tmp.h"
+
+<%
+from pyhplib import *
+%>
+
+
+module cep2axi (
+    input axi_clk,
+    input axi_rst_n,
+    input sys_clk, 
+    input sys_rst_n,
+    
+    // CEP interface
+    input wire                                cep_val, 
+    input wire [`CEP_DATA_WIDTH-1:0]          cep_data,
+    input wire [2:0]                          cep_queue_id,
+    output wire                               cep_rdy, 
+    // credits info
+<%
+print(f'''
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz, 
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz, 
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz, 
+''')
+%>
+
+    // AXI interace
+    output wire [`AXI4_ID_WIDTH     -1:0]     m_axi_awid,
+    output reg  [`AXI4_ADDR_WIDTH   -1:0]     m_axi_awaddr,
+    output wire [`AXI4_LEN_WIDTH    -1:0]     m_axi_awlen,
+    output wire [`AXI4_SIZE_WIDTH   -1:0]     m_axi_awsize,
+    output wire [`AXI4_USER_WIDTH   -1:0]     m_axi_awuser,
+    output reg                                m_axi_awvalid,
+    input  wire                               m_axi_awready,
+    output reg   [`AXI4_DATA_WIDTH   -1:0]    m_axi_wdata,
+    output wire  [`AXI4_STRB_WIDTH   -1:0]    m_axi_wstrb,
+    output wire                               m_axi_wlast,
+    output reg                                m_axi_wvalid,
+    input  wire                               m_axi_wready,
+    output wire  [`AXI4_ID_WIDTH     -1:0]    m_axi_arid,
+    output wire  [`AXI4_ADDR_WIDTH   -1:0]    m_axi_araddr,
+    output wire  [`AXI4_LEN_WIDTH    -1:0]    m_axi_arlen,
+    output wire  [`AXI4_SIZE_WIDTH   -1:0]    m_axi_arsize,
+    output wire  [`AXI4_USER_WIDTH   -1:0]    m_axi_aruser,
+    output wire                               m_axi_arvalid,
+    input  wire                               m_axi_arready,
+    input  wire  [`AXI4_ID_WIDTH     -1:0]    m_axi_rid,
+    input  wire  [`AXI4_DATA_WIDTH   -1:0]    m_axi_rdata,
+    input  wire  [`AXI4_RESP_WIDTH   -1:0]    m_axi_rresp,
+    input  wire                               m_axi_rlast,
+    input  wire                               m_axi_rvalid,
+    output wire                               m_axi_rready,
+    input  wire  [`AXI4_ID_WIDTH     -1:0]    m_axi_bid,
+    input  wire  [`AXI4_RESP_WIDTH   -1:0]    m_axi_bresp,
+    input  wire                               m_axi_bvalid,
+    output wire                               m_axi_bready, 
+
+    input wire   [`NOC_CHIPID_WIDTH-1:0]      chipid, 
+<%
+for i in range(PITON_NUM_CHIPS):
+    print(f"    input wire   [`AXI4_ADDR_WIDTH-1:0]       chip{i}_base, ")
+%>
+    input wire   [`AXI4_ADDR_WIDTH-1:0]       host_base
+);
+
+// sync cep to axi clock
+wire cep_val_synced;
+wire [`CEP_DATA_WIDTH-1:0] cep_data_synced;
+wire cep_rdy_synced;
+wire [2:0] cep_queue_id_synced;
+wire fifo_full;
+wire fifo_empty;
+wire [`CEP_DATA_WIDTH+3-1:0] fifo_out;
+
+`ifdef PITON_PROTO
+afifo_w515_d16  clk_crossing_fifo(
+    .rst(~sys_rst_n),
+    .wr_clk(sys_clk),
+    .rd_clk(axi_clk),
+    .rd_en(cep_rdy_synced),
+    .wr_en(cep_val),
+    .din({cep_queue_id, cep_data}),
+    .dout(fifo_out),
+    .full(fifo_full),
+    .empty(fifo_empty)
+);
+`else // ifndef PITON_PROTO
+async_fifo #(
+.DSIZE(`CEP_DATA_WIDTH + 3),
+.ASIZE(4),
+.MEMSIZE(8) )
+clk_crossing_fifo(
+    .rreset(~axi_rst_n),
+    .wreset(~sys_rst_n),
+    .wclk(sys_clk),
+    .rclk(axi_clk),
+    .ren(cep_rdy_synced),
+    .wval(cep_val),
+    .wdata({cep_queue_id, cep_data}),
+    .rdata(fifo_out),
+    .wfull(fifo_full),
+    .rempty(fifo_empty)
+);
+`endif // endif PITON_PROTO
+
+assign cep_data_synced = fifo_out[`CEP_DATA_WIDTH-1:0];
+assign cep_queue_id_synced = fifo_out[`CEP_DATA_WIDTH+2:`CEP_DATA_WIDTH];
+assign cep_rdy = ~fifo_full;
+assign cep_val_synced = ~fifo_empty;
+
+
+wire axi_aw_go = m_axi_awvalid & m_axi_awready;
+wire axi_w_go  = m_axi_wvalid  & m_axi_wready;
+
+wire [`AXI4_DATA_WIDTH-1:0] wdata = cep_data_synced;
+reg [`AXI4_ADDR_WIDTH-1:0] wr_addr;
+reg [`NOC_CHIPID_WIDTH-1:0] wr_chipid;
+always @(*) begin
+  wr_chipid = {1'b0, cep_data_synced[`MSG_DST_ONCHIPID]};
+<%
+print(f'''
+  if (wr_chipid > {PITON_NUM_CHIPS}) wr_chipid = `NOC_CHIPID_WIDTH'd{PITON_NUM_CHIPS};
+''')
+%>
+  case (wr_chipid)
+<%
+for i in range(PITON_NUM_CHIPS):
+    print(f"    {i}       : wr_addr = chip{i}_base;")
+%>
+    default : wr_addr = host_base;
+  endcase
+  wr_addr[8:6] = cep_queue_id_synced;
+  wr_addr[13:9] = chipid;
+end
+
+assign cep_rdy_synced = (m_axi_awready | ~m_axi_awvalid) & (m_axi_wready | ~m_axi_wvalid);
+wire wr_dispatch = cep_val_synced & cep_rdy_synced;
+
+
+// const fields
+assign m_axi_awid = 6'b100000;
+assign m_axi_bready   = 1'b1;
+assign m_axi_awlen    = `AXI4_LEN_WIDTH'b0;
+assign m_axi_awsize   = `AXI4_SIZE_WIDTH'b110;
+assign m_axi_awuser   = `AXI4_USER_WIDTH'b0;
+assign m_axi_wstrb = `AXI4_STRB_WIDTH'hffffffffffffffff;
+assign m_axi_wlast   = 1'b1;
+
+
+always @(posedge axi_clk) begin
+    if(~axi_rst_n) begin
+        m_axi_awaddr <= `AXI4_ADDR_WIDTH'b0;
+        m_axi_awvalid <= 1'b0;
+        m_axi_wdata <= `AXI4_DATA_WIDTH'h0;
+        m_axi_wvalid <= 1'b0;
+    end
+    else begin
+        if (wr_dispatch) begin
+            m_axi_awaddr <= wr_addr;
+            m_axi_awvalid <= 1'b1;
+            m_axi_wvalid <= 1'b1;
+            m_axi_wdata <= wdata;
+        end
+        else begin
+            if (axi_aw_go) begin
+                m_axi_awvalid <= 1'b0;
+            end
+            if (axi_w_go) begin
+                m_axi_wvalid <= 1'b0;
+            end
+        end
+    end
+end
+
+
+
+// credit counting
+cep2axi_credits cep2axi_credits(
+    .axi_clk       (axi_clk), 
+    .axi_rst_n     (axi_rst_n), 
+    .sys_clk       (sys_clk),
+    .sys_rst_n     (sys_rst_n),
+
+    .cep_queue1_credits_nz   (cep_queue1_credits_nz), 
+    .cep_queue2_credits_nz   (cep_queue2_credits_nz), 
+    .cep_queue3_credits_nz   (cep_queue3_credits_nz), 
+
+    .wr_dispatch   (wr_dispatch),
+    .wr_chipid     (wr_chipid), 
+    .wr_queue_id   (cep_queue_id_synced),
+
+    .m_axi_arid    (m_axi_arid), 
+    .m_axi_araddr  (m_axi_araddr), 
+    .m_axi_arlen   (m_axi_arlen), 
+    .m_axi_arsize  (m_axi_arsize), 
+    .m_axi_aruser  (m_axi_aruser), 
+    .m_axi_arvalid (m_axi_arvalid), 
+    .m_axi_arready (m_axi_arready), 
+    .m_axi_rid     (m_axi_rid), 
+    .m_axi_rdata   (m_axi_rdata), 
+    .m_axi_rresp   (m_axi_rresp), 
+    .m_axi_rlast   (m_axi_rlast), 
+    .m_axi_rvalid  (m_axi_rvalid), 
+    .m_axi_rready  (m_axi_rready), 
+
+    .chipid        (chipid), 
+<%
+for i in range(PITON_NUM_CHIPS):
+    print(f"    .chip{i}_base    (chip{i}_base), ")
+%>
+    .host_base     (host_base)
+);
+
+
+// `ifdef PITON_FPGA_SYNTH
+// ila_1 noc2axi_axi_ila (
+//     .axi_clk(axi_clk),
+//     .probe0(m_axi_wready),
+//     .probe1( m_axi_awaddr),
+//     .probe2( m_axi_bresp),
+//     .probe3( m_axi_bvalid),
+//     .probe4( m_axi_bready),
+//     .probe5( m_axi_araddr),
+//     .probe6( m_axi_rready),
+//     .probe7( m_axi_wvalid),
+//     .probe8( m_axi_arvalid),
+//     .probe9( m_axi_arready),
+//     .probe10( m_axi_rdata),
+//     .probe11( m_axi_awvalid),
+//     .probe12( m_axi_awready),
+//     .probe13( m_axi_rresp),
+//     .probe14( m_axi_wdata),
+//     .probe15( m_axi_wstrb),
+//     .probe16( m_axi_rvalid),
+//     .probe19( m_axi_awid),
+//     .probe20( m_axi_bid),
+//     .probe21(credits1_nz), 
+//     .probe22(credits2_nz), 
+//     .probe23(credits3_nz),
+//     .probe25( m_axi_arid),
+//     .probe38( m_axi_rid),
+//     .probe41( m_axi_rlast),
+//     .probe43( m_axi_wlast)
+// );
+// `endif
+
+
+
+endmodule

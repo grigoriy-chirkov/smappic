@@ -119,10 +119,10 @@ assign m_axi_wvalid = (req_state == PREP_REQ) || (req_state == SENT_AW);
 
 always  @(posedge clk) begin
     if(~rst_n) begin
-        req_header_f <= 0;
-        req_id_f <= 0;
+        req_header_f <= `MSG_HEADER_WIDTH'b0;
+        req_id_f <= `NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE'b0;
         req_state <= IDLE;
-        req_data_f <= 0;
+        req_data_f <= `AXI4_DATA_WIDTH'b0;
     end else begin
         case (req_state)
             IDLE: begin
@@ -156,10 +156,10 @@ always  @(posedge clk) begin
                 req_data_f <= m_axi_awgo ? 0 : req_data_f;
             end
             default : begin
-                req_header_f <= 0;
-                req_id_f <= 0;
+                req_header_f <= `MSG_HEADER_WIDTH'b0;
+                req_id_f <= `NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE'b0;
                 req_state <= IDLE;
-                req_data_f <= 0;
+                req_data_f <= `AXI4_DATA_WIDTH'b0;
             end
         endcase
     end
@@ -272,7 +272,7 @@ assign m_axi_bready = (resp_state == IDLE);
 
 always  @(posedge clk) begin
     if(~rst_n) begin
-        resp_id_f <= 0;
+        resp_id_f <= `NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE'b0;
         resp_state <= IDLE;
     end else begin
         case (resp_state)
@@ -286,7 +286,7 @@ always  @(posedge clk) begin
             end
             default : begin
                 resp_state <= IDLE;
-                resp_id_f <= 0;
+                resp_id_f <= `NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE'b0;
             end
         endcase
     end

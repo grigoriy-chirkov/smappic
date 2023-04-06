@@ -226,14 +226,14 @@ assign write_resp_rdy = preser_arb & preser_rdy;
 
 always @(posedge clk) begin
     if(~rst_n) begin
-        ser_data <= 0;
-        ser_val <= 0;
+        ser_data <= `AXI4_DATA_WIDTH'b0;
+        ser_val <= 1'b0;
     end 
     else begin
         if (preser_rdy) begin
             if (preser_arb) begin
                 ser_val <= write_resp_val;
-                ser_data <= 0;
+                ser_data <= 1'b0;
             end
             else begin
                 ser_val <= read_resp_val;

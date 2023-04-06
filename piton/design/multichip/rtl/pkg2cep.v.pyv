@@ -1,0 +1,131 @@
+// ========== Copyright Header Begin ============================================
+// Copyright (c) 2023 Princeton University
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Princeton University nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL PRINCETON UNIVERSITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// ========== Copyright Header End ============================================
+
+`include "axi_defines.vh"
+`include "cep_defines.vh"
+`include "define.tmp.h"
+
+<%
+from pyhplib import *
+%>
+
+module pkg2cep (
+    input clk, 
+    input rst_n,
+
+    input  wire                                   pkg1_val,
+    input  wire  [`PKG_DATA_WIDTH-1:0]            pkg1_data,
+    output wire                                   pkg1_rdy,
+    input  wire                                   pkg2_val,
+    input  wire  [`PKG_DATA_WIDTH-1:0]            pkg2_data,
+    output wire                                   pkg2_rdy,
+    input  wire                                   pkg3_val,
+    input  wire  [`PKG_DATA_WIDTH-1:0]            pkg3_data,
+    output wire                                   pkg3_rdy,
+
+    output reg                                    cep_queue1_val,
+    output reg   [`CEP_DATA_WIDTH-1:0]            cep_queue1_data,
+    input  wire                                   cep_queue1_rdy,
+    output reg   [`NOC_CHIPID_WIDTH-1:0]          cep_queue1_chipid,
+    output reg                                    cep_queue2_val,
+    output reg   [`CEP_DATA_WIDTH-1:0]            cep_queue2_data,
+    input  wire                                   cep_queue2_rdy,
+    output reg   [`NOC_CHIPID_WIDTH-1:0]          cep_queue2_chipid,
+    output reg                                    cep_queue3_val,
+    output reg   [`CEP_DATA_WIDTH-1:0]            cep_queue3_data,
+    input  wire                                   cep_queue3_rdy,
+    output reg   [`NOC_CHIPID_WIDTH-1:0]          cep_queue3_chipid
+);
+
+
+wire pkg1_go = pkg1_val & pkg1_rdy;
+wire pkg2_go = pkg2_val & pkg2_rdy;
+wire pkg3_go = pkg3_val & pkg3_rdy;
+wire cep_queue1_go = cep_queue1_val & cep_queue1_rdy;
+wire cep_queue2_go = cep_queue2_val & cep_queue2_rdy;
+wire cep_queue3_go = cep_queue3_val & cep_queue3_rdy;
+
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        cep_queue1_val <= 1'b0;
+        cep_queue1_data <= `CEP_DATA_WIDTH'b0;
+        cep_queue1_chipid <= `NOC_CHIPID_WIDTH'b0;
+    end
+    else begin
+        if (pkg1_go) begin
+            cep_queue1_val <= 1'b1;
+            cep_queue1_data <= pkg1_data[`CEP_DATA_WIDTH-1:0];
+            cep_queue1_chipid <= {1'b0, pkg1_data[`MSG_DST_ONCHIPID]};
+        end
+        else if (cep_queue1_go) begin
+            cep_queue1_val <= 1'b0;
+        end
+    end
+end
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        cep_queue2_val <= 1'b0;
+        cep_queue2_data <= `CEP_DATA_WIDTH'b0;
+        cep_queue2_chipid <= `NOC_CHIPID_WIDTH'b0;
+    end
+    else begin
+        if (pkg2_go) begin
+            cep_queue2_val <= 1'b1;
+            cep_queue2_data <= pkg2_data[`CEP_DATA_WIDTH-1:0];
+            cep_queue2_chipid <= {1'b0, pkg2_data[`MSG_DST_ONCHIPID]};
+        end
+        else if (cep_queue2_go) begin
+            cep_queue2_val <= 1'b0;
+        end
+    end
+end
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        cep_queue3_val <= 1'b0;
+        cep_queue3_data <= `CEP_DATA_WIDTH'b0;
+        cep_queue3_chipid <= `NOC_CHIPID_WIDTH'b0;
+    end
+    else begin
+        if (pkg3_go) begin
+            cep_queue3_val <= 1'b1;
+            cep_queue3_data <= pkg3_data[`CEP_DATA_WIDTH-1:0];
+            cep_queue3_chipid <= {1'b0, pkg3_data[`MSG_DST_ONCHIPID]};
+        end
+        else if (cep_queue3_go) begin
+            cep_queue3_val <= 1'b0;
+        end
+    end
+end
+
+assign pkg1_rdy = ~cep_queue1_val | cep_queue1_rdy;
+assign pkg2_rdy = ~cep_queue2_val | cep_queue2_rdy;
+assign pkg3_rdy = ~cep_queue3_val | cep_queue3_rdy;
+
+endmodule

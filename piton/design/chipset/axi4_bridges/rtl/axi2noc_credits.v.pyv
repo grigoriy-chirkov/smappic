@@ -34,8 +34,8 @@ from pyhplib import *
 %>
 
 module axi2noc_credits (
-    input axi_clk,    // Clock
-    input axi_rst_n,  // Asynchronous reset active low
+    input axi_clk,
+    input axi_rst_n,
     input piton_clk, 
     input piton_rst_n,
 
@@ -253,18 +253,18 @@ wire [`AXI4_DATA_WIDTH-1:0] rdata = { {(`AXI4_DATA_WIDTH-4*`NOC_DATA_WIDTH){1'b0
 assign s_axi_arready = s_axi_rready | ~s_axi_rvalid;
 always @(posedge axi_clk) begin
     if (~axi_rst_n) begin
-        s_axi_rvalid <= 0;
-        s_axi_rid <= 0;
+        s_axi_rvalid <= 1'b0;
+        s_axi_rid <= `AXI4_ID_WIDTH'b0;
         s_axi_rdata <= `AXI4_DATA_WIDTH'h0;
     end
     else begin
         if (axi_ar_go) begin
-            s_axi_rvalid <= 1;
+            s_axi_rvalid <= 1'b1;
             s_axi_rid <= s_axi_arid;
             s_axi_rdata <= rdata;
         end
         else if (axi_r_go) begin
-            s_axi_rvalid <= 0;
+            s_axi_rvalid <= 1'b0;
         end
     end
 end

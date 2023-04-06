@@ -151,10 +151,10 @@ reg        byte_sync, sync, irq_en, tx_busy;
 always @(posedge msoc_clk)
   if (rst_int)
     begin
-    core_lsu_addr_dly <= 0;
+    core_lsu_addr_dly <= 15'b0;
     mac_address <= 48'H230100890702;
-    tx_packet_length <= 0;
-    tx_enable_dly <= 0;
+    tx_packet_length <= 11'b0;
+    tx_enable_dly <= 4'b0;
     cooked <= 1'b0;
     loopback <= 1'b0;
     spare <= 4'b0;
@@ -182,8 +182,8 @@ always @(posedge msoc_clk)
       case(core_lsu_addr[6:3])
         0: mac_address[31:0] <= core_lsu_wdata;
         1: {irq_en,promiscuous,spare,loopback,cooked,mac_address[47:32]} <= core_lsu_wdata;
-        2: begin tx_enable_dly <= 10; tx_packet_length <= core_lsu_wdata; end /* tx payload size */
-        3: begin tx_enable_dly <= 0; tx_packet_length <= 0; end
+        2: begin tx_enable_dly <= 4'd10; tx_packet_length <= core_lsu_wdata; end /* tx payload size */
+        3: begin tx_enable_dly <= 4'b0; tx_packet_length <= 11'b0; end
         4: begin {phy_mdio_oe,phy_mdio_o,phy_mdclk} <= core_lsu_wdata; end
         5: begin lastbuf <= core_lsu_wdata[3:0]; end
         6: begin firstbuf <= core_lsu_wdata[3:0]; end
@@ -201,7 +201,7 @@ always @(posedge msoc_clk)
          end
        if (mac_gmii_tx_en && tx_enable_i)
          begin
-            tx_enable_dly <= 0;
+            tx_enable_dly <= 4'b0;
          end
        else if (1'b1 == |tx_enable_dly)
          begin

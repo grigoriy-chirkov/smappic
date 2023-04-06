@@ -136,8 +136,8 @@ print(str)
 print(f'''\
 always @(posedge piton_clk) begin
     if (~piton_rst_n) begin
-        flits_left <= 0;
-        noc_chosen_src <= 0;
+        flits_left <= `MSG_LENGTH_WIDTH'b0;
+        noc_chosen_src <= `NOC_CHIPID_WIDTH'b0;
     end
     else begin
         if (read_shaper & shaper_out_valid[noc_chosen_src]) begin
@@ -157,7 +157,7 @@ end
 // fields
 always @(posedge piton_clk) begin
     if (~piton_rst_n) begin
-        noc_val <= 0;
+        noc_val <= 1'b0;
         noc_data <= `NOC_DATA_WIDTH'b0;
     end
     else begin

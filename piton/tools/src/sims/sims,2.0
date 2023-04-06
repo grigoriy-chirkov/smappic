@@ -175,6 +175,7 @@ Getopt::Long::Configure ('no_auto_abbrev') ;
         'ost1' => 0,
         'ariane' => 0,
         'multichip' => 0,
+        'multichip_het' => 0,
         'piton_rvic' => 0,
         'numchips' => 1,
         'pico' => 0,
@@ -338,6 +339,7 @@ GetOptions (\%opt,
             'ost1!',
             'ariane!',
             'multichip!',
+            'multichip_het!',
             'piton_rvic!',
             'numchips=s',
             'pico!',
@@ -2859,8 +2861,12 @@ sub parse_args
   }
 
   $ENV{PITON_MULTICHIP}   = $opt{multichip};
+  $ENV{PITON_MULTICHIP_HET}   = $opt{multichip_het};
   if ($opt{multichip}) {
     push (@{$opt{config_rtl}}, "PITON_MULTICHIP");
+  }
+  if ($opt{multichip_het}) {
+    push (@{$opt{config_rtl}}, "PITON_MULTICHIP_HET");
   }
   $ENV{PITON_NUM_CHIPS}    = $opt{numchips};
   $ENV{PITON_NUM_CHIPS_SM} = $opt{numchips};

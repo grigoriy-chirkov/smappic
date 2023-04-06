@@ -108,11 +108,11 @@ end
 
 always @(posedge clk) begin
     if(~rst_n) begin
-        bvalid <= 0;
+        bvalid <= 1'b0;
     end 
     else begin
-        if (wvalid && wready) bvalid <= 1;
-        else if (bready) bvalid <= 0;
+        if (wvalid && wready) bvalid <= 1'b1;
+        else if (bready) bvalid <= 1'b0;
         else bvalid <= bvalid;
     end
 end
@@ -143,11 +143,11 @@ assign arready = ~rvalid | rready;
 
 always @(posedge clk) begin
     if(~rst_n) begin
-        rvalid <= 0;
+        rvalid <= 1'b0;
     end 
     else begin
-        if (arvalid && arready) rvalid <= 1;
-        else if (rready) rvalid <= 0;
+        if (arvalid && arready) rvalid <= 1'b1;
+        else if (rready) rvalid <= 1'b0;
         else rvalid <= rvalid;
     end
 end

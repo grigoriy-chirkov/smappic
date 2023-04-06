@@ -48,7 +48,7 @@ module spill_register #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_a_full
       if (!rst_ni)
-        a_full_q <= 0;
+        a_full_q <= 1'b0;
       else if (a_fill || a_drain)
         a_full_q <= a_fill;
     end
@@ -67,7 +67,7 @@ module spill_register #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_b_full
       if (!rst_ni)
-        b_full_q <= 0;
+        b_full_q <= 1'b0;
       else if (b_fill || b_drain)
         b_full_q <= b_fill;
     end

@@ -174,8 +174,6 @@ print("`define PITON_Y_TILES %d"   % PITON_Y_TILES)
 `define MSG_TYPE_LOAD_REQ           8'd31
 `define MSG_TYPE_PREFETCH_REQ       8'd1
 `define MSG_TYPE_STORE_REQ          8'd2
-`define MSG_TYPE_BLK_STORE_REQ      8'd3
-`define MSG_TYPE_BLKINIT_STORE_REQ  8'd4
 `define MSG_TYPE_CAS_REQ            8'd5
 `define MSG_TYPE_CAS_P1_REQ         8'd6
 //condition satisfied

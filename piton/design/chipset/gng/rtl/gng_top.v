@@ -90,7 +90,7 @@ noc_axilite_bridge  #(
 
 always @(posedge clk) begin
     if(~rst_n) begin
-        wr_pend <= 0;
+        wr_pend <= 1'b0;
     end 
     else begin
         if (bready)
@@ -120,7 +120,7 @@ reg [3:0] gng_val_r;
 always @(posedge clk) begin
     if(~rst_n) begin
         gng_dat_r <= 64'b0;
-        gng_val_r <= 0;
+        gng_val_r <= 4'b0;
         gng_cnt <= 4'b1000;
     end 
     else begin
@@ -129,7 +129,7 @@ always @(posedge clk) begin
             gng_dat_r <= ((gng_dat_r << 16) | gng_dat);
         end
         else if (rvalid & rready) begin
-            gng_val_r <= 0;
+            gng_val_r <= 4'b0;
             gng_cnt <= 4'b1000;
         end
         else begin

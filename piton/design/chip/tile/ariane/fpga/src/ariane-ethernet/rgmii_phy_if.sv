@@ -117,7 +117,7 @@ always @(posedge clk) begin
         rgmii_tx_clk_2 <= 1'b0;
         rgmii_tx_clk_rise <= 1'b1;
         rgmii_tx_clk_fall <= 1'b1;
-        count_reg <= 0;
+        count_reg <= 6'b0;
     end else begin
         rgmii_tx_clk_1 <= rgmii_tx_clk_2;
 
@@ -134,7 +134,7 @@ always @(posedge clk) begin
                 rgmii_tx_clk_1 <= 1'b0;
                 rgmii_tx_clk_2 <= 1'b0;
                 rgmii_tx_clk_fall <= 1'b1;
-                count_reg <= 0;
+                count_reg <= 6'b0;
             end
         end else if (speed == 2'b01) begin
             // 100M
@@ -148,7 +148,7 @@ always @(posedge clk) begin
             end else if (count_reg >= 4) begin
                 rgmii_tx_clk_2 <= 1'b0;
                 rgmii_tx_clk_fall <= 1'b1;
-                count_reg <= 0;
+                count_reg <= 6'b0;
             end
         end else begin
             // 1000M

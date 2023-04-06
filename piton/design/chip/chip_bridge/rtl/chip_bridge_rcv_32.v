@@ -179,7 +179,7 @@ always @(posedge wr_clk) begin
     if(rst) begin
 `endif
         channel_buffer <= 32'd0;
-        channel_buffer_count <= 0;
+        channel_buffer_count <= 1'b0;
     end
     else begin
         if(data_channel != 0) begin //do not store data if no channel is assigned

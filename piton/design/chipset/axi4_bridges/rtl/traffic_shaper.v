@@ -55,7 +55,7 @@ localparam CLOCK_WIDTH = 32;
 reg [CLOCK_WIDTH-1:0] clock;
 always @(posedge clk_out) begin
     if (~rst_n_out) begin
-        clock <= 0;
+        clock <= {CLOCK_WIDTH{1'b0}};
     end
     else begin
         clock <= clock + 1;
@@ -67,7 +67,7 @@ reg [31:0] pkg_counter;
 wire [31:0] pkg_counter_plus_request = pkg_counter + out_go;
 always @(posedge clk_out) begin
     if (~rst_n_out) begin
-        pkg_counter <= 0;
+        pkg_counter <= 32'b0;
     end
     else begin
         if (clock[6:0] == 0) begin

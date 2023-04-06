@@ -125,7 +125,7 @@ always #500 core_ref_clk = ~core_ref_clk;                       // 1000MHz
 `endif
 `endif
 
-always #500 axi_clk = ~axi_clk;                      // 1000MHz
+always #250 axi_clk = ~axi_clk;                      // 2000MHz
 
 `ifndef SYNC_MUX
 always #1429 io_clk = ~io_clk;                                  // 350MHz
@@ -325,7 +325,7 @@ wire _SYS___NOC__in_rdy;
         print(s)
 %>
 
-noc_repeater #(
+noc_repeater_het #(
     .SRC(0), 
     .DST(1)
 ) noc_repeater01(
@@ -356,7 +356,7 @@ noc_repeater #(
     .noc3_in_rdy   (sys0_noc3_out_rdy)
 );
 
-noc_repeater #(
+noc_repeater_het #(
     .SRC(1), 
     .DST(0)
 ) noc_repeater10(

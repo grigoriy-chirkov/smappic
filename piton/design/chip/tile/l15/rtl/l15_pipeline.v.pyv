@@ -93,7 +93,6 @@ module l15_pipeline(
     input wire [`L15_CSM_NUM_TICKETS_LOG2-1:0] noc2decoder_l15_csm_mshrid,
     // ack from output
     input wire cpxencoder_l15_req_ack,
-    // input wire noc1encoder_l15_req_ack,
     input wire noc1encoder_l15_req_sent,
     input wire [`NOC1_BUFFER_ACK_DATA_WIDTH-1:0] noc1encoder_l15_req_data_sent,
     input wire noc3encoder_l15_req_ack,
@@ -231,8 +230,6 @@ module l15_pipeline(
     output reg [`TLB_CSM_WIDTH-1:0] l15_noc1buffer_req_csm_data,
     output reg [`L15_UNPARAM_63_0] l15_noc1buffer_req_data_0,
     output reg [`L15_UNPARAM_63_0] l15_noc1buffer_req_data_1,
-    // output reg l15_noc1buffer_req_blkstore,
-    // output reg l15_noc1buffer_req_blkinitstore,
     // noc3
     output reg l15_noc3encoder_req_val,
     output reg [`L15_NOC3_REQTYPE_WIDTH-1:0] l15_noc3encoder_req_type,
@@ -257,7 +254,6 @@ module l15_pipeline(
     output reg l15_csm_req_val_s2,
     output reg l15_csm_stall_s3,
     output reg [`L15_CSM_NUM_TICKETS_LOG2-1:0] l15_csm_req_ticket_s2,
-    // output reg [`HOME_ID_WIDTH-1:0] l15_csm_clump_tile_count_s2,
     output reg  l15_csm_req_type_s2,     //0 for load, 1 for store
     output reg [`L15_UNPARAM_127_0] l15_csm_req_data_s2, // remember to duplicate this in l15
     output reg [`TLB_CSM_WIDTH-1:0] l15_csm_req_pcx_data_s2, // remember to duplicate this in l15
@@ -328,7 +324,6 @@ end
 // depends on nothing
 reg [`L15_CACHE_TAG_WIDTH-1:0] predecode_dtag_write_data_s1;
 reg [`L15_CACHE_INDEX_MASK] predecode_cache_index_s1;
-// reg [`L15_PADDR_MASK] predecode_mshr_address_s1;
 reg [`L15_CONTROL_WIDTH-1:0] predecode_mshr_read_control_s1;
 reg [`PACKET_HOME_ID_WIDTH-1:0] predecode_mshr_read_homeid_s1;
 reg [`L15_REQTYPE_WIDTH-1:0] predecode_reqtype_s1;
@@ -342,11 +337,9 @@ reg [`L15_THREADID_MASK] predecode_threadid_s1;
 reg [`L15_WAY_MASK] predecode_l1_replacement_way_s1;
 reg predecode_non_cacheable_s1;
 reg predecode_is_last_inval_s1;
-// reg predecode_icache_do_inval_s1;
 reg predecode_blockstore_bit_s1;
 reg predecode_blockstore_init_s1;
 reg predecode_prefetch_bit_s1;
-// reg predecode_invalidate_index_s1;
 reg predecode_l2_miss_s1;
 reg predecode_f4b_s1;
 reg predecode_dcache_load_s1;
@@ -399,7 +392,6 @@ begin
     pipe_mshr_readreq_threadid_s1 = noc2decoder_l15_threadid;
 
     predecode_mshr_read_control_s1 = mshr_pipe_readres_control_s1;
-    // predecode_mshr_read_address_s1 = mshr_pipe_address_s1;
     predecode_mshr_read_homeid_s1 = mshr_pipe_readres_homeid_s1;
 
     // mshr_val_array
@@ -455,7 +447,6 @@ begin
     predecode_address_plus2_s1 = 0;
     predecode_address_plus3_s1 = 0;
     predecode_is_last_inval_s1 = 0;
-    // predecode_icache_do_inval_s1 = 0;
     predecode_size_s1 = 0;
     predecode_threadid_s1 = 0;
     predecode_l1_replacement_way_s1 = 0;
@@ -463,7 +454,6 @@ begin
     predecode_blockstore_bit_s1 = 0;
     predecode_blockstore_init_s1 = 0;
     predecode_prefetch_bit_s1 = 0;
-    // predecode_invalidate_index_s1 = 0;
     predecode_l2_miss_s1 = 0;
     predecode_f4b_s1 = 0;
     predecode_icache_bit_s1 = 0;
@@ -477,9 +467,7 @@ begin
     case (predecode_source_s1)
         `L15_PREDECODE_SOURCE_NOC2:
         begin
-            // predecode_address_s1 = predecode_mshr_address_s1;
             predecode_size_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_SIZE_3B -: 3];
-            // predecode_threadid_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_THREADID -: `L15_THREADID_WIDTH];
             predecode_threadid_s1[`L15_THREADID_MASK] = noc2decoder_l15_threadid[`L15_THREADID_MASK];
             predecode_l1_replacement_way_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_L1_REPLACEMENT_WAY_2B -: 2];
             predecode_non_cacheable_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_NC_1B -: 1];
@@ -487,7 +475,6 @@ begin
             predecode_blockstore_bit_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_BLOCKSTORE_1B -: 1];
             predecode_blockstore_init_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_BLOCKSTOREINIT_1B -: 1];
             predecode_prefetch_bit_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_PREFETCH_1B -: 1];
-            // predecode_invalidate_index_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_INVALIDATE_INDEX_1B -: 1];
             predecode_l2_miss_s1 = noc2decoder_l15_l2miss;
             predecode_f4b_s1 = noc2decoder_l15_f4b;
             predecode_atomic_s1 = predecode_mshr_read_control_s1[`L15_CONTROL_ATOMIC];
@@ -506,16 +493,11 @@ begin
             if (noc2decoder_l15_icache_type)
                 predecode_is_last_inval_s1 = ((fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2) && (predecode_fwd_subcacheline_vector_s1[3:2] == 2'b11)) ||
                                              ((fetch_state_s1 == `L15_FETCH_STATE_NORMAL) && (predecode_fwd_subcacheline_vector_s1[`L15_UNPARAM_3_0] == 4'b0011));
-                // predecode_is_last_inval_s1 = ((fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2));
             else
                 predecode_is_last_inval_s1 = ((fetch_state_s1 == `L15_FETCH_STATE_INVAL_4) && (predecode_fwd_subcacheline_vector_s1[3])) ||
                                              ((fetch_state_s1 == `L15_FETCH_STATE_INVAL_3) && (predecode_fwd_subcacheline_vector_s1[3:2] == 2'b01)) ||
                                              ((fetch_state_s1 == `L15_FETCH_STATE_INVAL_2) && (predecode_fwd_subcacheline_vector_s1[3:1] == 3'b001)) ||
                                              ((fetch_state_s1 == `L15_FETCH_STATE_NORMAL) && (predecode_fwd_subcacheline_vector_s1[`L15_UNPARAM_3_0] == 4'b0001));
-
-            // predecode_icache_do_inval_s1 = ((fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2) && predecode_fwd_subcacheline_vector_s1[3:2] == 2'b11) ||
-            //                                 ((fetch_state_s1 == `L15_FETCH_STATE_NORMAL) && predecode_fwd_subcacheline_vector_s1[`L15_UNPARAM_1_0] == 2'b11);
-            // predecode_icache_do_inval_s1 = 1'b1;
 
             case(noc2decoder_l15_reqtype)
                 `MSG_TYPE_STORE_FWD:
@@ -523,10 +505,7 @@ begin
                     predecode_icache_bit_s1 = noc2decoder_l15_icache_type;
                     if (predecode_icache_bit_s1)
                     begin
-                        // if (predecode_icache_do_inval_s1)
-                            predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
-                        // else
-                        //     predecode_reqtype_s1 = `L15_REQTYPE_IGNORE;
+                        predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
                         predecode_address_s1 = (fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2) ? predecode_address_plus2_s1 :
                                                                                                 predecode_address_plus0_s1;
                     end
@@ -544,10 +523,7 @@ begin
                     predecode_icache_bit_s1 = noc2decoder_l15_icache_type;
                     if (predecode_icache_bit_s1)
                     begin
-                        // if (predecode_icache_do_inval_s1)
-                            predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
-                        // else
-                        //     predecode_reqtype_s1 = `L15_REQTYPE_IGNORE;
+                        predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
                         predecode_address_s1 = (fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2) ? predecode_address_plus2_s1 :
                                                                                                 predecode_address_plus0_s1;
                     end
@@ -566,10 +542,7 @@ begin
                     predecode_icache_bit_s1 = noc2decoder_l15_icache_type;
                     if (predecode_icache_bit_s1)
                     begin
-                        // if (predecode_icache_do_inval_s1)
-                            predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
-                        // else
-                        //     predecode_reqtype_s1 = `L15_REQTYPE_IGNORE;
+                        predecode_reqtype_s1 = `L15_REQTYPE_ICACHE_INVALIDATION;
                         predecode_address_s1 = (fetch_state_s1 == `L15_FETCH_STATE_ICACHE_INVAL_2) ? predecode_address_plus2_s1 :
                                                                                                 predecode_address_plus0_s1;
                     end
@@ -708,18 +681,7 @@ begin
                     end
                     else
                         predecode_reqtype_s1 = `L15_REQTYPE_STORE;
-                //`PCX_REQTYPE_CAS1:
-                //begin
-                //    predecode_reqtype_s1 = `L15_REQTYPE_CAS;
-                //    predecode_atomic_s1 = 1;
-                //end
-                //`PCX_REQTYPE_CAS2:
-                //    predecode_reqtype_s1 = `L15_REQTYPE_IGNORE;
-                //`PCX_REQTYPE_SWP_LOADSTUB:
-                //begin
-                //    predecode_reqtype_s1 = `L15_REQTYPE_SWP_LOADSTUB;
-                //    predecode_atomic_s1 = 1;
-                //end
+
                 `PCX_REQTYPE_AMO:
                 begin
                     case (pcxdecoder_l15_amo_op)
@@ -1123,8 +1085,6 @@ begin
     decoder_noc2_ack_stage_s1 = 1'b0;
     decoder_stall_on_mshr_allocation_s1 = 1'b0;
     decoder_stall_on_matched_bypassed_index_s1 = 1'b0;
-    // decoder_stall_on_ld_mshr_s1 = 1'b0;
-    // decoder_stall_on_st_mshr_s1 = 1'b0;
     decoder_s1_mshr_operation_s1 = 1'b0;
     decoder_dtag_operation_s1 = 1'b0;
     decoder_s2_mshr_operation_s1 = 1'b0;
@@ -1172,7 +1132,6 @@ begin
                 decoder_wmt_compare_op_s1 = `L15_WMT_COMPARE_TAGCHECK;
 
                 decoder_dcache_operation_s1 = `L15_DCACHE_READ_TAGCHECK_WAY_IF_M;
-                // decoder_hmt_op_s1 = `L15_HMT_READ_TAGCHECK_WAY_IF_M;
                 decoder_lruarray_write_op_s1 = `L15_LRU_INVALIDATE_IF_TAGCHECK_WAY_IS_MES;
 
                 decoder_cpx_operation_s1 = `L15_CPX_GEN_INVALIDATION_IF_TAGCHECK_MES_AND_WAYMAP_VALID;
@@ -1193,33 +1152,8 @@ begin
 
         `L15_REQTYPE_LOAD_PREFETCH:
         begin
-            // if (tagcheck_tag_match_s1)
-            // begin // prefetch ld hits mshr
-            //    decoder_pcx_ack_stage_s1 = `L15_ACK_STAGE_S1;
-            //    decoder_stall_on_matched_bypassed_index_s1 = 1;
-            //    decoder_cpx_operation_s1 = `L15_CPX_GEN_LD_RESPONSE_BOGUS_DATA;
-            // end
-            // else
-            // begin // prefetch ld
-            //    decoder_pcx_ack_stage_s1 = `L15_ACK_STAGE_S1;
-            //    decoder_stall_on_matched_bypassed_index_s1 = 1;
-            //    decoder_stall_on_ld_mshr_s1 = 1;
-            //    decoder_stall_on_st_mshr_s1 = 1;
-            //    decoder_stall_on_mshr_allocation_s1 = `L15_MSHR_ALLOCATE_TYPE_LD;
-            //    decoder_s1_mshr_operation_s1 = `L15_S1_MSHR_OP_ALLOCATE_LD;
-            //    decoder_dtag_operation_s1 = `L15_DTAG_OP_READ;
-            //    decoder_mesi_read_op_s1 = `L15_S2_MESI_READ;
-            //    decoder_csm_op_s1 = `L15_CSM_OP_READ_GHID;
-            //    decoder_s3_mshr_operation_s1 = `L15_S3_MSHR_OP_DEALLOCATION_IF_TAGCHECK_MES;
-            //    decoder_cpx_operation_s1 = `L15_CPX_GEN_LD_RESPONSE_BOGUS_DATA_IF_TAGCHECK_MES;
-            //    decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_LD_REQUEST_IF_TAGCHECK_MISS;
-            //    decoder_creditman_noc1_needed = 2'd1;
-            // end
             decoder_pcx_ack_stage_s1 = `L15_ACK_STAGE_S1;
-            // decoder_csm_op_s1 = `L15_CSM_OP_READ_GHID;
             decoder_cpx_operation_s1 = `L15_CPX_GEN_LD_RESPONSE_BOGUS_DATA;
-            // decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_LD_REQUEST;
-            // decoder_creditman_noc1_needed = 2'd1;
         end
 
         `L15_REQTYPE_LOAD:
@@ -1291,7 +1225,6 @@ begin
 
                     decoder_mesi_write_op_s1 = `L15_S3_MESI_INVALIDATE_TAGCHECK_WAY_IF_MES;
                     decoder_lrsc_flag_write_op_s1 = `L15_S2_LRSC_FLAG_CLEAR_TAGCHECK_WAY;
-                    // decoder_wmt_operation_s1 = `L15_WMT_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY;
                     decoder_wmt_read_op_s1 = `L15_WMT_READ;
                     decoder_wmt_write_op_s1 = `L15_WMT_DEMAP_TAGCHECK_WAY_IF_MES;
                     decoder_wmt_compare_op_s1 = `L15_WMT_COMPARE_TAGCHECK;
@@ -1299,7 +1232,6 @@ begin
 
                     decoder_cpx_operation_s1 = `L15_CPX_GEN_INVALIDATION_IF_TAGCHECK_MES_AND_WAYMAP_VALID;
                     decoder_noc1_operation_s1 = `L15_NOC1_GEN_WRITEBACK_GUARD_IF_TAGCHECK_M;
-                    // decoder_creditman_noc1_needed = 2'd1;
                     decoder_creditman_noc1_needed = 2'd2; // this one is for the subsequent write too
                     decoder_noc3_operation_s1 = `L15_NOC3_GEN_WRITEBACK_IF_TAGCHECK_M_FROM_DCACHE;
                     // moved for atomicity
@@ -1316,8 +1248,6 @@ begin
 `ifndef PITON_ASIC_RTL
                     decoder_s3_mshr_operation_s1 = `L15_S3_MSHR_OP_UPDATE_ST_MSHR_WAIT_ACK;
 `endif                    
-                    // decoder_creditman_req_8B_s1 = 1'b1;
-                    // decoder_creditman_noc1_needed = 2'd1;
                 end
             end
         end
@@ -1425,13 +1355,9 @@ begin
                 decoder_wmt_compare_op_s1 = `L15_WMT_COMPARE_TAGCHECK;
 
                 decoder_lruarray_write_op_s1 = `L15_LRU_UPDATE_ACCESS_BITS_IF_TAGCHECK_WAY_LRSC_SET;
-                //decoder_csm_op_s1 = `L15_CSM_OP_READ_GHID_IF_TAGCHECK_SI;
                 decoder_s3_mshr_operation_s1 = `L15_S3_MSHR_OP_DEALLOCATION;  // deallocate anyway
-                //decoder_mesi_write_op_s1 = `L15_S3_MESI_WRITE_TAGCHECK_WAY_M_IF_LRSC_SET;
                 decoder_lrsc_flag_write_op_s1 = `L15_S2_LRSC_FLAG_CLEAR_TAGCHECK_WAY;
                 decoder_cpx_operation_s1 = `L15_CPX_GEN_SC_ACK;
-                //decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_ST_UPGRADE_IF_TAGCHECK_S_ELSE_ST_FILL_IF_TAGCHECK_I;
-                //decoder_creditman_noc1_needed = 2'd1;
             end
         end
 
@@ -1461,7 +1387,6 @@ begin
 
                 decoder_mesi_write_op_s1 = `L15_S3_MESI_INVALIDATE_TAGCHECK_WAY_IF_MES;
                 decoder_lrsc_flag_write_op_s1 = `L15_S2_LRSC_FLAG_CLEAR_TAGCHECK_WAY;
-                // decoder_wmt_operation_s1 = `L15_WMT_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY;
                 decoder_wmt_read_op_s1 = `L15_WMT_READ;
                 decoder_wmt_write_op_s1 = `L15_WMT_DEMAP_TAGCHECK_WAY_IF_MES;
                 decoder_wmt_compare_op_s1 = `L15_WMT_COMPARE_TAGCHECK;
@@ -1492,21 +1417,9 @@ begin
                 decoder_mshr_allocation_type_s1 = `L15_MSHR_ID_LD;
 
                 decoder_csm_op_s1 = `L15_CSM_OP_READ_GHID;
-                //if (predecode_reqtype_s1 == `L15_REQTYPE_CAS)
-                //begin
-                //    decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_CAS_REQUEST_FROM_PCX;
-                //    // decoder_creditman_req_16B_s1 = 1'b1;
-                //end
-                //else
-                //begin
-                //    decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_SWAP_REQUEST_FROM_PCX;
-                //    // decoder_creditman_req_8B_s1 = 1'b1;
-                //end
                 case (predecode_reqtype_s1)
                     `L15_REQTYPE_AMO_LR:
-                    begin
                         decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_LR_REQUEST;
-                    end
                     `L15_REQTYPE_CAS:
                         decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_CAS_REQUEST_FROM_PCX;
                     `L15_REQTYPE_SWP_LOADSTUB:
@@ -1528,13 +1441,11 @@ begin
                     `L15_REQTYPE_AMO_MINU:
                         decoder_noc1_operation_s1 = `L15_NOC1_GEN_DATA_MINU_REQUEST_FROM_PCX;
                 endcase
-                // decoder_creditman_noc1_needed = 2'd1;
             end
         end
 
         `L15_REQTYPE_ICACHE_INVALIDATION:
         begin
-            // decoder_pcx_ack_stage_s1 = `L15_ACK_STAGE_S1;
             decoder_cpx_operation_s1 = `L15_CPX_GEN_ICACHE_INVALIDATION;
             if (predecode_is_last_inval_s1)
             begin
@@ -2387,7 +2298,6 @@ begin
         l1_replacement_way_s2_next = predecode_l1_replacement_way_s1;
         l2_miss_s2_next = predecode_l2_miss_s1;
         f4b_s2_next = predecode_f4b_s1;
-        // atomic_s2_next = predecode_atomic_s1;
         wmt_write_op_s2_next = decoder_wmt_write_op_s1;
         wmt_compare_op_s2_next = decoder_wmt_compare_op_s1;
         lruarray_write_op_s2_next = decoder_lruarray_write_op_s1;
@@ -2464,7 +2374,6 @@ reg tagcheck_state_s_s2;
 reg tagcheck_state_m_s2;
 reg tagcheck_state_e_s2;
 reg [`L15_UNPARAM_1_0] tagcheck_way_s2;
-// reg [`L15_UNPARAM_3_0] tagcheck_way_mask_s2;
 reg tagcheck_val_s2;
 reg tagcheck_lrsc_flag_s2;
 
@@ -2479,7 +2388,6 @@ reg flush_state_m_s2;
 reg flush_state_me_s2;
 reg flush_state_mes_s2;
 reg [`L15_UNPARAM_1_0] flush_way_s2;
-// reg [`L15_UNPARAM_3_0] flush_way_mask_s2;
 reg [`L15_CACHE_TAG_WIDTH-1:0] flush_way_tag_s2;
 reg [`L15_PADDR_MASK] flush_way_address_s2;
 always @ *
@@ -4164,7 +4072,6 @@ begin
             noc1_type_s3 = `L15_NOC1_REQTYPE_LD_REQUEST;
             l15_noc1buffer_req_address = address_s3;
             noc1_homeid_source_s3 = `L15_HOMEID_SRC_CSM_MODULE;
-            // creditman_noc1_reserve_s3 = val_s3; // These are actually non-cacheable/prefetch loads
         end
         `L15_NOC1_GEN_DATA_LD_REQUEST_IF_TAGCHECK_MISS:
         begin
@@ -4205,7 +4112,6 @@ begin
         begin
             noc1_req_val_s3 = val_s3;
             noc1_type_s3 = `L15_NOC1_REQTYPE_LR_REQUEST;
-            //noc1_data_source_s3 = `L15_NOC1_SOURCE_PCX_128B;
             l15_noc1buffer_req_address = address_s3;
             noc1_homeid_source_s3 = `L15_HOMEID_SRC_CSM_MODULE;
             creditman_noc1_reserve_s3 = val_s3;
@@ -4306,8 +4212,6 @@ begin
     l15_noc1buffer_req_non_cacheable = non_cacheable_s3;
     l15_noc1buffer_req_size = size_s3;
     l15_noc1buffer_req_prefetch = prefetch_s3;
-    // l15_noc1buffer_req_blkstore = 0; // not using block stores
-    // l15_noc1buffer_req_blkinitstore = 0; // not using block stores
 
     l15_noc1buffer_req_data_0[`L15_UNPARAM_63_0] = 0;
     l15_noc1buffer_req_data_1[`L15_UNPARAM_63_0] = 0;
@@ -4315,7 +4219,6 @@ begin
         `L15_NOC1_SOURCE_PCX_64B:
         begin
             l15_noc1buffer_req_data_0[`L15_UNPARAM_63_0] = pcxdecoder_l15_data[`L15_UNPARAM_63_0];
-            // l15_noc1buffer_req_data_1[`L15_UNPARAM_63_0] = 64'b0;
         end
         `L15_NOC1_SOURCE_PCX_128B:
         begin
@@ -4448,9 +4351,6 @@ begin
     l15_noc3encoder_req_fwdack_vector = predecode_fwd_subcacheline_vector_s3;
 
     l15_noc3encoder_req_homeid = 0;
-    // `ifdef NO_RTL_CSM
-    //     noc1_homeid_source_s3 = `L15_HOMEID_SRC_CSM_MODULE;
-    // `endif
     case (noc3_homeid_source_s3)
         `L15_HOMEID_SRC_NOC2_SOURCE:
             l15_noc3encoder_req_homeid = noc2_src_homeid_s3[`PACKET_HOME_ID_WIDTH-1:0];

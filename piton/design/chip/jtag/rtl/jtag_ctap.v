@@ -117,12 +117,12 @@ always @ (posedge clk)
 begin
     if (!rst_n)
     begin
-        jtag_req <= 0;
-        data_reg <= 0;
-        jtag_address <= 0;
-        interrupt_bit <= 0;
-        jtag_req_val <= 0;
-        capture_oram_response <= 0;
+        jtag_req <= `JTAG_REQ_WIDTH'b0;
+        data_reg <= `JTAG_DATA_RES_WIDTH'b0;
+        jtag_address <= `JTAG_ADDRESS_REG_WIDTH'b0;
+        interrupt_bit <= 1'b0;
+        jtag_req_val <= 1'b0;
+        capture_oram_response <= 1'b0;
         ctap_clk_en_reg <= ~(128'b0);
         ctap_oram_clk_en_reg <= 1'b0; // oram is off by default
     end

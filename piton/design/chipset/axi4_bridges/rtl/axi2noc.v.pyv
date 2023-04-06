@@ -99,20 +99,20 @@ reg [2:0] wr_noc_vals;
 reg [`AXI4_ID_WIDTH-1:0] axi_awid;
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        wr_chipid <= 0;
-        wr_noc_vals <= 0;
-        aw_recvd <= 0;
-        axi_awid <= 0;
+        wr_chipid <= `NOC_CHIPID_WIDTH'b0;
+        wr_noc_vals <= 3'b0;
+        aw_recvd <= 1'b0;
+        axi_awid <= `AXI4_ID_WIDTH'b0;
     end 
     else begin
         if (axi_awgo) begin
             wr_chipid <= {{`NOC_CHIPID_WIDTH-5 {1'b0}}, s_axi_awaddr[13:9]};
             wr_noc_vals <= s_axi_awaddr[8:6];
-            aw_recvd <= 1;
+            aw_recvd <= 1'b1;
             axi_awid <= s_axi_awid;
         end
         else if (dispatch) begin
-            aw_recvd <= 0;
+            aw_recvd <= 1'b0;
         end
     end
 end
@@ -123,20 +123,20 @@ reg [`NOC_DATA_WIDTH-1:0] noc2_indata;
 reg [`NOC_DATA_WIDTH-1:0] noc3_indata;
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        w_recvd <= 0;
+        w_recvd <= 1'b0;
         noc1_indata <= `NOC_DATA_WIDTH'b0;
         noc2_indata <= `NOC_DATA_WIDTH'b0;
         noc3_indata <= `NOC_DATA_WIDTH'b0;
     end 
     else begin
         if (axi_wgo) begin
-            w_recvd <= 1;
+            w_recvd <= 1'b1;
             noc1_indata <= s_axi_wdata[2*`NOC_DATA_WIDTH-1:1*`NOC_DATA_WIDTH];
             noc2_indata <= s_axi_wdata[3*`NOC_DATA_WIDTH-1:2*`NOC_DATA_WIDTH];
             noc3_indata <= s_axi_wdata[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH];
         end
         else if (dispatch) begin
-            w_recvd <= 0;
+            w_recvd <= 1'b0;
         end
     end
 end
@@ -150,16 +150,16 @@ reg wr_resp_pending;
 reg [`AXI4_ID_WIDTH-1:0] axi_bid;
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        wr_resp_pending <= 0;
-        axi_bid <= 0;
+        wr_resp_pending <= 1'b0;
+        axi_bid <= `AXI4_ID_WIDTH'b0;
     end 
     else begin
         if (dispatch) begin
-            wr_resp_pending <= 1;
+            wr_resp_pending <= 1'b1;
             axi_bid <= axi_awid;
         end
         else if (axi_bgo)
-            wr_resp_pending <= 0;
+            wr_resp_pending <= 1'b0;
     end
 end
 

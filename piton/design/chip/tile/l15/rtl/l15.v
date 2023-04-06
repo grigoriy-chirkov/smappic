@@ -202,7 +202,6 @@ l15_csm l15_csm(
     .l15_csm_req_val_s2(l15_csm_req_val_s2),
     .l15_csm_stall_s3(l15_csm_stall_s3),
     .l15_csm_req_ticket_s2(l15_csm_req_ticket_s2),
-    //.l15_csm_clump_tile_count_s2(l15_csm_clump_tile_count_s2),
     .l15_csm_req_type_s2(l15_csm_req_type_s2),
     .l15_csm_req_data_s2(l15_csm_req_data_s2),
     .l15_csm_req_pcx_data_s2(l15_csm_req_pcx_data_s2),
@@ -308,8 +307,6 @@ wire [`L15_PADDR_HI:0] l15_noc1buffer_req_address;
 wire l15_noc1buffer_req_non_cacheable;
 wire [2:0] l15_noc1buffer_req_size;
 wire l15_noc1buffer_req_prefetch;
-// wire l15_noc1buffer_req_blkstore;
-// wire l15_noc1buffer_req_blkinitstore;
 wire [63:0] l15_noc1buffer_req_data_0;
 wire [63:0] l15_noc1buffer_req_data_1;
 wire [`TLB_CSM_WIDTH-1:0] l15_noc1buffer_req_csm_data;
@@ -327,8 +324,6 @@ wire [`L15_PADDR_HI:0] noc1buffer_noc1encoder_req_address;
 wire noc1buffer_noc1encoder_req_non_cacheable;
 wire [2:0] noc1buffer_noc1encoder_req_size;
 wire noc1buffer_noc1encoder_req_prefetch;
-// wire noc1buffer_noc1encoder_req_blkstore;
-// wire noc1buffer_noc1encoder_req_blkinitstore;
 wire [63:0] noc1buffer_noc1encoder_req_data_0;
 wire [63:0] noc1buffer_noc1encoder_req_data_1;
 wire [`PACKET_HOME_ID_WIDTH-1:0] noc1buffer_noc1encoder_req_homeid;
@@ -693,13 +688,9 @@ l15_pipeline pipeline(
     .noc2decoder_l15_threadid(noc2decoder_l15_threadid),
     .noc2decoder_l15_hmc_fill(noc2decoder_l15_hmc_fill),
     .cpxencoder_l15_req_ack(transducer_l15_req_ack),
-    // .noc1encoder_l15_req_ack(noc1encoder_l15_req_ack),
     .noc1encoder_l15_req_sent(noc1encoder_l15_req_sent),
     .noc1encoder_l15_req_data_sent(noc1encoder_l15_req_data_sent),
     .noc3encoder_l15_req_ack(noc3encoder_l15_req_ack),
-    // .chipid(chipid),
-    // .coreid_x(coreid_x),
-    // .coreid_y(coreid_y),
     
     // OUTPUT
     .l15_dtag_val_s1(l15_dtag_val_s1),
@@ -766,8 +757,6 @@ l15_pipeline pipeline(
     .l15_noc1buffer_req_non_cacheable(l15_noc1buffer_req_non_cacheable),
     .l15_noc1buffer_req_size(l15_noc1buffer_req_size),
     .l15_noc1buffer_req_prefetch(l15_noc1buffer_req_prefetch),
-    // .l15_noc1buffer_req_blkstore(l15_noc1buffer_req_blkstore),
-    // .l15_noc1buffer_req_blkinitstore(l15_noc1buffer_req_blkinitstore),
     .l15_noc1buffer_req_data_0(l15_noc1buffer_req_data_0),
     .l15_noc1buffer_req_data_1(l15_noc1buffer_req_data_1),
     .l15_noc1buffer_req_csm_data(l15_noc1buffer_req_csm_data),
@@ -880,8 +869,6 @@ noc1buffer noc1buffer(
     .l15_noc1buffer_req_non_cacheable(l15_noc1buffer_req_non_cacheable),
     .l15_noc1buffer_req_size(l15_noc1buffer_req_size),
     .l15_noc1buffer_req_prefetch(l15_noc1buffer_req_prefetch),
-    // .l15_noc1buffer_req_blkstore(l15_noc1buffer_req_blkstore),
-    // .l15_noc1buffer_req_blkinitstore(l15_noc1buffer_req_blkinitstore),
     .l15_noc1buffer_req_csm_data(l15_noc1buffer_req_csm_data),
     
     .l15_noc1buffer_req_csm_ticket(l15_noc1buffer_req_csm_ticket),
@@ -902,13 +889,6 @@ noc1buffer noc1buffer(
     .noc1buffer_noc1encoder_req_non_cacheable(noc1buffer_noc1encoder_req_non_cacheable),
     .noc1buffer_noc1encoder_req_size(noc1buffer_noc1encoder_req_size),
     .noc1buffer_noc1encoder_req_prefetch(noc1buffer_noc1encoder_req_prefetch),
-    // .noc1buffer_noc1encoder_req_blkstore(noc1buffer_noc1encoder_req_blkstore),
-    // .noc1buffer_noc1encoder_req_blkinitstore(noc1buffer_noc1encoder_req_blkinitstore),
-    
-    // stall signal from dmbr prevents the encoder from sending requests to the L2
-    // .l15_dmbr_l1missIn(l15_dmbr_l1missIn),
-    // .l15_dmbr_l1missTag(l15_dmbr_l1missTag),
-    // .dmbr_l15_stall(dmbr_l15_stall),
     
     // CSM
     .l15_csm_read_ticket(l15_csm_read_ticket),
@@ -918,7 +898,6 @@ noc1buffer noc1buffer(
     .csm_l15_read_res_val(csm_l15_read_res_val),
     .noc1buffer_noc1encoder_req_homeid(noc1buffer_noc1encoder_req_homeid),
     
-    // .noc1buffer_l15_req_ack(noc1encoder_l15_req_ack),
     .noc1buffer_l15_req_sent(noc1encoder_l15_req_sent),
     .noc1buffer_l15_req_data_sent(noc1encoder_l15_req_data_sent),
     
@@ -942,8 +921,6 @@ noc1encoder noc1encoder(
     .noc1buffer_noc1encoder_req_non_cacheable(noc1buffer_noc1encoder_req_non_cacheable),
     .noc1buffer_noc1encoder_req_size(noc1buffer_noc1encoder_req_size),
     .noc1buffer_noc1encoder_req_prefetch(noc1buffer_noc1encoder_req_prefetch),
-    // .noc1buffer_noc1encoder_req_blkstore(noc1buffer_noc1encoder_req_blkstore),
-    // .noc1buffer_noc1encoder_req_blkinitstore(noc1buffer_noc1encoder_req_blkinitstore),
     .noc1buffer_noc1encoder_req_csm_sdid(noc1buffer_noc1encoder_req_csm_sdid),
     .noc1buffer_noc1encoder_req_csm_lsid(noc1buffer_noc1encoder_req_csm_lsid),
     .noc1buffer_noc1encoder_req_homeid(noc1buffer_noc1encoder_req_homeid),

@@ -132,11 +132,11 @@ for i in range(PITON_NUM_CHIPS_PER_FPGA):
 always_ff @(negedge sw_shell[{15-i}] or posedge piton_clk)
     if (!sw_shell[{15-i}])
     begin
-        pre_piton_rst_n[{i}] <= 0;
-        piton_rst_n[{i}] <= 0;
+        pre_piton_rst_n[{i}] <= 1'b0;
+        piton_rst_n[{i}] <= 1'b0;
     end
     else begin
-        pre_piton_rst_n[{i}] <= 1;
+        pre_piton_rst_n[{i}] <= 1'b1;
         piton_rst_n[{i}] <= pre_piton_rst_n[{i}];
     end
 ''')
@@ -148,11 +148,11 @@ logic interconnect_rst_n;
 always_ff @(posedge sw_shell[{15-PITON_NUM_CHIPS_PER_FPGA}] or posedge shell_clk)
     if (sw_shell[{15-PITON_NUM_CHIPS_PER_FPGA}])
     begin
-        pre_interconnect_rst_n <= 0;
-        interconnect_rst_n <= 0;
+        pre_interconnect_rst_n <= 1'b0;
+        interconnect_rst_n <= 1'b0;
     end
     else begin
-        pre_interconnect_rst_n <= 1;
+        pre_interconnect_rst_n <= 1'b1;
         interconnect_rst_n <= pre_interconnect_rst_n;
     end
 ''')
@@ -164,11 +164,11 @@ logic shell_rst_n;
 always_ff @(negedge rst_main_n or posedge shell_clk)
     if (!rst_main_n)
     begin
-        pre_shell_rst_n <= 0;
-        shell_rst_n <= 0;
+        pre_shell_rst_n <= 1'b0;
+        shell_rst_n <= 1'b0;
     end
     else begin
-        pre_shell_rst_n <= 1;
+        pre_shell_rst_n <= 1'b1;
         shell_rst_n <= pre_shell_rst_n;
     end
 

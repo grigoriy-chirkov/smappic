@@ -1,0 +1,155 @@
+// ========== Copyright Header Begin ============================================
+// Copyright (c) 2023 Princeton University
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Princeton University nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL PRINCETON UNIVERSITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// ========== Copyright Header End ============================================
+
+`include "define.tmp.h"
+
+<% 
+from pyhplib import *
+%>
+
+module cep2noc_queue(
+    input clk,
+    input rst_n,
+    input [`NOC_CHIPID_WIDTH-1:0] fpgaid,
+
+    // input
+<%
+for i in range(PITON_NUM_CHIPS):
+    print(f'''\
+    input   wire                                   chip{i}_cep_val_in, 
+''')
+%>
+    input   wire                                   host_cep_val_in, 
+    input   wire [`CEP_DATA_WIDTH-1:0]             cep_data_in,
+
+    // output
+    output  wire                                   cep_val_out, 
+    output  wire [`CEP_DATA_WIDTH-1:0]             cep_data_out,
+    input   wire                                   cep_rdy_out,
+<%
+print(f'''
+    output wire [{PITON_NUM_CHIPS}:0]              cep_credits
+''')
+%>
+);
+
+
+// queues are never full because
+// of the credit system
+
+wire read_shaper = cep_rdy_out;
+reg [`NOC_CHIPID_WIDTH-1:0] cep_chipid;
+
+<%
+print(f'''\
+wire [`CEP_DATA_WIDTH-1:0] shaper_out[{PITON_NUM_CHIPS}:0];
+wire [{PITON_NUM_CHIPS}:0] shaper_out_valid;
+wire [{PITON_NUM_CHIPS}:0] shaper_empty = ~shaper_out_valid;
+''')
+
+for i in range(PITON_NUM_CHIPS):
+    src_fpgaid = int(i / PITON_NUM_CHIPS_PER_FPGA)
+    print(f'''\
+traffic_shaper #(
+    .DATA_WIDTH(`CEP_DATA_WIDTH), 
+    .ADD_LATENCY_SLOW(0),
+    .ADD_LATENCY_FAST(0),
+    .PKGS_PER_128_CYCLES_FAST(0), 
+    .PKGS_PER_128_CYCLES_SLOW(0)
+) cep_shaper{i} (
+    .clk(clk),
+    .rst_n(rst_n),
+    .fast(`NOC_CHIPID_WIDTH'd{src_fpgaid} != fpgaid),
+    .valid_in(chip{i}_cep_val_in),
+    .data_in(cep_data_in),
+    .ready_in(),
+    .valid_out(shaper_out_valid[{i}]),
+    .data_out(shaper_out[{i}]),
+    .ready_out(read_shaper & (cep_chipid == {i}))
+);
+''')
+
+print(f'''\
+traffic_shaper #(
+    .DATA_WIDTH(`CEP_DATA_WIDTH), 
+    .ADD_LATENCY_SLOW(0),
+    .ADD_LATENCY_FAST(0),
+    .PKGS_PER_128_CYCLES_FAST(0),
+    .PKGS_PER_128_CYCLES_SLOW(0)
+) cep_shaper_host (
+    .clk(clk),
+    .rst_n(rst_n),
+    .fast(1'b1),
+    .valid_in(host_cep_val_in),
+    .data_in(cep_data_in),
+    .ready_in(),
+    .valid_out(shaper_out_valid[{PITON_NUM_CHIPS}]),
+    .data_out(shaper_out[{PITON_NUM_CHIPS}]),
+    .ready_out(read_shaper & (cep_chipid >= {PITON_NUM_CHIPS}))
+);
+''')
+%>
+
+// do round robin over the fifos, try four fifos and then give up for the current cycle
+reg [`NOC_CHIPID_WIDTH-1:0] cep_chipid_next;
+<%
+str = f'''\
+always @(*) begin
+    cep_chipid_next = (cep_chipid + `NOC_CHIPID_WIDTH'd1) % `NOC_CHIPID_WIDTH'd{PITON_NUM_CHIPS + 1};
+'''
+for i in range(4):
+    str += f'''\
+    if (shaper_empty[cep_chipid_next]) cep_chipid_next = (cep_chipid_next + `NOC_CHIPID_WIDTH'd1) % `NOC_CHIPID_WIDTH'd{PITON_NUM_CHIPS + 1};
+'''
+str += "end\n"
+print(str)
+%>
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        cep_chipid <= `NOC_CHIPID_WIDTH'b0;
+    end
+    else begin
+        if (read_shaper & shaper_out_valid[cep_chipid]) begin
+            cep_chipid <= cep_chipid_next;
+        end
+        else begin
+            if (shaper_empty[cep_chipid])
+                cep_chipid <= cep_chipid_next;
+        end
+    end
+end
+
+
+assign cep_val_out = shaper_out_valid[cep_chipid];
+assign cep_data_out = shaper_out[cep_chipid];
+<%
+print(f'''
+assign cep_credits = ({{{PITON_NUM_CHIPS}{{1'b0}}}} | (read_shaper & shaper_out_valid[cep_chipid])) << cep_chipid;
+''')
+%>
+endmodule

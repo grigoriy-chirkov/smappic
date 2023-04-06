@@ -132,17 +132,17 @@ always @(posedge clk) begin
         credit_1 <= 9'd0;
         credit_2 <= 9'd0;
         credit_3 <= 9'd0;
-        sel_23 <= 0;
-        sel_13 <= 0;
-        sel_12 <= 0;
-        sel_123 <= 0;
+        sel_23 <= 1'b0;
+        sel_13 <= 1'b0;
+        sel_12 <= 1'b0;
+        sel_123 <= 2'b0;
 
-        select_counter <= 0;
+        select_counter <= 1'b0;
     end
     else begin
         //update select hold
         if(select == 0) begin
-            select_counter <= 0;
+            select_counter <= 1'b0;
         end
         else begin
             select_counter <= select_counter + 2'b01; 
@@ -177,8 +177,8 @@ always @(posedge clk) begin
             end
         end 
         if(rdy_2 & val_2) begin
-            sel_23 <= 1;
-            sel_12 <= 0;
+            sel_23 <= 1'b1;
+            sel_12 <= 1'b0;
             if (sel_123 == 2'b10) begin
                 sel_123 <= 2'b11;
             end
@@ -187,8 +187,8 @@ always @(posedge clk) begin
             end
         end
         if(rdy_3 & val_3) begin
-            sel_23 <= 0;
-            sel_13 <= 0;
+            sel_23 <= 1'b0;
+            sel_13 <= 1'b0;
             if (sel_123 == 2'b11) begin
                 sel_123 <= 2'b01;
             end

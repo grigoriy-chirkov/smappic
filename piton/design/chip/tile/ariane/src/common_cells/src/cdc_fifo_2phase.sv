@@ -78,14 +78,14 @@ module cdc_fifo_2phase #(
 
   always_ff @(posedge src_clk_i, negedge src_rst_ni) begin
     if (!src_rst_ni)
-      src_wptr_q <= 0;
+      src_wptr_q <= '0;
     else if (src_valid_i && src_ready_o)
       src_wptr_q <= src_wptr_q + 1;
   end
 
   always_ff @(posedge dst_clk_i, negedge dst_rst_ni) begin
     if (!dst_rst_ni)
-      dst_rptr_q <= 0;
+      dst_rptr_q <= '0;
     else if (dst_valid_o && dst_ready_i)
       dst_rptr_q <= dst_rptr_q + 1;
   end

@@ -55,8 +55,6 @@ begin
         `MSG_TYPE_LOAD_REQ              : $sformat( msg_type_string, "    ld_req       ");
         `MSG_TYPE_PREFETCH_REQ          : $sformat( msg_type_string, "   pref_req      ");
         `MSG_TYPE_STORE_REQ             : $sformat( msg_type_string, "    st_req       ");
-        `MSG_TYPE_BLK_STORE_REQ         : $sformat( msg_type_string, "  blk_st_req     ");
-        `MSG_TYPE_BLKINIT_STORE_REQ     : $sformat( msg_type_string, " blkinit_st_req  ");
         `MSG_TYPE_CAS_REQ               : $sformat( msg_type_string, "    cas_req      ");
         `MSG_TYPE_CAS_P1_REQ            : $sformat( msg_type_string, "  cas_p1_req     ");
         `MSG_TYPE_CAS_P2Y_REQ           : $sformat( msg_type_string, "  cas_p2y_req    ");
