@@ -23,22 +23,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# def MakeGenericCacheDefine(modulename, type, height_define, heightlog2_define, width_define):
-#    if type == "1rw":
-#       t = Get1RWTemplate()
-#    elif type == "1r1w":
-#       # t = Get1R1WTemplate()
-#       assert(0)
-#    elif type == "2rw":
-#       t = Get2RWTemplate()
-#    else:
-#       assert(0)
-
-#    t = t.replace("_PARAMS_HEIGHT_LOG", heightlog2_define)
-#    t = t.replace("_PARAMS_HEIGHT", height_define)
-#    t = t.replace("_PARAMS_WIDTH", width_define)
-#    t = t.replace("_PARAMS_NAME", str(modulename))
-#    print(t)
 
 def MakeGenericCacheHeader(modulename, type, height_define, heightlog2_define, width_define):
    if type == "1rw":
@@ -55,21 +39,6 @@ def MakeGenericCacheHeader(modulename, type, height_define, heightlog2_define, w
    t = t.replace("_PARAMS_WIDTH", width_define)
    t = t.replace("_PARAMS_NAME", str(modulename))
    print(t)
-
-   # if type == "1rw":
-   #    t = Get1RWCache()
-   # elif type == "1r1w":
-   #    t = Get1R1WCache()
-   # elif type == "2rw":
-   #    t = Get2RWCache()
-   # else:
-   #    assert(0)
-
-   # t = t.replace("_PARAMS_HEIGHT_LOG", heightlog2_define)
-   # t = t.replace("_PARAMS_HEIGHT", height_define)
-   # t = t.replace("_PARAMS_WIDTH", width_define)
-   # t = t.replace("_PARAMS_NAME", str(modulename))
-   # print(t)
 
 
 def MakeGenericCache(modulename, type, height_define, heightlog2_define, width_define):
@@ -156,42 +125,6 @@ def MakeGenericCacheDefine(modulename, type, height_define, heightlog2_define, w
   print("`else")
   MakeGenericCache(modulename, type, height_define, heightlog2_define, width_define)
   print("`endif \n\n endmodule")
-
-# def MakeGenericCacheDefine(modulename, type, height_define, heightlog2_define, width_define):
-#   MakeGenericCacheHeader(modulename, type, height_define, heightlog2_define, width_define)
-
-#   if type == "1rw":
-#      print("wire [%s-1:0] DOUT_bram;" % width_define)
-#   else:
-#      print("wire [%s-1:0] DOUTA_bram;" % width_define)
-#      print("wire [%s-1:0] DOUTB_bram;" % width_define)
-#   MakeSynthesizableBram(modulename, type, height_define, heightlog2_define, width_define)
-
-#   MakeGenericCache(modulename, type, height_define, heightlog2_define, width_define)
-
-#   if type == "1rw":
-#      print('''
-#          // comparing correctness
-#          always @ (negedge MEMCLK) begin
-#             if (DOUT_bram != DOUT) begin
-#                $display("Mismatch %s");
-#                repeat(5)@(posedge MEMCLK);
-#                `MONITOR_PATH.fail("Mismatch L2 state");
-#             end
-#          end
-#       ''' % modulename)
-#   else:
-#      print('''
-#          // comparing correctness
-#          always @ (negedge MEMCLK) begin
-#             if (DOUTA_bram != DOUTA || DOUTB_bram != DOUTB) begin
-#                $display("Mismatch %s");
-#                repeat(5)@(posedge MEMCLK);
-#                `MONITOR_PATH.fail("Mismatch L2 state");
-#             end
-#          end
-#       ''' % modulename)
-#   print("endmodule")
 
 def Get1RWTemplate():
   return '''

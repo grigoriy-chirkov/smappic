@@ -1,0 +1,25 @@
+CAPI=2:
+name: openpiton::home_agent_sram_wrappers:0.1
+description: Top-level Home Agent SRAM wrappers
+
+filesets:
+    rtl:
+        depend:
+            - openpiton::preprocessor
+            - openpiton::piton_common
+            - openpiton::piton_include
+        file_type: verilogSource
+
+targets:
+    default:
+        filesets: [rtl]
+        generate: [pyhp_preprocess]
+
+generate:
+    pyhp_preprocess:
+        generator: pyhp_preprocess_gen
+        parameters:
+            process_me : [[sram_home_agent_data.v.pyv, sram_home_agent_data.tmp.v],
+                          [sram_home_agent_dir.v.pyv, sram_home_agent_dir.tmp.v],
+                          [sram_home_agent_state.v.pyv, sram_home_agent_state.tmp.v],
+                          [sram_home_agent_tag.v.pyv, sram_home_agent_tag.tmp.v]]
