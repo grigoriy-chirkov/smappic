@@ -45,7 +45,7 @@ module multichip_adapter_outpipe3 (
     // CEP interace
     output wire                                   cep_val,
     output wire [`CEP_DATA_WIDTH-1:0]             cep_data,
-    output wire [`NOC_CHIPID_WIDTH-1:0]           cep_chipid,
+    output wire [`CEP_CHIPID_WIDTH-1:0]           cep_chipid,
     input  wire                                   cep_rdy
 );
 

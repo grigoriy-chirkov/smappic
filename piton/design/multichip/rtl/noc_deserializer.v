@@ -28,11 +28,6 @@
 `include "cep_defines.vh"
 `include "define.tmp.h"
 
-<%
-from pyhplib import *
-%>
-
-
 module noc_deserializer (
     input clk,
     input rst_n,

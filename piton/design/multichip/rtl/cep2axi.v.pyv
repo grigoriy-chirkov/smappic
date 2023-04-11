@@ -42,15 +42,15 @@ module cep2axi (
     // CEP interface
     input  wire                               cep_queue1_val,
     input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue1_data,
-    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue1_chipid,
+    input  wire  [`CEP_CHIPID_WIDTH-1:0]      cep_queue1_chipid,
     output wire                               cep_queue1_rdy, 
     input  wire                               cep_queue2_val,
     input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue2_data,
-    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue2_chipid,
+    input  wire  [`CEP_CHIPID_WIDTH-1:0]      cep_queue2_chipid,
     output wire                               cep_queue2_rdy,
     input  wire                               cep_queue3_val,
     input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue3_data,
-    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue3_chipid,
+    input  wire  [`CEP_CHIPID_WIDTH-1:0]      cep_queue3_chipid,
     output wire                               cep_queue3_rdy,
 
     // AXI interace
@@ -84,7 +84,7 @@ module cep2axi (
     input  wire                               m_axi_bvalid,
     output wire                               m_axi_bready, 
 
-    input wire   [`NOC_CHIPID_WIDTH-1:0]      chipid, 
+    input wire   [`CEP_CHIPID_WIDTH-1:0]      chipid, 
 <%
 for i in range(PITON_NUM_CHIPS):
     print(f"    input wire   [`AXI4_ADDR_WIDTH-1:0]       chip{i}_base, ")
@@ -96,9 +96,9 @@ for i in range(PITON_NUM_CHIPS):
 
 wire cep_queue1_val_synced;
 wire [`CEP_DATA_WIDTH-1:0] cep_queue1_data_synced;
-wire [`NOC_CHIPID_WIDTH-1:0] cep_queue1_chipid_synced;
+wire [`CEP_CHIPID_WIDTH-1:0] cep_queue1_chipid_synced;
 reg  cep_queue1_rdy_synced;
-wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo1_out;
+wire [`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:0] fifo1_out;
 wire fifo1_full;
 wire fifo1_empty;
 
@@ -116,7 +116,7 @@ afifo_w526_d16  clk_crossing_fifo1(
 );
 `else // ifndef PITON_PROTO
 async_fifo #(
-.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
+.DSIZE(`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH),
 .ASIZE(4),
 .MEMSIZE(8) )
 clk_crossing_fifo1(
@@ -135,14 +135,14 @@ clk_crossing_fifo1(
 assign cep_queue1_rdy = ~fifo1_full;
 assign cep_queue1_val_synced = ~fifo1_empty;
 assign cep_queue1_data_synced = fifo1_out[`CEP_DATA_WIDTH-1:0];
-assign cep_queue1_chipid_synced = fifo1_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
+assign cep_queue1_chipid_synced = fifo1_out[`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
 
 
 wire cep_queue2_val_synced;
 wire [`CEP_DATA_WIDTH-1:0] cep_queue2_data_synced;
-wire [`NOC_CHIPID_WIDTH-1:0] cep_queue2_chipid_synced;
+wire [`CEP_CHIPID_WIDTH-1:0] cep_queue2_chipid_synced;
 reg  cep_queue2_rdy_synced;
-wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo2_out;
+wire [`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:0] fifo2_out;
 wire fifo2_full;
 wire fifo2_empty;
 
@@ -160,7 +160,7 @@ afifo_w526_d16  clk_crossing_fifo2(
 );
 `else // ifndef PITON_PROTO
 async_fifo #(
-.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
+.DSIZE(`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH),
 .ASIZE(4),
 .MEMSIZE(8) )
 clk_crossing_fifo2(
@@ -179,13 +179,13 @@ clk_crossing_fifo2(
 assign cep_queue2_rdy = ~fifo2_full;
 assign cep_queue2_val_synced = ~fifo2_empty;
 assign cep_queue2_data_synced = fifo2_out[`CEP_DATA_WIDTH-1:0];
-assign cep_queue2_chipid_synced = fifo2_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
+assign cep_queue2_chipid_synced = fifo2_out[`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
 
 wire cep_queue3_val_synced;
 wire [`CEP_DATA_WIDTH-1:0] cep_queue3_data_synced;
-wire [`NOC_CHIPID_WIDTH-1:0] cep_queue3_chipid_synced;
+wire [`CEP_CHIPID_WIDTH-1:0] cep_queue3_chipid_synced;
 reg  cep_queue3_rdy_synced;
-wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo3_out;
+wire [`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:0] fifo3_out;
 wire fifo3_full;
 wire fifo3_empty;
 
@@ -203,7 +203,7 @@ afifo_w526_d16  clk_crossing_fifo3(
 );
 `else // ifndef PITON_PROTO
 async_fifo #(
-.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
+.DSIZE(`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH),
 .ASIZE(4),
 .MEMSIZE(8) )
 clk_crossing_fifo3(
@@ -222,7 +222,7 @@ clk_crossing_fifo3(
 assign cep_queue3_rdy = ~fifo3_full;
 assign cep_queue3_val_synced = ~fifo3_empty;
 assign cep_queue3_data_synced = fifo3_out[`CEP_DATA_WIDTH-1:0];
-assign cep_queue3_chipid_synced = fifo3_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
+assign cep_queue3_chipid_synced = fifo3_out[`CEP_DATA_WIDTH+`CEP_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
 
 
 
@@ -230,13 +230,11 @@ assign cep_queue3_chipid_synced = fifo3_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:
 // choose which queue goes now
 //=========================================
 
-<%
-print(f'''
-wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz;
-wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz;
-wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz;
-''')
-%>
+
+wire [`PITON_NUM_CHIPS:0] cep_queue1_credits_nz;
+wire [`PITON_NUM_CHIPS:0] cep_queue2_credits_nz;
+wire [`PITON_NUM_CHIPS:0] cep_queue3_credits_nz;
+
 
 reg [2:0] queue_chosen;
 always @(*) begin
@@ -256,7 +254,7 @@ end
 reg cep_val_synced;
 reg [`CEP_DATA_WIDTH-1:0] cep_data_synced;
 reg [2:0] cep_queue_id_synced;
-reg [`NOC_CHIPID_WIDTH-1:0] cep_chipid_synced;
+reg [`CEP_CHIPID_WIDTH-1:0] cep_chipid_synced;
 wire cep_rdy_synced;
 
 always @* begin
@@ -293,7 +291,7 @@ always @* begin
             cep_val_synced = 1'b0;
             cep_data_synced = `CEP_DATA_WIDTH'd0;
             cep_queue_id_synced = 3'b000;
-            cep_chipid_synced = `NOC_CHIPID_WIDTH'b0;
+            cep_chipid_synced = `CEP_CHIPID_WIDTH'b0;
             cep_queue1_rdy_synced = 1'b0;
             cep_queue2_rdy_synced = 1'b0;
             cep_queue3_rdy_synced = 1'b0;
@@ -306,14 +304,10 @@ wire axi_w_go  = m_axi_wvalid  & m_axi_wready;
 
 wire [`AXI4_DATA_WIDTH-1:0] wdata = cep_data_synced;
 reg [`AXI4_ADDR_WIDTH-1:0] wr_addr;
-reg [`NOC_CHIPID_WIDTH-1:0] wr_chipid;
+reg [`CEP_CHIPID_WIDTH-1:0] wr_chipid;
 always @(*) begin
   wr_chipid = cep_chipid_synced;
-<%
-print(f'''
-  if (wr_chipid > {PITON_NUM_CHIPS}) wr_chipid = `NOC_CHIPID_WIDTH'd{PITON_NUM_CHIPS};
-''')
-%>
+  if (wr_chipid > `PITON_NUM_CHIPS) wr_chipid = `CEP_CHIPID_WIDTH'd`PITON_NUM_CHIPS;
   case (wr_chipid)
 <%
 for i in range(PITON_NUM_CHIPS):

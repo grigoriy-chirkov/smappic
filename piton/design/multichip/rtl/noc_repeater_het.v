@@ -25,6 +25,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ========== Copyright Header End ============================================
 
+`include "cep_defines.vh"
+
 module noc_repeater_het (
     input piton_clk,
     input piton_rst_n,
@@ -216,7 +218,7 @@ multichip_adapter multichip_adapter0(
     .s_axi_bvalid  (axi_10_bvalid), 
     .s_axi_bready  (axi_10_bready), 
 
-    .chipid       (`NOC_CHIPID_WIDTH'd0),
+    .chipid       (`CEP_CHIPID_WIDTH'd0),
     .chip0_base   (`AXI4_ADDR_WIDTH'h00000),
     .chip1_base   (`AXI4_ADDR_WIDTH'h10000),
     .host_base    (`AXI4_ADDR_WIDTH'h40000)
@@ -306,7 +308,7 @@ multichip_adapter multichip_adapter1(
     .s_axi_bvalid  (axi_01_bvalid), 
     .s_axi_bready  (axi_01_bready), 
 
-    .chipid       (`NOC_CHIPID_WIDTH'd1),
+    .chipid       (`CEP_CHIPID_WIDTH'd1),
     .chip0_base   (`AXI4_ADDR_WIDTH'h00000),
     .chip1_base   (`AXI4_ADDR_WIDTH'h10000),
     .host_base    (`AXI4_ADDR_WIDTH'h40000)

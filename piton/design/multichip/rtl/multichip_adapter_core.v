@@ -28,11 +28,6 @@
 `include "cep_defines.vh"
 `include "define.tmp.h"
 
-<%
-from pyhplib import *
-%>
-
-
 module multichip_adapter_core (
     input clk,
     input rst_n,
@@ -60,15 +55,15 @@ module multichip_adapter_core (
     // CEP interace
     output wire                               cep_queue1_val_out,
     output wire [`CEP_DATA_WIDTH-1:0]         cep_queue1_data_out,
-    output wire [`NOC_CHIPID_WIDTH-1:0]       cep_queue1_chipid_out,
+    output wire [`CEP_CHIPID_WIDTH-1:0]       cep_queue1_chipid_out,
     input  wire                               cep_queue1_rdy_out,
     output wire                               cep_queue2_val_out,
     output wire [`CEP_DATA_WIDTH-1:0]         cep_queue2_data_out,
-    output wire [`NOC_CHIPID_WIDTH-1:0]       cep_queue2_chipid_out,
+    output wire [`CEP_CHIPID_WIDTH-1:0]       cep_queue2_chipid_out,
     input  wire                               cep_queue2_rdy_out,
     output wire                               cep_queue3_val_out,
     output wire [`CEP_DATA_WIDTH-1:0]         cep_queue3_data_out,
-    output wire [`NOC_CHIPID_WIDTH-1:0]       cep_queue3_chipid_out,
+    output wire [`CEP_CHIPID_WIDTH-1:0]       cep_queue3_chipid_out,
     input  wire                               cep_queue3_rdy_out,
     input  wire                               cep_queue1_val_in,
     input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue1_data_in,

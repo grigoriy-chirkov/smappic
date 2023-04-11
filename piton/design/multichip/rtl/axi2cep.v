@@ -29,10 +29,6 @@
 `include "axi_defines.vh"
 `include "define.tmp.h"
 
-<%
-from pyhplib import *
-%>
-
 module axi2cep (
     input sys_clk,
     input sys_rst_n,
@@ -79,7 +75,7 @@ module axi2cep (
     output wire                               s_axi_bvalid,
     input  wire                               s_axi_bready, 
 
-    input wire   [`NOC_CHIPID_WIDTH-1:0]      chipid
+    input wire   [`CEP_CHIPID_WIDTH-1:0]      chipid
 );
 
 
@@ -93,19 +89,19 @@ wire dispatch = aw_recvd & w_recvd;
 
 // AXI part
 // receive data from awaddr
-reg [`NOC_CHIPID_WIDTH-1:0] wr_chipid;
+reg [`CEP_CHIPID_WIDTH-1:0] wr_chipid;
 reg [2:0] wr_queue_id;
 reg [`AXI4_ID_WIDTH-1:0] axi_awid;
 always @(posedge axi_clk) begin
     if(~axi_rst_n) begin
-        wr_chipid <= `NOC_CHIPID_WIDTH'b0;
+        wr_chipid <= `CEP_CHIPID_WIDTH'b0;
         wr_queue_id <= 3'b0;
         aw_recvd <= 1'b0;
         axi_awid <= `AXI4_ID_WIDTH'b0;
     end 
     else begin
         if (axi_awgo) begin
-            wr_chipid <= {{`NOC_CHIPID_WIDTH-5 {1'b0}}, s_axi_awaddr[13:9]};
+            wr_chipid <= {{`CEP_CHIPID_WIDTH-5 {1'b0}}, s_axi_awaddr[13:9]};
             wr_queue_id <= s_axi_awaddr[8:6];
             aw_recvd <= 1'b1;
             axi_awid <= s_axi_awid;
@@ -157,14 +153,7 @@ always @(posedge axi_clk) begin
 end
 
 // queues
-<%
-print(f'''
-wire [{PITON_NUM_CHIPS}:0]  cep_queue1_credits_return;
-wire [{PITON_NUM_CHIPS}:0]  cep_queue2_credits_return;
-wire [{PITON_NUM_CHIPS}:0]  cep_queue3_credits_return;
-''')
-%>
-
+wire [`PITON_NUM_CHIPS:0]  cep_queue1_credits_return;
 axi2cep_queue queue1 (
     .axi_clk(axi_clk),
     .axi_rst_n(axi_rst_n),
@@ -183,7 +172,7 @@ axi2cep_queue queue1 (
     .cep_credits(cep_queue1_credits_return)
 );
 
-// queues
+wire [`PITON_NUM_CHIPS:0]  cep_queue2_credits_return;
 axi2cep_queue queue2 (
     .axi_clk(axi_clk),
     .axi_rst_n(axi_rst_n),
@@ -202,7 +191,7 @@ axi2cep_queue queue2 (
     .cep_credits(cep_queue2_credits_return)
 );
 
-// queues
+wire [`PITON_NUM_CHIPS:0]  cep_queue3_credits_return;
 axi2cep_queue queue3 (
     .axi_clk(axi_clk),
     .axi_rst_n(axi_rst_n),

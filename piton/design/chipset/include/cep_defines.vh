@@ -32,6 +32,7 @@
 
 `define CEP_DATA_WIDTH  512
 `define PKG_DATA_WIDTH  `CEP_DATA_WIDTH
+`define CEP_CHIPID_WIDTH 14
 
 
 `endif

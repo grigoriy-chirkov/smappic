@@ -57,6 +57,7 @@ from pyhplib import *
 print("`define PITON_NUM_TILES %d" % PITON_NUM_TILES)
 print("`define PITON_X_TILES %d"   % PITON_X_TILES)
 print("`define PITON_Y_TILES %d"   % PITON_Y_TILES)
+print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 %>
 
 // NoC interface
