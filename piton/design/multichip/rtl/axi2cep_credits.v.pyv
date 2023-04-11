@@ -41,9 +41,9 @@ module axi2cep_credits (
     input sys_rst_n,
 <%
 print(f'''
-    input [{PITON_NUM_CHIPS}:0] cep_queue1_credits, 
-    input [{PITON_NUM_CHIPS}:0] cep_queue2_credits, 
-    input [{PITON_NUM_CHIPS}:0] cep_queue3_credits, 
+    input [{PITON_NUM_CHIPS}:0] cep_queue1_credits_return, 
+    input [{PITON_NUM_CHIPS}:0] cep_queue2_credits_return, 
+    input [{PITON_NUM_CHIPS}:0] cep_queue3_credits_return, 
 ''')
 %>
     input  wire  [`AXI4_ID_WIDTH     -1:0]    s_axi_arid,
@@ -68,9 +68,9 @@ print(f'''
 
 <%
 print(f'''
-wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_synced;
-wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_synced;
-wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_synced;
+wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_return_synced;
+wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_return_synced;
+wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_return_synced;
 ''')
 %>
 wire credit_fifo1_empty;
@@ -83,9 +83,9 @@ afifo_w16_d16 async_credit_fifo1(
     .wr_clk(sys_clk),
     .rd_clk(axi_clk),
     .rd_en(1'b1),
-    .wr_en(|cep_queue1_credits),
-    .din(cep_queue1_credits),
-    .dout(cep_queue1_credits_synced),
+    .wr_en(|cep_queue1_credits_return),
+    .din(cep_queue1_credits_return),
+    .dout(cep_queue1_credits_return_synced),
     .full(),
     .empty(credit_fifo1_empty)
 );
@@ -100,9 +100,9 @@ async_credit_fifo1(
     .wclk(sys_clk),
     .rclk(axi_clk),
     .ren(1'b1),
-    .wval(|cep_queue1_credits),
-    .wdata(cep_queue1_credits),
-    .rdata(cep_queue1_credits_synced),
+    .wval(|cep_queue1_credits_return),
+    .wdata(cep_queue1_credits_return),
+    .rdata(cep_queue1_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo1_empty)
 );
@@ -113,9 +113,9 @@ afifo_w16_d16 async_credit_fifo2(
     .wr_clk(sys_clk),
     .rd_clk(axi_clk),
     .rd_en(1'b1),
-    .wr_en(|cep_queue2_credits),
-    .din(cep_queue2_credits),
-    .dout(cep_queue2_credits_synced),
+    .wr_en(|cep_queue2_credits_return),
+    .din(cep_queue2_credits_return),
+    .dout(cep_queue2_credits_return_synced),
     .full(),
     .empty(credit_fifo2_empty)
 );
@@ -130,9 +130,9 @@ async_credit_fifo2(
     .wclk(sys_clk),
     .rclk(axi_clk),
     .ren(1'b1),
-    .wval(|cep_queue2_credits),
-    .wdata(cep_queue2_credits),
-    .rdata(cep_queue2_credits_synced),
+    .wval(|cep_queue2_credits_return),
+    .wdata(cep_queue2_credits_return),
+    .rdata(cep_queue2_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo2_empty)
 );
@@ -143,9 +143,9 @@ afifo_w16_d16 async_credit_fifo3(
     .wr_clk(sys_clk),
     .rd_clk(axi_clk),
     .rd_en(1'b1),
-    .wr_en(|cep_queue3_credits),
-    .din(cep_queue3_credits),
-    .dout(cep_queue3_credits_synced),
+    .wr_en(|cep_queue3_credits_return),
+    .din(cep_queue3_credits_return),
+    .dout(cep_queue3_credits_return_synced),
     .full(),
     .empty(credit_fifo3_empty)
 );
@@ -160,9 +160,9 @@ async_credit_fifo3(
     .wclk(sys_clk),
     .rclk(axi_clk),
     .ren(1'b1),
-    .wval(|cep_queue3_credits),
-    .wdata(cep_queue3_credits),
-    .rdata(cep_queue3_credits_synced),
+    .wval(|cep_queue3_credits_return),
+    .wdata(cep_queue3_credits_return),
+    .rdata(cep_queue3_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo3_empty)
 );
@@ -172,9 +172,9 @@ async_credit_fifo3(
 <%
 for i in range(PITON_NUM_CHIPS):
     str = f'''\
-wire credits1_chip{i}_up = ~credit_fifo1_empty & (cep_queue1_credits_synced[{i}]);
-wire credits2_chip{i}_up = ~credit_fifo2_empty & (cep_queue2_credits_synced[{i}]);
-wire credits3_chip{i}_up = ~credit_fifo3_empty & (cep_queue3_credits_synced[{i}]);
+wire credits1_chip{i}_up = ~credit_fifo1_empty & (cep_queue1_credits_return_synced[{i}]);
+wire credits2_chip{i}_up = ~credit_fifo2_empty & (cep_queue2_credits_return_synced[{i}]);
+wire credits3_chip{i}_up = ~credit_fifo3_empty & (cep_queue3_credits_return_synced[{i}]);
 '''
     print(str)
 %>

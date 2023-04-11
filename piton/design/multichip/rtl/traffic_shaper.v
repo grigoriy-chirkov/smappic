@@ -35,8 +35,10 @@ module traffic_shaper #(
     parameter PKGS_PER_128_CYCLES_FAST = 0, 
     parameter PKGS_PER_128_CYCLES_SLOW = 0
 ) (
-    input clk,
-    input rst_n,
+    input clk_in,
+    input rst_n_in,
+    input clk_out,
+    input rst_n_out,
     input fast,
 
     input wire [DATA_WIDTH-1:0] data_in, // Data to be sent
@@ -51,8 +53,8 @@ module traffic_shaper #(
 localparam CLOCK_WIDTH = 32;
 
 reg [CLOCK_WIDTH-1:0] clock;
-always @(posedge clk) begin
-    if (~rst_n) begin
+always @(posedge clk_out) begin
+    if (~rst_n_out) begin
         clock <= {CLOCK_WIDTH{1'b0}};
     end
     else begin
@@ -63,13 +65,13 @@ end
 wire out_go = valid_out & ready_out;
 reg [31:0] pkg_counter;
 wire [31:0] pkg_counter_plus_request = pkg_counter + out_go;
-always @(posedge clk) begin
-    if (~rst_n) begin
+always @(posedge clk_out) begin
+    if (~rst_n_out) begin
         pkg_counter <= 32'b0;
     end
     else begin
         if (clock[6:0] == 0) begin
-            pkg_counter <= {31'b0, out_go};
+            pkg_counter <= 32'b0 | out_go;
         end
         else begin
             pkg_counter <= pkg_counter_plus_request;
@@ -96,14 +98,12 @@ assign ready_in = ~fifo_full;
 assign data_out = fifo_data_out;
 assign valid_out = ~fifo_empty & its_time & bw_ok;
 
+
 `ifdef PITON_FPGA_SYNTH
-fifo_w96_d128  shaper_fifo(
-`ifdef PITON_FPGA_AFIFO_NO_SRST
-    .rst(~rst_n),
-`else // ifndef PITON_FPGA_AFIFO_NO_SRST
-    .srst(~rst_n),
-`endif // endif PITON_FPGA_AFIFO_NO_SRST
-    .clk(clk),
+afifo_w544_d128  shaper_fifo(
+    .rst(~rst_n_out),
+    .wr_clk(clk_in),
+    .rd_clk(clk_out),
     .rd_en(ren),
     .wr_en(valid_in),
     .din({clock + add_time, data_in}),
@@ -112,19 +112,21 @@ fifo_w96_d128  shaper_fifo(
     .empty(fifo_empty)
 );
 `else
-sync_fifo #(
+async_fifo #(
     .DSIZE(DATA_WIDTH + CLOCK_WIDTH),
     .ASIZE(8),
     .MEMSIZE(128) 
 ) shaper_fifo (
-    .reset(~rst_n),
-    .clk(clk),
+    .rreset(~rst_n_out),
+    .wreset(~rst_n_in),
+    .wclk(clk_in),
+    .rclk(clk_out),
     .ren(ren),
     .wval(valid_in),
     .wdata({clock + add_time, data_in}),
     .rdata(fifo_out),
-    .full(fifo_full),
-    .empty(fifo_empty)
+    .wfull(fifo_full), 
+    .rempty(fifo_empty)
 );
 `endif
 
@@ -132,7 +134,7 @@ sync_fifo #(
 // generate
 // if (BW_RATIO == 69) begin    
 //     ila_0 shaper_ila_1(
-//         .clk(clk), 
+//         .clk(clk_in), 
 //         .probe0(valid_in), 
 //         .probe1(data_in), 
 //         .probe2(ready_in), 

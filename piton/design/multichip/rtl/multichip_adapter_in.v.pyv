@@ -84,20 +84,16 @@ module multichip_adapter_in (
 );
 
 // CEP interface
-reg                                     cep_val;
-reg   [`CEP_DATA_WIDTH-1:0]             cep_data;
-reg   [2:0]                             cep_queue_id;
-reg   [`NOC_CHIPID_WIDTH-1:0]           cep_chipid;
-wire                                    cep_rdy;
+wire                                    cep_queue1_val;
+wire  [`CEP_DATA_WIDTH-1:0]             cep_queue1_data;
+wire                                    cep_queue1_rdy;
+wire                                    cep_queue2_val;
+wire  [`CEP_DATA_WIDTH-1:0]             cep_queue2_data;
+wire                                    cep_queue2_rdy;
+wire                                    cep_queue3_val;
+wire  [`CEP_DATA_WIDTH-1:0]             cep_queue3_data;
+wire                                    cep_queue3_rdy;
 
-// credits
-<%
-print(f'''
-wire [{PITON_NUM_CHIPS}:0]              cep_queue1_credits;
-wire [{PITON_NUM_CHIPS}:0]              cep_queue2_credits;
-wire [{PITON_NUM_CHIPS}:0]              cep_queue3_credits;
-''')
-%>
 
 axi2cep axi2cep (
     .s_axi_awid(s_axi_awid),
@@ -129,16 +125,15 @@ axi2cep axi2cep (
     .s_axi_bready(s_axi_bready),
 
     // CEP interace
-    .cep_val(cep_val),
-    .cep_data(cep_data),
-    .cep_queue_id(cep_queue_id),
-    .cep_chipid(cep_chipid),
-    .cep_rdy(cep_rdy),
-
-    // credits
-    .cep_queue1_credits(cep_queue1_credits),
-    .cep_queue2_credits(cep_queue2_credits),
-    .cep_queue3_credits(cep_queue3_credits),
+    .cep_queue1_val(cep_queue1_val),
+    .cep_queue1_data(cep_queue1_data),
+    .cep_queue1_rdy(cep_queue1_rdy),
+    .cep_queue2_val(cep_queue2_val),
+    .cep_queue2_data(cep_queue2_data),
+    .cep_queue2_rdy(cep_queue2_rdy),
+    .cep_queue3_val(cep_queue3_val),
+    .cep_queue3_data(cep_queue3_data),
+    .cep_queue3_rdy(cep_queue3_rdy),
 
     .chipid(chipid),
     .fpgaid(fpgaid),
@@ -151,16 +146,15 @@ axi2cep axi2cep (
 
 cep2noc cep2noc (
     // CEP interace
-    .cep_val(cep_val),
-    .cep_data(cep_data),
-    .cep_queue_id(cep_queue_id),
-    .cep_chipid(cep_chipid),
-    .cep_rdy(cep_rdy),
-
-    // credits
-    .cep_queue1_credits(cep_queue1_credits),
-    .cep_queue2_credits(cep_queue2_credits),
-    .cep_queue3_credits(cep_queue3_credits),
+    .cep_queue1_val(cep_queue1_val),
+    .cep_queue1_data(cep_queue1_data),
+    .cep_queue1_rdy(cep_queue1_rdy),
+    .cep_queue2_val(cep_queue2_val),
+    .cep_queue2_data(cep_queue2_data),
+    .cep_queue2_rdy(cep_queue2_rdy),
+    .cep_queue3_val(cep_queue3_val),
+    .cep_queue3_data(cep_queue3_data),
+    .cep_queue3_rdy(cep_queue3_rdy),
 
     .noc1_val(noc1_val),
     .noc1_data(noc1_data),
@@ -172,7 +166,6 @@ cep2noc cep2noc (
     .noc3_data(noc3_data),
     .noc3_rdy(noc3_rdy),
 
-    .fpgaid(fpgaid),
     .clk(sys_clk),
     .rst_n(sys_rst_n)
 );

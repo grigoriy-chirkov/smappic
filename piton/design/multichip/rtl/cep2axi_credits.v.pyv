@@ -37,14 +37,12 @@ from pyhplib import *
 module cep2axi_credits (
     input axi_clk,
     input axi_rst_n,
-    input sys_clk, 
-    input sys_rst_n,
     
 <%
 print(f'''
-    output reg  [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz, 
-    output reg  [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz, 
-    output reg  [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz, 
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz, 
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz, 
+    output wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz, 
 ''')
 %>
     input                         wr_dispatch, 
@@ -91,51 +89,23 @@ print(str)
 %>
 
 <%
-str = f"wire[{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz_prepresync = {{1'b1,"
+str = f"assign cep_queue1_credits_nz = {{1'b1,"
 for i in range(PITON_NUM_CHIPS-1, -1, -1):
   str += f" (credits1[{i}] > 8'd10),"
 str = str[:-1] + "}; // 10 bc there are some cycles between this computation and usage of the credit\n"
 print(str)
 
-str = f"wire[{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz_prepresync = {{1'b1,"
+str = f"assign cep_queue2_credits_nz = {{1'b1,"
 for i in range(PITON_NUM_CHIPS-1, -1, -1):
   str += f" (credits2[{i}] > 8'd10),"
 str = str[:-1] + "}; // 10 bc there are some cycles between this computation and usage of the credit\n"
 print(str)
 
-str = f"wire[{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz_prepresync = {{1'b1,"
+str = f"assign cep_queue3_credits_nz = {{1'b1,"
 for i in range(PITON_NUM_CHIPS-1, -1, -1):
   str += f" (credits3[{i}] > 8'd10),"
 str = str[:-1] + "}; // 10 bc there are some cycles between this computation and usage of the credit\n"
 print(str)
-%>
-
-<%
-print(f'''
-reg [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz_presync;
-reg [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz_presync;
-reg [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz_presync;
-
-always @(posedge sys_clk) begin
-  if(~sys_rst_n) begin
-
-    cep_queue1_credits_nz <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-    cep_queue2_credits_nz <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-    cep_queue3_credits_nz <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-    cep_queue1_credits_nz_presync <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-    cep_queue2_credits_nz_presync <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-    cep_queue3_credits_nz_presync <= {{{PITON_NUM_CHIPS+1} {{1'b1}}}};
-  end
-  else begin
-    cep_queue1_credits_nz_presync <= cep_queue1_credits_nz_prepresync;
-    cep_queue2_credits_nz_presync <= cep_queue2_credits_nz_prepresync;
-    cep_queue3_credits_nz_presync <= cep_queue3_credits_nz_prepresync;
-    cep_queue1_credits_nz <= cep_queue1_credits_nz_presync;
-    cep_queue2_credits_nz <= cep_queue2_credits_nz_presync;
-    cep_queue3_credits_nz <= cep_queue3_credits_nz_presync;
-  end
-end
-''')
 %>
 
 

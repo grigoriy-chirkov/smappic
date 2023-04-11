@@ -40,19 +40,15 @@ module axi2cep (
     input axi_rst_n,
     
     // CEP interace
-    output wire                                     cep_val,
-    output wire   [`CEP_DATA_WIDTH-1:0]             cep_data,
-    output wire   [2:0]                             cep_queue_id,
-    output wire   [`NOC_CHIPID_WIDTH-1:0]           cep_chipid,
-    input  wire                                     cep_rdy,
-    // credits
-<%
-print(f'''
-    input wire [{PITON_NUM_CHIPS}:0]                cep_queue1_credits, 
-    input wire [{PITON_NUM_CHIPS}:0]                cep_queue2_credits, 
-    input wire [{PITON_NUM_CHIPS}:0]                cep_queue3_credits, 
-''')
-%>
+    output wire                               cep_queue1_val,
+    output wire   [`CEP_DATA_WIDTH-1:0]       cep_queue1_data,
+    input  wire                               cep_queue1_rdy,
+    output wire                               cep_queue2_val,
+    output wire   [`CEP_DATA_WIDTH-1:0]       cep_queue2_data,
+    input  wire                               cep_queue2_rdy,
+    output wire                               cep_queue3_val,
+    output wire   [`CEP_DATA_WIDTH-1:0]       cep_queue3_data,
+    input  wire                               cep_queue3_rdy,
 
     // AXI interace
     input  wire [`AXI4_ID_WIDTH     -1:0]     s_axi_awid,
@@ -83,8 +79,7 @@ print(f'''
     output wire                               s_axi_bvalid,
     input  wire                               s_axi_bready, 
 
-    input wire   [`NOC_CHIPID_WIDTH-1:0]      chipid, 
-    input wire   [`NOC_CHIPID_WIDTH-1:0]      fpgaid
+    input wire   [`NOC_CHIPID_WIDTH-1:0]      chipid
 );
 
 
@@ -95,7 +90,6 @@ wire axi_bgo = s_axi_bvalid & s_axi_bready;
 reg aw_recvd;
 reg w_recvd;
 wire dispatch = aw_recvd & w_recvd;
-wire fifo_full;
 
 // AXI part
 // receive data from awaddr
@@ -116,7 +110,7 @@ always @(posedge axi_clk) begin
             aw_recvd <= 1'b1;
             axi_awid <= s_axi_awid;
         end
-        else if (dispatch & ~fifo_full) begin
+        else if (dispatch) begin
             aw_recvd <= 1'b0;
         end
     end
@@ -134,14 +128,14 @@ always @(posedge axi_clk) begin
             w_recvd <= 1'b1;
             cep_indata <= s_axi_wdata[`CEP_DATA_WIDTH-1:0];
         end
-        else if (dispatch & ~fifo_full) begin
+        else if (dispatch) begin
             w_recvd <= 1'b0;
         end
     end
 end
 
-assign s_axi_wready = (dispatch & ~fifo_full) | ~w_recvd;
-assign s_axi_awready = (dispatch & ~fifo_full) | ~aw_recvd;
+assign s_axi_wready = dispatch | ~w_recvd;
+assign s_axi_awready = dispatch | ~aw_recvd;
 
 
 // send write acks
@@ -153,7 +147,7 @@ always @(posedge axi_clk) begin
         axi_bid <= `AXI4_ID_WIDTH'b0;
     end 
     else begin
-        if (dispatch & ~fifo_full) begin
+        if (dispatch) begin
             wr_resp_pending <= 1'b1;
             axi_bid <= axi_awid;
         end
@@ -162,45 +156,70 @@ always @(posedge axi_clk) begin
     end
 end
 
-// clock crossing
-wire fifo_empty;
-wire [`CEP_DATA_WIDTH + 3 + `NOC_CHIPID_WIDTH - 1:0] fifo_data;
-`ifdef PITON_FPGA_SYNTH
-afifo_w529_d16  clock_crossing_fifo(
-    .rst(~sys_rst_n),
-    .wr_clk(axi_clk),
-    .rd_clk(sys_clk),
-    .rd_en(cep_rdy),
-    .wr_en(dispatch),
-    .din({wr_queue_id, wr_chipid, cep_indata}),
-    .dout(fifo_data),
-    .full(fifo_full),
-    .empty(fifo_empty)
-);
-`else
-async_fifo #(
-    .DSIZE(`CEP_DATA_WIDTH + 3 + `NOC_CHIPID_WIDTH),
-    .ASIZE(5),
-    .MEMSIZE(16) 
-) clock_crossing_fifo (
-    .rreset(~sys_rst_n),
-    .wreset(~axi_rst_n),
-    .wclk(axi_clk),
-    .rclk(sys_clk),
-    .ren(cep_rdy),
-    .wval(dispatch),
-    .wdata({wr_queue_id, wr_chipid, cep_indata}),
-    .rdata(fifo_data),
-    .wfull(fifo_full), 
-    .rempty(fifo_empty)
-);
-`endif
+// queues
+<%
+print(f'''
+wire [{PITON_NUM_CHIPS}:0]  cep_queue1_credits_return;
+wire [{PITON_NUM_CHIPS}:0]  cep_queue2_credits_return;
+wire [{PITON_NUM_CHIPS}:0]  cep_queue3_credits_return;
+''')
+%>
 
-assign cep_data = fifo_data[`CEP_DATA_WIDTH-1:0];
-assign cep_chipid = fifo_data[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
-assign cep_queue_id = fifo_data[`CEP_DATA_WIDTH+3+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH];
-assign cep_val = ~fifo_empty;
+axi2cep_queue queue1 (
+    .axi_clk(axi_clk),
+    .axi_rst_n(axi_rst_n),
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
 
+    //input
+    .cep_val_in(dispatch & wr_queue_id[0]),
+    .cep_data_in(cep_indata),
+    .cep_chipid_in(wr_chipid),
+
+    //output
+    .cep_val_out(cep_queue1_val),
+    .cep_data_out(cep_queue1_data),
+    .cep_rdy_out(cep_queue1_rdy),
+    .cep_credits(cep_queue1_credits_return)
+);
+
+// queues
+axi2cep_queue queue2 (
+    .axi_clk(axi_clk),
+    .axi_rst_n(axi_rst_n),
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+
+    //input
+    .cep_val_in(dispatch & wr_queue_id[1]),
+    .cep_data_in(cep_indata),
+    .cep_chipid_in(wr_chipid),
+
+    //output
+    .cep_val_out(cep_queue2_val),
+    .cep_data_out(cep_queue2_data),
+    .cep_rdy_out(cep_queue2_rdy),
+    .cep_credits(cep_queue2_credits_return)
+);
+
+// queues
+axi2cep_queue queue3 (
+    .axi_clk(axi_clk),
+    .axi_rst_n(axi_rst_n),
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+
+    //input
+    .cep_val_in(dispatch & wr_queue_id[2]),
+    .cep_data_in(cep_indata),
+    .cep_chipid_in(wr_chipid),
+
+    //output
+    .cep_val_out(cep_queue3_val),
+    .cep_data_out(cep_queue3_data),
+    .cep_rdy_out(cep_queue3_rdy),
+    .cep_credits(cep_queue3_credits_return)
+);
 
 assign s_axi_bvalid = wr_resp_pending;
 assign s_axi_bid = axi_bid;//6'b100000;
@@ -213,9 +232,9 @@ axi2cep_credits axi2cep_credits(
     .sys_clk    (sys_clk),
     .sys_rst_n  (sys_rst_n),
 
-    .cep_queue1_credits(cep_queue1_credits),    
-    .cep_queue2_credits(cep_queue2_credits),
-    .cep_queue3_credits(cep_queue3_credits),
+    .cep_queue1_credits_return(cep_queue1_credits_return),
+    .cep_queue2_credits_return(cep_queue2_credits_return),
+    .cep_queue3_credits_return(cep_queue3_credits_return),
 
     .s_axi_arid    (s_axi_arid), 
     .s_axi_araddr  (s_axi_araddr), 

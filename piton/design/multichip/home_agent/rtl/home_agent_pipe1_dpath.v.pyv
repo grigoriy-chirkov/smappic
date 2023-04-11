@@ -582,8 +582,7 @@ end
 for i in range(L2_WAYS):
     print("always @ *")
     print("begin")
-    print('''    if ((addr_S2_f[`L2_TAG] == tag_data_way_S2[%d]) && 
-(state_way_S2[%d][`L2_STATE_VD] == `L2_VD_CLEAN || state_way_S2[%d][`L2_STATE_VD] == `L2_VD_DIRTY ))''' % (i, i, i))
+    print('''    if ((addr_S2_f[`L2_TAG] == tag_data_way_S2[%d]) && (state_way_S2[%d][`L2_STATE_VD] == `L2_VD_CLEAN || state_way_S2[%d][`L2_STATE_VD] == `L2_VD_DIRTY ))''' % (i, i, i))
     print("    begin")
     print("        tag_hit_way_S2[%d] = 1'b1;" % (i))
     print("    end")
@@ -621,32 +620,6 @@ begin
         l2_tag_hit_S2 = l2_tag_cmp_hit_S2;
     end
 end
-/*
-<%  
-print("            l2_tag_hit_S2 = ",end="")
-for i in range(L2_WAYS):
-    if i != L2_WAYS-1:
-        print("tag_hit_way_S2[%d] || " % (i),end="")
-    else:
-        print("tag_hit_way_S2[%d];" % (i))
-%>
-    end
-end
-
-
-
-always @ *
-begin
-<% 
-print("    l2_hit_way_sel_S2 = {`L2_WAYS_WIDTH{1'b0}};")
-for i in range(L2_WAYS):
-    print("    if (tag_hit_way_S2[%d])" % (i))
-    print("    begin")
-    print("        l2_hit_way_sel_S2 = `L2_WAY_%d;" % (i))
-    print("    end")
-%>
-end
-*/
  
 //pseudo LRU algorithm 
 always @ *

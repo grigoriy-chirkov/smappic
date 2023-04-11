@@ -36,7 +36,6 @@ from pyhplib import *
 module cep2noc (
     input clk,
     input rst_n,
-    input   wire [`NOC_CHIPID_WIDTH-1:0]           fpgaid,
 
     // Noc interface
     output  wire                                   noc1_val,
@@ -50,102 +49,15 @@ module cep2noc (
     input   wire                                   noc3_rdy,
 
     // CEP interace
-    input  wire                                    cep_val,
-    input  wire  [`CEP_DATA_WIDTH-1:0]             cep_data,
-    input  wire  [2:0]                             cep_queue_id,
-    input  wire  [`NOC_CHIPID_WIDTH-1:0]           cep_chipid,
-    output wire                                    cep_rdy, 
-    // credits
-<%
-print(f'''
-    output wire [{PITON_NUM_CHIPS}:0]              cep_queue1_credits, 
-    output wire [{PITON_NUM_CHIPS}:0]              cep_queue2_credits, 
-    output wire [{PITON_NUM_CHIPS}:0]              cep_queue3_credits
-''')
-%>
-);
-
-assign cep_rdy = 1'b1;
-
-wire cep_queue1_val;
-wire [`CEP_DATA_WIDTH-1:0] cep_queue1_data;
-wire cep_queue1_rdy;
-cep2noc_queue queue1 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .fpgaid(fpgaid),
-
-    //input
-<%
-for i in range(PITON_NUM_CHIPS):
-    print(f'''\
-    .chip{i}_cep_val_in(cep_val & (cep_chipid == {i}) & cep_queue_id[0]),
-''')
-print(f'''\
-    .host_cep_val_in(cep_val & (cep_chipid >= {PITON_NUM_CHIPS}) & cep_queue_id[0]),
-''')
-%>
-    .cep_data_in(cep_data),
-
-    //output
-    .cep_val_out(cep_queue1_val),
-    .cep_data_out(cep_queue1_data),
-    .cep_rdy_out(cep_queue1_rdy),
-    .cep_credits(cep_queue1_credits)
-);
-
-wire cep_queue2_val;
-wire [`CEP_DATA_WIDTH-1:0] cep_queue2_data;
-wire cep_queue2_rdy;
-cep2noc_queue queue2 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .fpgaid(fpgaid),
-
-    // input
-<%
-for i in range(PITON_NUM_CHIPS):
-    print(f'''\
-    .chip{i}_cep_val_in(cep_val & (cep_chipid == {i}) & cep_queue_id[1]),
-''')
-print(f'''\
-    .host_cep_val_in(cep_val & (cep_chipid >= {PITON_NUM_CHIPS}) & cep_queue_id[1]),
-''')
-%>
-    .cep_data_in(cep_data),
-
-    //output
-    .cep_val_out(cep_queue2_val),
-    .cep_data_out(cep_queue2_data),
-    .cep_rdy_out(cep_queue2_rdy),
-    .cep_credits(cep_queue2_credits)
-);
-
-wire cep_queue3_val;
-wire [`CEP_DATA_WIDTH-1:0] cep_queue3_data;
-wire cep_queue3_rdy;
-cep2noc_queue queue3 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .fpgaid(fpgaid),
-
-    // input
-<%
-for i in range(PITON_NUM_CHIPS):
-    print(f'''\
-    .chip{i}_cep_val_in(cep_val & (cep_chipid == {i}) & cep_queue_id[2]),
-''')
-print(f'''\
-    .host_cep_val_in(cep_val & (cep_chipid >= {PITON_NUM_CHIPS}) & cep_queue_id[2]),
-''')
-%>
-    .cep_data_in(cep_data),
-
-    // output
-    .cep_val_out(cep_queue3_val),
-    .cep_data_out(cep_queue3_data),
-    .cep_rdy_out(cep_queue3_rdy),
-    .cep_credits(cep_queue3_credits)
+    input  wire                                    cep_queue1_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]             cep_queue1_data,
+    output wire                                    cep_queue1_rdy, 
+    input  wire                                    cep_queue2_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]             cep_queue2_data,
+    output wire                                    cep_queue2_rdy,
+    input  wire                                    cep_queue3_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]             cep_queue3_data,
+    output wire                                    cep_queue3_rdy
 );
 
 wire pkg1_val;

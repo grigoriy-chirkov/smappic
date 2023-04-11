@@ -1,0 +1,128 @@
+// ========== Copyright Header Begin ============================================
+// Copyright (c) 2023 Princeton University
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Princeton University nor the
+//       names of its contributors may be used to endorse or promote products
+//       derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL PRINCETON UNIVERSITY BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// ========== Copyright Header End ============================================
+
+`include "cep_defines.vh"
+`include "define.tmp.h"
+
+<%
+from pyhplib import *
+%>
+
+
+module multichip_adapter_outpipe1 (
+    input clk,
+    input rst_n,
+    
+    // Noc interface
+    input  wire                                   noc_val,
+    input  wire [`NOC_DATA_WIDTH-1:0]             noc_data,
+    output wire                                   noc_rdy,
+
+    // CEP interace
+    output wire                                   cep_val,
+    output wire [`CEP_DATA_WIDTH-1:0]             cep_data,
+    output wire [`NOC_CHIPID_WIDTH-1:0]           cep_chipid,
+    input  wire                                   cep_rdy
+);
+
+
+
+
+wire stall_S1;
+wire stall_S2;
+wire stall_S3;
+
+wire val_S1;
+reg val_S2;
+reg val_S3;
+
+// Stage 1
+
+wire [`PKG_DATA_WIDTH-1:0] data_S1;
+
+noc_deserializer noc_deserializer(
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .flit_val(noc_val),
+    .flit_data(noc_data),
+    .flit_rdy(noc_rdy),
+
+    .pkg_val(val_S1), 
+    .pkg_data(data_S1),
+    .pkg_rdy(~stall_S1)
+);
+
+assign stall_S1 = stall_S2 & val_S1;
+
+wire val_S2_next = val_S1;
+wire [`PKG_DATA_WIDTH-1:0] data_S2_next = data_S1;
+
+// Stage 1 -> 2
+
+reg [`PKG_DATA_WIDTH-1:0] data_S2;
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        val_S2 <= 1'b0;
+        data_S2 <= `PKG_DATA_WIDTH'b0;
+    end
+    else if (~stall_S2) begin
+        val_S2 <= val_S2_next;
+        data_S2 <= data_S2_next;
+    end 
+end
+
+assign stall_S2 = stall_S3 & val_S2;
+
+// Stage 2
+
+wire val_S3_next = val_S2;
+wire [`PKG_DATA_WIDTH-1:0] data_S3_next = data_S2;
+
+// Stage 2 -> 3
+
+reg [`PKG_DATA_WIDTH-1:0] data_S3;
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        val_S3 <= 1'b0;
+        data_S3 <= `PKG_DATA_WIDTH'b0;
+    end
+    else if (~stall_S3) begin
+        val_S3 <= val_S3_next;
+        data_S3 <= data_S3_next;
+    end 
+end
+
+assign stall_S3 = ~cep_rdy & val_S3;
+
+assign cep_val = val_S3;
+assign cep_data = data_S3;
+assign cep_chipid = data_S3[`MSG_DST_ONCHIPID];
+
+endmodule

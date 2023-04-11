@@ -2,7 +2,7 @@ axi2cep_credits.v
 axi2cep.v
 cep2axi_credits.v
 cep2axi.v
-cep2noc_queue.v
+axi2cep_queue.v
 cep2noc.v
 multichip_adapter_in.v
 multichip_adapter_out.v
@@ -14,3 +14,11 @@ pkg2cep.v
 cep2pkg.v
 repeater_checker.v
 traffic_shaper.v
+multichip_adapter.v
+multichip_adapter_core.v
+multichip_adapter_outpipe1.v
+multichip_adapter_outpipe2.v
+multichip_adapter_outpipe3.v
+multichip_adapter_inpipe1.v
+multichip_adapter_inpipe2.v
+multichip_adapter_inpipe3.v

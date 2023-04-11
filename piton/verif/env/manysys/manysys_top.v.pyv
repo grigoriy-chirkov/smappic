@@ -672,7 +672,7 @@ system system1(
     .multichip_processor_noc3_ready   (sys1_noc3_in_rdy),
 `endif
 
-
+    .sw(),
     // Do not provide any functionality
     .leds()
 );

@@ -40,15 +40,15 @@ module multichip_adapter_out (
     input axi_rst_n, 
     
     // Noc interface
-    input  wire                                   noc1_val,
-    input  wire [`NOC_DATA_WIDTH-1:0]             noc1_data,
-    output wire                                   noc1_rdy,
-    input  wire                                   noc2_val,
-    input  wire [`NOC_DATA_WIDTH-1:0]             noc2_data,
-    output wire                                   noc2_rdy,
-    input  wire                                   noc3_val,
-    input  wire [`NOC_DATA_WIDTH-1:0]             noc3_data,
-    output wire                                   noc3_rdy,
+    input  wire                               noc1_val,
+    input  wire [`NOC_DATA_WIDTH-1:0]         noc1_data,
+    output wire                               noc1_rdy,
+    input  wire                               noc2_val,
+    input  wire [`NOC_DATA_WIDTH-1:0]         noc2_data,
+    output wire                               noc2_rdy,
+    input  wire                               noc3_val,
+    input  wire [`NOC_DATA_WIDTH-1:0]         noc3_data,
+    output wire                               noc3_rdy,
 
     // AXI interace
     output wire [`AXI4_ID_WIDTH     -1:0]     m_axi_awid,
@@ -90,17 +90,18 @@ for i in range(PITON_NUM_CHIPS):
 );
 
 // CEP interace
-wire                                   cep_val;
-wire [`CEP_DATA_WIDTH-1:0]             cep_data;
-wire [2:0]                             cep_queue_id;
-wire                                   cep_rdy;
-<%
-print(f'''
-wire [{PITON_NUM_CHIPS}:0]                                cep_queue1_credits_nz;
-wire [{PITON_NUM_CHIPS}:0]                                cep_queue2_credits_nz;
-wire [{PITON_NUM_CHIPS}:0]                                cep_queue3_credits_nz;
-''')
-%> 
+wire                                   cep_queue1_val;
+wire [`CEP_DATA_WIDTH-1:0]             cep_queue1_data;
+wire [`NOC_CHIPID_WIDTH-1:0]           cep_queue1_chipid;
+wire                                   cep_queue1_rdy;
+wire                                   cep_queue2_val;
+wire [`CEP_DATA_WIDTH-1:0]             cep_queue2_data;
+wire [`NOC_CHIPID_WIDTH-1:0]           cep_queue2_chipid;
+wire                                   cep_queue2_rdy;
+wire                                   cep_queue3_val;
+wire [`CEP_DATA_WIDTH-1:0]             cep_queue3_data;
+wire [`NOC_CHIPID_WIDTH-1:0]           cep_queue3_chipid;
+wire                                   cep_queue3_rdy;
 
 noc2cep noc2cep(
     .noc1_val(noc1_val),
@@ -114,13 +115,18 @@ noc2cep noc2cep(
     .noc3_rdy(noc3_rdy),
 
     // CEP interace
-    .cep_val(cep_val),
-    .cep_data(cep_data),
-    .cep_queue_id(cep_queue_id),
-    .cep_rdy(cep_rdy),
-    .cep_queue1_credits_nz(cep_queue1_credits_nz),
-    .cep_queue2_credits_nz(cep_queue2_credits_nz),
-    .cep_queue3_credits_nz(cep_queue3_credits_nz),
+    .cep_queue1_val(cep_queue1_val),
+    .cep_queue1_data(cep_queue1_data),
+    .cep_queue1_chipid(cep_queue1_chipid),
+    .cep_queue1_rdy(cep_queue1_rdy),
+    .cep_queue2_val(cep_queue2_val),
+    .cep_queue2_data(cep_queue2_data),
+    .cep_queue2_chipid(cep_queue2_chipid),
+    .cep_queue2_rdy(cep_queue2_rdy),
+    .cep_queue3_val(cep_queue3_val),
+    .cep_queue3_data(cep_queue3_data),
+    .cep_queue3_chipid(cep_queue3_chipid),
+    .cep_queue3_rdy(cep_queue3_rdy),
 
     .clk(sys_clk),
     .rst_n(sys_rst_n)
@@ -128,13 +134,18 @@ noc2cep noc2cep(
 
 cep2axi cep2axi(
     // CEP interace
-    .cep_val(cep_val),
-    .cep_data(cep_data),
-    .cep_queue_id(cep_queue_id),
-    .cep_rdy(cep_rdy),
-    .cep_queue1_credits_nz(cep_queue1_credits_nz),
-    .cep_queue2_credits_nz(cep_queue2_credits_nz),
-    .cep_queue3_credits_nz(cep_queue3_credits_nz),
+    .cep_queue1_val(cep_queue1_val),
+    .cep_queue1_data(cep_queue1_data),
+    .cep_queue1_chipid(cep_queue1_chipid),
+    .cep_queue1_rdy(cep_queue1_rdy),
+    .cep_queue2_val(cep_queue2_val),
+    .cep_queue2_data(cep_queue2_data),
+    .cep_queue2_chipid(cep_queue2_chipid),
+    .cep_queue2_rdy(cep_queue2_rdy),
+    .cep_queue3_val(cep_queue3_val),
+    .cep_queue3_data(cep_queue3_data),
+    .cep_queue3_chipid(cep_queue3_chipid),
+    .cep_queue3_rdy(cep_queue3_rdy),
 
     .m_axi_awid(m_axi_awid),
     .m_axi_awaddr(m_axi_awaddr),
@@ -172,9 +183,11 @@ cep2axi cep2axi(
     .sys_rst_n(sys_rst_n),
 
     .chipid       (chipid), 
-    .chip0_base   (`AXI4_ADDR_WIDTH'h00000), 
-    .chip1_base   (`AXI4_ADDR_WIDTH'h10000), 
-    .host_base    (`AXI4_ADDR_WIDTH'h40000)
+<%
+for i in range(PITON_NUM_CHIPS):
+    print(f"    .chip{i}_base(chip{i}_base),")
+%>
+    .host_base    (host_base)
 );
 
 endmodule

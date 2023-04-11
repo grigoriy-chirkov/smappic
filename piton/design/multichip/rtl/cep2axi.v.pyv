@@ -40,18 +40,18 @@ module cep2axi (
     input sys_rst_n,
     
     // CEP interface
-    input wire                                cep_val, 
-    input wire [`CEP_DATA_WIDTH-1:0]          cep_data,
-    input wire [2:0]                          cep_queue_id,
-    output wire                               cep_rdy, 
-    // credits info
-<%
-print(f'''
-    output wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz, 
-    output wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz, 
-    output wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz, 
-''')
-%>
+    input  wire                               cep_queue1_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue1_data,
+    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue1_chipid,
+    output wire                               cep_queue1_rdy, 
+    input  wire                               cep_queue2_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue2_data,
+    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue2_chipid,
+    output wire                               cep_queue2_rdy,
+    input  wire                               cep_queue3_val,
+    input  wire  [`CEP_DATA_WIDTH-1:0]        cep_queue3_data,
+    input  wire  [`NOC_CHIPID_WIDTH-1:0]      cep_queue3_chipid,
+    output wire                               cep_queue3_rdy,
 
     // AXI interace
     output wire [`AXI4_ID_WIDTH     -1:0]     m_axi_awid,
@@ -93,50 +93,213 @@ for i in range(PITON_NUM_CHIPS):
 );
 
 // sync cep to axi clock
-wire cep_val_synced;
-wire [`CEP_DATA_WIDTH-1:0] cep_data_synced;
-wire cep_rdy_synced;
-wire [2:0] cep_queue_id_synced;
-wire fifo_full;
-wire fifo_empty;
-wire [`CEP_DATA_WIDTH+3-1:0] fifo_out;
+
+wire cep_queue1_val_synced;
+wire [`CEP_DATA_WIDTH-1:0] cep_queue1_data_synced;
+wire [`NOC_CHIPID_WIDTH-1:0] cep_queue1_chipid_synced;
+reg  cep_queue1_rdy_synced;
+wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo1_out;
+wire fifo1_full;
+wire fifo1_empty;
 
 `ifdef PITON_PROTO
-afifo_w515_d16  clk_crossing_fifo(
+afifo_w526_d16  clk_crossing_fifo1(
     .rst(~sys_rst_n),
     .wr_clk(sys_clk),
     .rd_clk(axi_clk),
-    .rd_en(cep_rdy_synced),
-    .wr_en(cep_val),
-    .din({cep_queue_id, cep_data}),
-    .dout(fifo_out),
-    .full(fifo_full),
-    .empty(fifo_empty)
+    .rd_en(cep_queue1_rdy_synced),
+    .wr_en(cep_queue1_val),
+    .din({cep_queue1_chipid, cep_queue1_data}),
+    .dout(fifo1_out),
+    .full(fifo1_full),
+    .empty(fifo1_empty)
 );
 `else // ifndef PITON_PROTO
 async_fifo #(
-.DSIZE(`CEP_DATA_WIDTH + 3),
+.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
 .ASIZE(4),
 .MEMSIZE(8) )
-clk_crossing_fifo(
+clk_crossing_fifo1(
     .rreset(~axi_rst_n),
     .wreset(~sys_rst_n),
     .wclk(sys_clk),
     .rclk(axi_clk),
-    .ren(cep_rdy_synced),
-    .wval(cep_val),
-    .wdata({cep_queue_id, cep_data}),
-    .rdata(fifo_out),
-    .wfull(fifo_full),
-    .rempty(fifo_empty)
+    .ren(cep_queue1_rdy_synced),
+    .wval(cep_queue1_val),
+    .wdata({cep_queue1_chipid, cep_queue1_data}),
+    .rdata(fifo1_out),
+    .wfull(fifo1_full),
+    .rempty(fifo1_empty)
 );
 `endif // endif PITON_PROTO
+assign cep_queue1_rdy = ~fifo1_full;
+assign cep_queue1_val_synced = ~fifo1_empty;
+assign cep_queue1_data_synced = fifo1_out[`CEP_DATA_WIDTH-1:0];
+assign cep_queue1_chipid_synced = fifo1_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
 
-assign cep_data_synced = fifo_out[`CEP_DATA_WIDTH-1:0];
-assign cep_queue_id_synced = fifo_out[`CEP_DATA_WIDTH+2:`CEP_DATA_WIDTH];
-assign cep_rdy = ~fifo_full;
-assign cep_val_synced = ~fifo_empty;
 
+wire cep_queue2_val_synced;
+wire [`CEP_DATA_WIDTH-1:0] cep_queue2_data_synced;
+wire [`NOC_CHIPID_WIDTH-1:0] cep_queue2_chipid_synced;
+reg  cep_queue2_rdy_synced;
+wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo2_out;
+wire fifo2_full;
+wire fifo2_empty;
+
+`ifdef PITON_PROTO
+afifo_w526_d16  clk_crossing_fifo2(
+    .rst(~sys_rst_n),
+    .wr_clk(sys_clk),
+    .rd_clk(axi_clk),
+    .rd_en(cep_queue2_rdy_synced),
+    .wr_en(cep_queue2_val),
+    .din({cep_queue2_chipid, cep_queue2_data}),
+    .dout(fifo2_out),
+    .full(fifo2_full),
+    .empty(fifo2_empty)
+);
+`else // ifndef PITON_PROTO
+async_fifo #(
+.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
+.ASIZE(4),
+.MEMSIZE(8) )
+clk_crossing_fifo2(
+    .rreset(~axi_rst_n),
+    .wreset(~sys_rst_n),
+    .wclk(sys_clk),
+    .rclk(axi_clk),
+    .ren(cep_queue2_rdy_synced),
+    .wval(cep_queue2_val),
+    .wdata({cep_queue2_chipid, cep_queue2_data}),
+    .rdata(fifo2_out),
+    .wfull(fifo2_full),
+    .rempty(fifo2_empty)
+);
+`endif // endif PITON_PROTO
+assign cep_queue2_rdy = ~fifo2_full;
+assign cep_queue2_val_synced = ~fifo2_empty;
+assign cep_queue2_data_synced = fifo2_out[`CEP_DATA_WIDTH-1:0];
+assign cep_queue2_chipid_synced = fifo2_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
+
+wire cep_queue3_val_synced;
+wire [`CEP_DATA_WIDTH-1:0] cep_queue3_data_synced;
+wire [`NOC_CHIPID_WIDTH-1:0] cep_queue3_chipid_synced;
+reg  cep_queue3_rdy_synced;
+wire [`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:0] fifo3_out;
+wire fifo3_full;
+wire fifo3_empty;
+
+`ifdef PITON_PROTO
+afifo_w526_d16  clk_crossing_fifo3(
+    .rst(~sys_rst_n),
+    .wr_clk(sys_clk),
+    .rd_clk(axi_clk),
+    .rd_en(cep_queue3_rdy_synced),
+    .wr_en(cep_queue3_val),
+    .din({cep_queue3_chipid, cep_queue3_data}),
+    .dout(fifo3_out),
+    .full(fifo3_full),
+    .empty(fifo3_empty)
+);
+`else // ifndef PITON_PROTO
+async_fifo #(
+.DSIZE(`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH),
+.ASIZE(4),
+.MEMSIZE(8) )
+clk_crossing_fifo3(
+    .rreset(~axi_rst_n),
+    .wreset(~sys_rst_n),
+    .wclk(sys_clk),
+    .rclk(axi_clk),
+    .ren(cep_queue3_rdy_synced),
+    .wval(cep_queue3_val),
+    .wdata({cep_queue3_chipid, cep_queue3_data}),
+    .rdata(fifo3_out),
+    .wfull(fifo3_full),
+    .rempty(fifo3_empty)
+);
+`endif // endif PITON_PROTO
+assign cep_queue3_rdy = ~fifo3_full;
+assign cep_queue3_val_synced = ~fifo3_empty;
+assign cep_queue3_data_synced = fifo3_out[`CEP_DATA_WIDTH-1:0];
+assign cep_queue3_chipid_synced = fifo3_out[`CEP_DATA_WIDTH+`NOC_CHIPID_WIDTH-1:`CEP_DATA_WIDTH];
+
+
+
+//=========================================
+// choose which queue goes now
+//=========================================
+
+<%
+print(f'''
+wire [{PITON_NUM_CHIPS}:0] cep_queue1_credits_nz;
+wire [{PITON_NUM_CHIPS}:0] cep_queue2_credits_nz;
+wire [{PITON_NUM_CHIPS}:0] cep_queue3_credits_nz;
+''')
+%>
+
+reg [2:0] queue_chosen;
+always @(*) begin
+  // always choose queue3 if its valid and we have
+  // enough credits to send to destination
+  queue_chosen[2] = cep_queue3_val_synced & 
+                    cep_queue3_credits_nz[cep_queue3_chipid_synced];
+  // choose queue2 if queue 3 is not chosen,
+  // and we have enough credits
+  queue_chosen[1] = cep_queue2_val_synced & ~queue_chosen[2] & 
+                    cep_queue2_credits_nz[cep_queue2_chipid_synced];
+  // same logic for queue1, but with even lower priority
+  queue_chosen[0] = cep_queue1_val_synced & ~queue_chosen[2] & ~queue_chosen[1] & 
+                    cep_queue1_credits_nz[cep_queue1_chipid_synced];
+end
+
+reg cep_val_synced;
+reg [`CEP_DATA_WIDTH-1:0] cep_data_synced;
+reg [2:0] cep_queue_id_synced;
+reg [`NOC_CHIPID_WIDTH-1:0] cep_chipid_synced;
+wire cep_rdy_synced;
+
+always @* begin
+    case (queue_chosen) 
+        3'b001: begin
+            cep_val_synced = cep_queue1_val_synced;
+            cep_data_synced = cep_queue1_data_synced;
+            cep_queue_id_synced = 3'b001;
+            cep_chipid_synced = cep_queue1_chipid_synced;
+            cep_queue1_rdy_synced = cep_rdy_synced;
+            cep_queue2_rdy_synced = 1'b0;
+            cep_queue3_rdy_synced = 1'b0;
+        end
+        3'b010: begin
+            cep_val_synced = cep_queue2_val_synced;
+            cep_data_synced = cep_queue2_data_synced;
+            cep_queue_id_synced = 3'b010;
+            cep_chipid_synced = cep_queue2_chipid_synced;
+            cep_queue1_rdy_synced = 1'b0;
+            cep_queue2_rdy_synced = cep_rdy_synced;
+            cep_queue3_rdy_synced = 1'b0;
+        end
+        3'b100: begin
+            cep_val_synced = cep_queue3_val_synced;
+            cep_data_synced = cep_queue3_data_synced;
+            cep_queue_id_synced = 3'b100;
+            cep_chipid_synced = cep_queue3_chipid_synced;
+            cep_queue1_rdy_synced = 1'b0;
+            cep_queue2_rdy_synced = 1'b0;
+            cep_queue3_rdy_synced = cep_rdy_synced;
+        end
+        default: begin
+            // no queue is chosen
+            cep_val_synced = 1'b0;
+            cep_data_synced = `CEP_DATA_WIDTH'd0;
+            cep_queue_id_synced = 3'b000;
+            cep_chipid_synced = `NOC_CHIPID_WIDTH'b0;
+            cep_queue1_rdy_synced = 1'b0;
+            cep_queue2_rdy_synced = 1'b0;
+            cep_queue3_rdy_synced = 1'b0;
+        end
+    endcase
+end
 
 wire axi_aw_go = m_axi_awvalid & m_axi_awready;
 wire axi_w_go  = m_axi_wvalid  & m_axi_wready;
@@ -145,7 +308,7 @@ wire [`AXI4_DATA_WIDTH-1:0] wdata = cep_data_synced;
 reg [`AXI4_ADDR_WIDTH-1:0] wr_addr;
 reg [`NOC_CHIPID_WIDTH-1:0] wr_chipid;
 always @(*) begin
-  wr_chipid = {1'b0, cep_data_synced[`MSG_DST_ONCHIPID]};
+  wr_chipid = cep_chipid_synced;
 <%
 print(f'''
   if (wr_chipid > {PITON_NUM_CHIPS}) wr_chipid = `NOC_CHIPID_WIDTH'd{PITON_NUM_CHIPS};
@@ -207,8 +370,6 @@ end
 cep2axi_credits cep2axi_credits(
     .axi_clk       (axi_clk), 
     .axi_rst_n     (axi_rst_n), 
-    .sys_clk       (sys_clk),
-    .sys_rst_n     (sys_rst_n),
 
     .cep_queue1_credits_nz   (cep_queue1_credits_nz), 
     .cep_queue2_credits_nz   (cep_queue2_credits_nz), 

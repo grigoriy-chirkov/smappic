@@ -839,11 +839,8 @@ reg stall_mshr_S1;
 always @ *
 begin
     // trinn
-    // stall_mshr_S1 = ( (mshr_cam_en_S1 && !global_stall_S1) && mshr_hit_S1)
-    stall_mshr_S1 = (mshr_cam_en_S1 && mshr_hit_S1)
-                 || (~msg_from_mshr_S1
-                 //can be optimized
-                 &&((mshr_empty_slots_S1 <= 3 && (valid_S2 || valid_S3 || valid_S4))
+    stall_mshr_S1 = (mshr_cam_en_S1 && mshr_hit_S1) || 
+                (~msg_from_mshr_S1 && ((mshr_empty_slots_S1 <= 3 && (valid_S2 || valid_S3 || valid_S4))
                  ||  mshr_empty_slots_S1 == 0));
 end
 
@@ -2048,7 +2045,6 @@ end
 always @ *
 begin
     stall_pre_S3 = stall_S4;
-    //stall_pre_S3 = stall_S4 || global_stall_S3;
 end
 
 always @ *

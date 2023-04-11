@@ -325,66 +325,53 @@ wire _SYS___NOC__in_rdy;
         print(s)
 %>
 
-noc_repeater_het #(
-    .SRC(0), 
-    .DST(1)
-) noc_repeater01(
+noc_repeater_het noc_repeater(
     .piton_clk(core_ref_clk), 
     .piton_rst_n(sys_rst_n), 
     .axi_clk(axi_clk), 
     .axi_rst_n(axi_rst_n),
 
-    .noc1_out_val  (sys1_noc1_in_val), 
-    .noc1_out_data (sys1_noc1_in_data), 
-    .noc1_out_rdy  (sys1_noc1_in_rdy), 
-    .noc1_in_val   (sys0_noc1_out_val), 
-    .noc1_in_data  (sys0_noc1_out_data), 
-    .noc1_in_rdy   (sys0_noc1_out_rdy),
+    .noc1_out1_val  (sys1_noc1_in_val), 
+    .noc1_out1_data (sys1_noc1_in_data), 
+    .noc1_out1_rdy  (sys1_noc1_in_rdy), 
+    .noc1_in0_val   (sys0_noc1_out_val), 
+    .noc1_in0_data  (sys0_noc1_out_data), 
+    .noc1_in0_rdy   (sys0_noc1_out_rdy),
 
-    .noc2_out_val  (sys1_noc2_in_val), 
-    .noc2_out_data (sys1_noc2_in_data), 
-    .noc2_out_rdy  (sys1_noc2_in_rdy), 
-    .noc2_in_val   (sys0_noc2_out_val), 
-    .noc2_in_data  (sys0_noc2_out_data), 
-    .noc2_in_rdy   (sys0_noc2_out_rdy),
+    .noc2_out1_val  (sys1_noc2_in_val), 
+    .noc2_out1_data (sys1_noc2_in_data), 
+    .noc2_out1_rdy  (sys1_noc2_in_rdy), 
+    .noc2_in0_val   (sys0_noc2_out_val), 
+    .noc2_in0_data  (sys0_noc2_out_data), 
+    .noc2_in0_rdy   (sys0_noc2_out_rdy),
 
-    .noc3_out_val  (sys1_noc3_in_val), 
-    .noc3_out_data (sys1_noc3_in_data), 
-    .noc3_out_rdy  (sys1_noc3_in_rdy), 
-    .noc3_in_val   (sys0_noc3_out_val), 
-    .noc3_in_data  (sys0_noc3_out_data), 
-    .noc3_in_rdy   (sys0_noc3_out_rdy)
-);
+    .noc3_out1_val  (sys1_noc3_in_val), 
+    .noc3_out1_data (sys1_noc3_in_data), 
+    .noc3_out1_rdy  (sys1_noc3_in_rdy), 
+    .noc3_in0_val   (sys0_noc3_out_val), 
+    .noc3_in0_data  (sys0_noc3_out_data), 
+    .noc3_in0_rdy   (sys0_noc3_out_rdy),
 
-noc_repeater_het #(
-    .SRC(1), 
-    .DST(0)
-) noc_repeater10(
-    .piton_clk(core_ref_clk), 
-    .piton_rst_n(sys_rst_n), 
-    .axi_clk(axi_clk), 
-    .axi_rst_n(axi_rst_n),
+    .noc1_out0_val  (sys0_noc1_in_val), 
+    .noc1_out0_data (sys0_noc1_in_data), 
+    .noc1_out0_rdy  (sys0_noc1_in_rdy), 
+    .noc1_in1_val   (sys1_noc1_out_val), 
+    .noc1_in1_data  (sys1_noc1_out_data), 
+    .noc1_in1_rdy   (sys1_noc1_out_rdy),
 
-    .noc1_out_val  (sys0_noc1_in_val), 
-    .noc1_out_data (sys0_noc1_in_data), 
-    .noc1_out_rdy  (sys0_noc1_in_rdy), 
-    .noc1_in_val   (sys1_noc1_out_val), 
-    .noc1_in_data  (sys1_noc1_out_data), 
-    .noc1_in_rdy   (sys1_noc1_out_rdy),
+    .noc2_out0_val  (sys0_noc2_in_val), 
+    .noc2_out0_data (sys0_noc2_in_data), 
+    .noc2_out0_rdy  (sys0_noc2_in_rdy), 
+    .noc2_in1_val   (sys1_noc2_out_val), 
+    .noc2_in1_data  (sys1_noc2_out_data), 
+    .noc2_in1_rdy   (sys1_noc2_out_rdy),
 
-    .noc2_out_val  (sys0_noc2_in_val), 
-    .noc2_out_data (sys0_noc2_in_data), 
-    .noc2_out_rdy  (sys0_noc2_in_rdy), 
-    .noc2_in_val   (sys1_noc2_out_val), 
-    .noc2_in_data  (sys1_noc2_out_data), 
-    .noc2_in_rdy   (sys1_noc2_out_rdy),
-
-    .noc3_out_val  (sys0_noc3_in_val), 
-    .noc3_out_data (sys0_noc3_in_data), 
-    .noc3_out_rdy  (sys0_noc3_in_rdy), 
-    .noc3_in_val   (sys1_noc3_out_val), 
-    .noc3_in_data  (sys1_noc3_out_data), 
-    .noc3_in_rdy   (sys1_noc3_out_rdy)
+    .noc3_out0_val  (sys0_noc3_in_val), 
+    .noc3_out0_data (sys0_noc3_in_data), 
+    .noc3_out0_rdy  (sys0_noc3_in_rdy), 
+    .noc3_in1_val   (sys1_noc3_out_val), 
+    .noc3_in1_data  (sys1_noc3_out_data), 
+    .noc3_in1_rdy   (sys1_noc3_out_rdy)
 );
 
 `endif
@@ -672,7 +659,7 @@ system system1(
     .multichip_processor_noc3_ready   (sys1_noc3_in_rdy),
 `endif
 
-
+    .sw(),
     // Do not provide any functionality
     .leds()
 );

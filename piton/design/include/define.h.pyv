@@ -310,71 +310,7 @@ print("`define PITON_Y_TILES %d"   % PITON_Y_TILES)
 `define MSG_DATA_SIZE_32B       3'b110
 `define MSG_DATA_SIZE_64B       3'b111
 
-
-//`define HOME_ID_MASK_X          10:10
-//Additional fields for Sharer Domain ID and Logical Sharer ID
-//For coherence domain restriction only
-
-
-// Tri: dynamically adjust these parameters based on how many tiles are available
-//  Assumption: 8x8 topology
-// `ifdef RTL_TILE63
-// `define HOME_ID_MASK_X          8:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          11:9
-// `define HOME_ID_MASK_Y_ENABLE   1
-// `define TOTAL_NUM_TILE          64
-// `else
-// `ifdef RTL_TILE31
-// `define HOME_ID_MASK_X          8:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          10:9
-// `define HOME_ID_MASK_Y_ENABLE   1
-// `define TOTAL_NUM_TILE          32
-// `else
-// `ifdef RTL_TILE15
-// `define HOME_ID_MASK_X          8:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          9:9
-// `define HOME_ID_MASK_Y_ENABLE   1
-// `define TOTAL_NUM_TILE          16
-// `else
-// `ifdef RTL_TILE7
-// `define HOME_ID_MASK_X          8:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          0:0
-// `define HOME_ID_MASK_Y_ENABLE   0
-// `define TOTAL_NUM_TILE          8
-// `else
-// `ifdef RTL_TILE3
-// `define HOME_ID_MASK_X          7:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          0:0
-// `define HOME_ID_MASK_Y_ENABLE   0
-// `define TOTAL_NUM_TILE          4
-// `else
-// `ifdef RTL_TILE1
-// `define HOME_ID_MASK_X          6:6
-// `define HOME_ID_MASK_X_ENABLE   1
-// `define HOME_ID_MASK_Y          0:0
-// `define HOME_ID_MASK_Y_ENABLE   0
-// `define TOTAL_NUM_TILE          2
-// `else
-// `define HOME_ID_MASK_X          6:6
-// `define HOME_ID_MASK_X_ENABLE   0
-// `define HOME_ID_MASK_Y          0:0
-// `define HOME_ID_MASK_Y_ENABLE   0
-// `define TOTAL_NUM_TILE          1
-// `endif
-// `endif
-// `endif
-// `endif
-// `endif
-// `endif
-
 `define TOTAL_NUM_TILE (`PITON_NUM_TILES)
-
-//`define DMBR_TAG_WIDTH 4
 
 //Clumpy Shared Memory
 
@@ -461,40 +397,10 @@ print("`define PITON_Y_TILES %d"   % PITON_Y_TILES)
 `define TTE_CSM_SDID            15:6
 `define TTE_CSM_LSID            5:0
 
-
-//`define TTE_CSM_WIDTH           64
-//`define TTE_CSM                 63:0
-//`define TTE_CSM_VALID           63
-//`define TTE_CSM_SZL             62:61
-//`define TTE_CSM_NFO             60
-//`define TTE_CSM_IE              59
-//`define TTE_CSM_SOFT2           58:49
-//`define TTE_CSM_SZH             48
-//`define TTE_CSM_DIAG            47:40
-//`define TTE_CSM_RES1            39
-//`define TTE_CSM_SDID            38:29
-//`define TTE_CSM_HDID            28:19
-//`define TTE_CSM_LSID            18:13
-//`define TTE_CSM_SOFT            12:8
-//`define TTE_CSM_RES2            7
-//`define TTE_CSM_LOCK            6
-//`define TTE_CSM_CP              5
-//`define TTE_CSM_CV              4
-//`define TTE_CSM_E               3
-//`define TTE_CSM_P               2
-//`define TTE_CSM_W               1
-//`define TTE_CSM_RES3            0
-
-
-
 `define HOME_ID_WIDTH               `MSG_LHID_WIDTH
 `define HOME_ID_ADDR_POS_LOW        `HOME_ID_WIDTH+5 : 6
 `define HOME_ID_ADDR_POS_MIDDLE     `HOME_ID_WIDTH+13 : 14
 `define HOME_ID_ADDR_POS_HIGH       `HOME_ID_WIDTH+23 : 24
-//`define HOME_ID_X_POS_WIDTH         3
-//`define HOME_ID_X_POS               2:0
-//`define HOME_ID_Y_POS_WIDTH         3
-//`define HOME_ID_Y_POS               5:3
 
 // For the on-chip device access requests(addr starts with 0xe), 
 // address has specific fields for x, y, and fbits
