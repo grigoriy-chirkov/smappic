@@ -46,7 +46,11 @@ module multichip_adapter_outpipe1 (
     output wire                                   cep_val,
     output wire [`CEP_DATA_WIDTH-1:0]             cep_data,
     output wire [`CEP_CHIPID_WIDTH-1:0]           cep_chipid,
-    input  wire                                   cep_rdy
+    input  wire                                   cep_rdy,
+
+    output wire                                   mshr_write_state_en,
+    output wire                                   mshr_write_data_en,
+    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data
 );
 
 
@@ -103,6 +107,32 @@ assign stall_S2 = stall_S3 & val_S2;
 
 wire val_S3_next = val_S2;
 wire [`PKG_DATA_WIDTH-1:0] data_S3_next = data_S2;
+
+assign mshr_write_state_en = val_S2 & ~stall_S2;
+assign mshr_write_data_en = val_S2 & ~stall_S2;
+
+multichip_adapter_mshr_encoder mshr_encoder(
+    .data(mshr_write_data),
+
+    .addr(data_S2[`MSG_ADDR]),
+    .way(`MA_WAYS_WIDTH'd0),
+    .mshrid(data_S2[`MSG_MSHRID]),
+    .cache_type(data_S2[`MSG_CACHE_TYPE]),
+    .data_size(data_S2[`MSG_DATA_SIZE]),
+    .msg_type(data_S2[`MSG_TYPE]),
+    .msg_l2_miss(data_S2[`MSG_L2_MISS]),
+    .src_chipid(data_S2[`MSG_SRC_CHIPID]),
+    .src_x(data_S2[`MSG_SRC_X]),
+    .src_y(data_S2[`MSG_SRC_Y]),
+    .src_fbits(data_S2[`MSG_SRC_FBITS]),
+    .sdid(data_S2[`MSG_SDID]),
+    .lsid(data_S2[`MSG_LSID]),
+    .miss_lsid(`MSG_LSID_WIDTH'd0),
+    .smc_miss(1'b0),
+    .recycled(1'b0),
+    .inv_fwd_pending(1'b0)
+);
+
 
 // Stage 2 -> 3
 

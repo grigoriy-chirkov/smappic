@@ -27,6 +27,7 @@
 
 `include "cep_defines.vh"
 `include "define.tmp.h"
+`include "multichip_adapter.vh"
 
 module multichip_adapter_core (
     input clk,
@@ -76,6 +77,60 @@ module multichip_adapter_core (
     output wire                               cep_queue3_rdy_in
 );
 
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_empty_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_pending_index;
+wire mshr_pending;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_empty_slots;
+wire [`MA_OWNER_BITS-1:0] mshr_inv_counter;
+wire mshr_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_hit_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_rd_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_cam_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_pending_data;
+wire mshr_write_state_en;
+wire mshr_write_data_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_write_data;
+
+multichip_adapter_mshr mshr (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(1'b0),
+
+    .cam_en1(1'b1),
+    .wr_state_en1(mshr_write_state_en),
+    .wr_data_en1(mshr_write_data_en),
+    .pending_ready1(1'b1),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
+    .wr_index_in1(mshr_empty_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+
+    .wr_state_en2(1'b0),
+    .wr_data_en2(1'b0),
+    .inc_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_BITS'b0),
+    .data_in2(`MA_MSHR_ARRAY_WIDTH'b0),
+    .data_mask_in2(`MA_MSHR_ARRAY_WIDTH'b0),
+    .rd_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+    .wr_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+
+    .hit(mshr_hit),
+    .hit_index(mshr_hit_index),
+    .rd_state_out(mshr_rd_state),
+    .rd_data_out(mshr_rd_data),
+    .cam_data_out(mshr_cam_data),
+    .pending_data_out(mshr_pending_data),
+
+    .inv_counter_out(mshr_inv_counter),
+    .empty_slots(mshr_empty_slots),
+    .pending(mshr_pending),
+    .pending_index(mshr_pending_index),
+    .empty_index(mshr_empty_index)
+);
+
 multichip_adapter_outpipe1 outpipe1 (
     .clk(clk), 
     .rst_n(rst_n),
@@ -87,7 +142,11 @@ multichip_adapter_outpipe1 outpipe1 (
     .cep_val(cep_queue1_val_out),
     .cep_data(cep_queue1_data_out),
     .cep_chipid(cep_queue1_chipid_out),
-    .cep_rdy(cep_queue1_rdy_out)
+    .cep_rdy(cep_queue1_rdy_out), 
+
+    .mshr_write_state_en(mshr_write_state_en),
+    .mshr_write_data_en(mshr_write_data_en),
+    .mshr_write_data(mshr_write_data)
 );
 
 multichip_adapter_outpipe2 outpipe2 (

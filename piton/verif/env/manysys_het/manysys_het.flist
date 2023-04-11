@@ -21,6 +21,7 @@
 // ========== Copyright Header End ============================================
 +incdir+../../../design/include
 +incdir+../../../design/chipset/include
++incdir+../../../design/multichip/include
 +incdir+.
 
 cross_module.h

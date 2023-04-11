@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Princeton University
+Copyright (c) 2023 Princeton University
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-`include "l2.tmp.h"
 `include "define.tmp.h"
+`include "multichip_adapter.vh"
 
-module home_agent_mshr_wrap(
-
+module multichip_adapter_mshr (
     input wire clk,
     input wire rst_n,
     input wire pipe_wr_sel,
@@ -38,42 +37,42 @@ module home_agent_mshr_wrap(
     input wire wr_state_en1,
     input wire wr_data_en1,
     input wire pending_ready1,
-    input wire [`L2_MSHR_STATE_BITS-1:0] state_in1,
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_in1,
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in1,
-    input wire [`L2_MSHR_INDEX_WIDTH-1:0] inv_counter_rd_index_in1,
-    input wire [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in1,
-    input wire [`L2_MSHR_ADDR_IN_WIDTH-1:0] addr_in1,
+    input wire [`MA_MSHR_STATE_BITS-1:0] state_in1,
+    input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_in1,
+    input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in1,
+    input wire [`MA_MSHR_INDEX_WIDTH-1:0] inv_counter_rd_index_in1,
+    input wire [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in1,
+    input wire [`MA_MSHR_ADDR_IN_WIDTH-1:0] addr_in1,
 
     input wire wr_state_en2,
     input wire wr_data_en2,
     input wire inc_counter_en2,
-    input wire [`L2_MSHR_STATE_BITS-1:0] state_in2,
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_in2,
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in2,
-    input wire [`L2_MSHR_INDEX_WIDTH-1:0] rd_index_in2,
-    input wire [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in2,
+    input wire [`MA_MSHR_STATE_BITS-1:0] state_in2,
+    input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_in2,
+    input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in2,
+    input wire [`MA_MSHR_INDEX_WIDTH-1:0] rd_index_in2,
+    input wire [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in2,
 
     output reg hit,
-    output reg [`L2_MSHR_INDEX_WIDTH-1:0] hit_index,
-    output reg [`L2_MSHR_STATE_BITS-1:0] rd_state_out,
-    output reg [`L2_MSHR_ARRAY_WIDTH-1:0] rd_data_out,
-    output reg [`L2_MSHR_ARRAY_WIDTH-1:0] cam_data_out,
-    output reg [`L2_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
+    output reg [`MA_MSHR_INDEX_WIDTH-1:0] hit_index,
+    output reg [`MA_MSHR_STATE_BITS-1:0] rd_state_out,
+    output reg [`MA_MSHR_ARRAY_WIDTH-1:0] rd_data_out,
+    output reg [`MA_MSHR_ARRAY_WIDTH-1:0] cam_data_out,
+    output reg [`MA_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
 
-    output reg [`L2_OWNER_BITS-1:0] inv_counter_out,
-    output reg [`L2_MSHR_INDEX_WIDTH:0] empty_slots,
+    output reg [`MA_OWNER_BITS-1:0] inv_counter_out,
+    output reg [`MA_MSHR_INDEX_WIDTH:0] empty_slots,
     output reg pending,
-    output reg [`L2_MSHR_INDEX_WIDTH-1:0] pending_index,
-    output reg [`L2_MSHR_INDEX_WIDTH-1:0] empty_index
+    output reg [`MA_MSHR_INDEX_WIDTH-1:0] pending_index,
+    output reg [`MA_MSHR_INDEX_WIDTH-1:0] empty_index
 );
 
 reg wr_state_en;
 reg wr_data_en;
-reg [`L2_MSHR_STATE_BITS-1:0] state_in;
-reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_in;
-reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in;
-reg [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in;
+reg [`MA_MSHR_STATE_BITS-1:0] state_in;
+reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_in;
+reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in;
+reg [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in;
 
 always @ *
 begin
@@ -100,20 +99,20 @@ end
 
 
 <%
-L2_MSHR_ENTRIES = 8
-L2_MSHR_INDEX_WIDTH = 3
+MA_MSHR_ENTRIES = 8
+MA_MSHR_INDEX_WIDTH = 3
 %>
 
-reg [`L2_MSHR_STATE_BITS-1:0] state_mem_f [`L2_MSHR_ENTRIES-1:0];
-reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_mem_f [`L2_MSHR_ENTRIES-1:0];
-reg [`L2_OWNER_BITS-1:0] counter_mem_f [`L2_MSHR_ENTRIES-1:0];
+reg [`MA_MSHR_STATE_BITS-1:0] state_mem_f [`MA_MSHR_ENTRIES-1:0];
+reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_mem_f [`MA_MSHR_ENTRIES-1:0];
+reg [`MA_OWNER_BITS-1:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
 
 always @ *
 begin
     empty_slots = 0;
 <%
-for i in range(L2_MSHR_ENTRIES):
-    print("    if (state_mem_f[%d] == `L2_MSHR_STATE_INVAL)" % (i))
+for i in range(MA_MSHR_ENTRIES):
+    print("    if (state_mem_f[%d] == `MA_MSHR_STATE_INVAL)" % (i))
     print("    begin")
     print("        empty_slots = empty_slots + 1;")
     print("    end")
@@ -123,23 +122,23 @@ end
 always @ *
 begin
 <%
-for i in range(L2_MSHR_ENTRIES):
+for i in range(MA_MSHR_ENTRIES):
     if i == 0:
-        print("    if (state_mem_f[%d] == `L2_MSHR_STATE_PENDING)" % (i))
+        print("    if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
         print("    begin")
         print("        pending = 1'b1;" )
-        print("        pending_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("        pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("    end")
     else:
-        print("    else if (state_mem_f[%d] == `L2_MSHR_STATE_PENDING)" % (i))
+        print("    else if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
         print("    begin")
         print("        pending = 1'b1;" )
-        print("        pending_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("        pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("    end")
 print("    else")
 print("    begin")
 print("        pending = 1'b0;" )
-print("        pending_index = %d\'d0;" % (L2_MSHR_INDEX_WIDTH))
+print("        pending_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
 print("    end")
 %>
 end
@@ -147,20 +146,20 @@ end
 always @ *
 begin
 <%
-for i in range(L2_MSHR_ENTRIES):
+for i in range(MA_MSHR_ENTRIES):
     if i == 0:
-        print("    if (state_mem_f[%d] == `L2_MSHR_STATE_INVAL)" % (i))
+        print("    if (state_mem_f[%d] == `MA_MSHR_STATE_INVAL)" % (i))
         print("    begin")
-        print("        empty_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("        empty_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("    end")
     else:
-        print("    else if (state_mem_f[%d] == `L2_MSHR_STATE_INVAL)" % (i))
+        print("    else if (state_mem_f[%d] == `MA_MSHR_STATE_INVAL)" % (i))
         print("    begin")
-        print("        empty_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("        empty_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("    end")
 print("    else")
 print("    begin")
-print("        empty_index = %d\'d0;" % (L2_MSHR_INDEX_WIDTH))
+print("        empty_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
 print("    end")
 %>
 end
@@ -183,30 +182,30 @@ begin
 <%
 print("    if(cam_en1)")
 print("    begin")
-for i in range(L2_MSHR_ENTRIES):
+for i in range(MA_MSHR_ENTRIES):
     if i == 0:
-        print("        if ((data_mem_f[%d][`L2_MSHR_CMP_ADDR] == addr_in1) && (state_mem_f[%d] != `L2_MSHR_STATE_INVAL))" % (i,i))
+        print("        if ((data_mem_f[%d][`MA_MSHR_CMP_ADDR] == addr_in1) && (state_mem_f[%d] != `MA_MSHR_STATE_INVAL))" % (i,i))
         print("        begin")
         print("            hit = 1'b1;")
-        print("            hit_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("            hit_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("        end")
     else:
-        print("        else if ((data_mem_f[%d][`L2_MSHR_CMP_ADDR] == addr_in1) && (state_mem_f[%d] != `L2_MSHR_STATE_INVAL))" % (i,i))
+        print("        else if ((data_mem_f[%d][`MA_MSHR_CMP_ADDR] == addr_in1) && (state_mem_f[%d] != `MA_MSHR_STATE_INVAL))" % (i,i))
         print("        begin")
         print("            hit = 1'b1;")
-        print("            hit_index = %d\'d%d;" % (L2_MSHR_INDEX_WIDTH, i))
+        print("            hit_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
         print("        end")
 
 print("        else")
 print("        begin")
 print("            hit = 1'b0;")
-print("            hit_index = %d\'d0;" % (L2_MSHR_INDEX_WIDTH))
+print("            hit_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
 print("        end")
 print("    end")
 print("    else")
 print("    begin")
 print("        hit = 1'b0;")
-print("        hit_index = %d\'d0;" % (L2_MSHR_INDEX_WIDTH))
+print("        hit_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
 print("    end")
 
 %>
@@ -220,8 +219,8 @@ begin
     if (!rst_n)
     begin
 <%
-for i in range(L2_MSHR_ENTRIES):
-    print("        state_mem_f[%d] <= `L2_MSHR_STATE_INVAL;" % (i))
+for i in range(MA_MSHR_ENTRIES):
+    print("        state_mem_f[%d] <= `MA_MSHR_STATE_INVAL;" % (i))
 %>
     end
     else if (wr_state_en)
@@ -230,25 +229,25 @@ for i in range(L2_MSHR_ENTRIES):
         if (pending && pending_ready1 && (pending_index != wr_index_in))
         begin
             //SMC miss entries are locked in the mshr
-            if (data_mem_f[pending_index][`L2_MSHR_SMC_MISS])
+            if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
             begin
-                state_mem_f[pending_index] <= `L2_MSHR_STATE_WAIT;
+                state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
             end
             else
             begin
-                state_mem_f[pending_index] <= `L2_MSHR_STATE_INVAL;
+                state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
             end
         end
     end
     else if (pending && pending_ready1)
     begin
-        if (data_mem_f[pending_index][`L2_MSHR_SMC_MISS])
+        if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
         begin
-            state_mem_f[pending_index] <= `L2_MSHR_STATE_WAIT;
+            state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
         end
         else
         begin
-            state_mem_f[pending_index] <= `L2_MSHR_STATE_INVAL;
+            state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
         end
     end
 end
@@ -258,13 +257,13 @@ begin
     if (!rst_n)
     begin
 <%
-for i in range(L2_MSHR_ENTRIES):
-    print("        counter_mem_f[%d] <= {`L2_OWNER_BITS{1'b0}};" % (i))
+for i in range(MA_MSHR_ENTRIES):
+    print("        counter_mem_f[%d] <= {`MA_OWNER_BITS{1'b0}};" % (i))
 %>
     end
     else if (pending && pending_ready1)
     begin
-        counter_mem_f[pending_index] <= {`L2_OWNER_BITS{1'b0}};
+        counter_mem_f[pending_index] <= {`MA_OWNER_BITS{1'b0}};
         if (inc_counter_en2 && (pending_index != wr_index_in))
         begin
             counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + 1;
@@ -282,8 +281,8 @@ begin
     if (!rst_n)
     begin
 <%
-for i in range(L2_MSHR_ENTRIES):
-    print("        data_mem_f[%d] <= {`L2_MSHR_ARRAY_WIDTH{1'b0}};" % (i))
+for i in range(MA_MSHR_ENTRIES):
+    print("        data_mem_f[%d] <= {`MA_MSHR_ARRAY_WIDTH{1'b0}};" % (i))
 %>
     end
     else if (wr_data_en)

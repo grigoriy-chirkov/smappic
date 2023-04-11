@@ -16,3 +16,6 @@ multichip_adapter_outpipe3.v
 multichip_adapter_inpipe1.v
 multichip_adapter_inpipe2.v
 multichip_adapter_inpipe3.v
+multichip_adapter_mshr.v
+multichip_adapter_mshr_encoder.v
+multichip_adapter_mshr_decoder.v
