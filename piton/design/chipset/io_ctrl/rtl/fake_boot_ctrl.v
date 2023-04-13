@@ -292,7 +292,7 @@ assign mem_process_next_val = mem_valid_in & mem_ready_in;
 
 assign read_data = hit_bram_r ? bram_data_out : {`PITON_BRAM_TEST_WIDTH{1'b0}};
 
-assign bram_r_val       = mem_valid_in & ((msg_type == `MSG_TYPE_LOAD_MEM) | (msg_type == `MSG_TYPE_NC_LOAD_REQ));
+assign bram_r_val       = mem_valid_in & ((msg_type == `MSG_TYPE_LOAD_MEM) | (msg_type == `MSG_TYPE_NC_LOAD_MEM));
 assign buf_out_mem[0]   = mem_process_next_val_r  ? msg_send_header_r[`NOC_DATA_WIDTH-1:0] : buf_out_mem_r[0];
 
 assign {buf_out_mem[8], buf_out_mem[7], buf_out_mem[6], buf_out_mem[5],
@@ -306,29 +306,29 @@ assign {buf_out_mem[2], buf_out_mem[1]}     = mem_process_next_val_r ?
                                              {buf_out_mem_r[2], buf_out_mem_r[1]};
 
 // WRITE
-assign bram_w_val       = mem_valid_in & ((msg_type == `MSG_TYPE_STORE_MEM) | (msg_type == `MSG_TYPE_NC_STORE_REQ));
+assign bram_w_val       = mem_valid_in & ((msg_type == `MSG_TYPE_STORE_MEM) | (msg_type == `MSG_TYPE_NC_STORE_MEM));
 assign bram_data_in     = {buf_in_mem_f[10], buf_in_mem_f[9], buf_in_mem_f[8], buf_in_mem_f[7], 
                            buf_in_mem_f[6],  buf_in_mem_f[5], buf_in_mem_f[4], buf_in_mem_f[3]};
-assign bram_w_mask      = msg_type == `MSG_TYPE_NC_STORE_REQ ? write_mask <<  64*(1<<msg_addr[5:3]) : {`PITON_BRAM_TEST_WIDTH{1'b1}};
+assign bram_w_mask      = msg_type == `MSG_TYPE_NC_STORE_MEM ? write_mask <<  64*(1<<msg_addr[5:3]) : {`PITON_BRAM_TEST_WIDTH{1'b1}};
 
 
 // Figure out at which cycle are used
 assign msg_send_type    = {`MSG_TYPE_WIDTH{mem_valid_in}} &
                          (msg_type == `MSG_TYPE_LOAD_MEM        ? `MSG_TYPE_LOAD_MEM_ACK        :
                           msg_type == `MSG_TYPE_STORE_MEM       ? `MSG_TYPE_STORE_MEM_ACK       :
-                          msg_type == `MSG_TYPE_NC_LOAD_REQ     ? `MSG_TYPE_NC_LOAD_MEM_ACK     :
-                          msg_type == `MSG_TYPE_NC_STORE_REQ    ? `MSG_TYPE_NC_STORE_MEM_ACK    : `MSG_TYPE_ERROR);
+                          msg_type == `MSG_TYPE_NC_LOAD_MEM     ? `MSG_TYPE_NC_LOAD_MEM_ACK     :
+                          msg_type == `MSG_TYPE_NC_STORE_MEM    ? `MSG_TYPE_NC_STORE_MEM_ACK    : `MSG_TYPE_ERROR);
 assign msg_send_length  = {`MSG_LENGTH_WIDTH{1'b1}} & 
                          (msg_type == `MSG_TYPE_LOAD_MEM        ? 8'd8  :
                           msg_type == `MSG_TYPE_STORE_MEM       ? 8'd0  :
-                          msg_type == `MSG_TYPE_NC_LOAD_REQ     ? 8'd2  :
-                          msg_type == `MSG_TYPE_NC_STORE_REQ    ? 8'd0  : 8'd0);
+                          msg_type == `MSG_TYPE_NC_LOAD_MEM     ? 8'd2  :
+                          msg_type == `MSG_TYPE_NC_STORE_MEM    ? 8'd0  : 8'd0);
 
 always @(posedge clk)
     msg_send_header_r <= msg_send_header;
 
 always @(posedge clk)
-    addr_subline_r <= msg_type == `MSG_TYPE_NC_LOAD_REQ ? msg_addr[`L2_DATA_SUBLINE] : 2'b0;
+    addr_subline_r <= msg_type == `MSG_TYPE_NC_LOAD_MEM ? msg_addr[`L2_DATA_SUBLINE] : 2'b0;
 
 always @(posedge clk)
     hit_bram_r <= hit_bram;

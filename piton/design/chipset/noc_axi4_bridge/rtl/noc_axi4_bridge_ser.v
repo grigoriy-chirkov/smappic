@@ -142,7 +142,7 @@ always @(posedge clk) begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_STORE_MEM_ACK;
               resp_header[`MSG_LENGTH  ]     <= `MSG_LENGTH_WIDTH'b0;
             end
-            `MSG_TYPE_NC_LOAD_REQ: begin
+            `MSG_TYPE_NC_LOAD_MEM: begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_NC_LOAD_MEM_ACK;
               `ifdef L2_SEND_NC_REQ
               if (header_in[`MSG_DATA_SIZE] < `MSG_DATA_SIZE_8B)
@@ -153,7 +153,7 @@ always @(posedge clk) begin
               resp_header[`MSG_LENGTH  ]     <= `PAYLOAD_LEN; 
               `endif
            end
-            `MSG_TYPE_NC_STORE_REQ: begin
+            `MSG_TYPE_NC_STORE_MEM: begin
               resp_header[`MSG_TYPE    ]     <= `MSG_TYPE_NC_STORE_MEM_ACK;
               resp_header[`MSG_LENGTH  ]     <= `MSG_LENGTH_WIDTH'b0;
             end

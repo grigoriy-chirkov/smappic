@@ -1818,7 +1818,7 @@ begin
 `ifdef L2_SEND_NC_REQ
         // NC ifill is on 4B, and do not need 2 cycles to read out the data.
         // So l2_ifill for it is "n"
-        if (msg_type_S2_f == `MSG_TYPE_NC_LOAD_REQ && data_size_S2_f != `MSG_DATA_SIZE_32B)
+        if (msg_type_S2_f == `MSG_TYPE_NC_LOAD_MEM && data_size_S2_f != `MSG_DATA_SIZE_32B)
         begin
             l2_ifill_32B_S2 = n;
         end
@@ -2397,10 +2397,8 @@ begin
                             end
                             else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                             begin
-                                //TODO
-                                //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
                                 `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
+                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                                 `else
                                     cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                                 `endif
@@ -2418,10 +2416,8 @@ begin
                             end
                             else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                             begin
-                                //TODO
-                                //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    y,          `MSG_TYPE_STORE_MEM};
                                 `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    y,          `MSG_TYPE_STORE_MEM};
+                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                                 `else
                                     cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                                 `endif
@@ -2462,15 +2458,13 @@ begin
                         end
                         else
                         begin
-                            cs_S4 = {n,          y,          `MSG_TYPE_NC_STORE_REQ,n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,          y,          `MSG_TYPE_NC_STORE_MEM,n,          `MSG_TYPE_ERROR};
                         end
                     end
                     else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                     begin
-                        //TODO
-                        //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
                         `ifdef L2_SEND_NC_REQ
-                            cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                         `else
                             cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                         `endif
@@ -2527,7 +2521,7 @@ begin
                         case (l2_way_state_vd_S4)
                         `L2_VD_CLEAN:
                         begin
-                            cs_S4 = {n,         y,          `MSG_TYPE_NC_STORE_REQ,    n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,         y,          `MSG_TYPE_NC_STORE_MEM,    n,          `MSG_TYPE_ERROR};
                         end
                         `L2_VD_DIRTY:
                         begin
@@ -2774,7 +2768,7 @@ end
 always @ *
 begin
     load_store_mem_S4 = cs_S4[`CS_MSG0_SEND_EN_S4] && cs_S4[`CS_MSG1_SEND_EN_S4] &&
-                       (msg0_send_type_S4 == `MSG_TYPE_LOAD_MEM || msg0_send_type_S4 == `MSG_TYPE_NC_LOAD_REQ)
+                       (msg0_send_type_S4 == `MSG_TYPE_LOAD_MEM || msg0_send_type_S4 == `MSG_TYPE_NC_LOAD_MEM)
                      &&(msg1_send_type_S4 == `MSG_TYPE_STORE_MEM);
 end
 
@@ -2908,7 +2902,6 @@ begin
             begin
                 msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_1H2D;
                 msg_send_length_S4 = `MSG_LENGTH_WIDTH'd2;
-                // msg_send_data_size_S4 = data_size_S4_f;
                 msg_send_cache_type_S4 = cache_type_S4_f;
                 msg_send_mshrid_S4 = mshrid_S4;
             end
@@ -2919,7 +2912,6 @@ begin
                 begin
                     // Just for Sparc non-cacheable 32B ifill
                     msg_send_length_S4 = `MSG_LENGTH_WIDTH'd4;
-                    // msg_send_data_size_S4 = `MSG_DATA_SIZE_32B;
                     msg_send_cache_type_S4 = cache_type_S4_f;
                     msg_send_mshrid_S4 = mshrid_S4;
                     if (l2_load_data_subline_S4_f == `L2_DATA_SUBLINE_0)
@@ -2936,7 +2928,6 @@ begin
                     // non-cacheable data load should be within 8B, but sparc sends 16B nc-load
                     msg_send_mode_S4 = (data_size_S4_f == `MSG_DATA_SIZE_16B) ? `L2_P1_BUF_OUT_MODE_1H2D : `L2_P1_BUF_OUT_MODE_1H1D;
                     msg_send_length_S4 = (data_size_S4_f == `MSG_DATA_SIZE_16B) ? `MSG_LENGTH_WIDTH'd2 : `MSG_LENGTH_WIDTH'd1;
-                    // msg_send_data_size_S4 = 1-8B;
                     msg_send_cache_type_S4 = cache_type_S4_f;
                     msg_send_mshrid_S4 = mshrid_S4;
                 end
@@ -2946,7 +2937,6 @@ begin
             begin
                 msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_1H2D;
                 msg_send_length_S4 = `MSG_LENGTH_WIDTH'd2;
-                // msg_send_data_size_S4 = `MSG_DATA_SIZE_16B;
                 msg_send_cache_type_S4 = cache_type_S4_f;
                 msg_send_mshrid_S4 = mshrid_S4;
             end
@@ -2954,7 +2944,6 @@ begin
             begin
                 // ifill ack
                 msg_send_length_S4 = `MSG_LENGTH_WIDTH'd4;
-                // msg_send_data_size_S4 = `MSG_DATA_SIZE_32B;
                 msg_send_cache_type_S4 = cache_type_S4_f;
                 msg_send_mshrid_S4 = mshrid_S4;
                 if (l2_load_data_subline_S4_f == `L2_DATA_SUBLINE_0)
@@ -2980,7 +2969,7 @@ begin
             msg_send_cache_type_S4 = `MSG_CACHE_TYPE_DATA;
             msg_send_mshrid_S4 = mshr_wr_index_in_S4;
         end
-        `MSG_TYPE_NC_LOAD_REQ:
+        `MSG_TYPE_NC_LOAD_MEM:
         begin
             msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_3H0D;
             msg_send_length_S4 = `MSG_LENGTH_WIDTH'd2;

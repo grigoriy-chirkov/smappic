@@ -121,11 +121,11 @@ module piton_sd_core_ctrl (
 
     wire    store       =   (msg_type == `MSG_TYPE_STORE_REQ) ||
                             (msg_type == `MSG_TYPE_STORE_MEM);
-    wire    ncstore     =   (msg_type == `MSG_TYPE_NC_STORE_REQ);
+    wire    ncstore     =   (msg_type == `MSG_TYPE_NC_STORE_MEM);
     wire    wr          =   store || ncstore;
     wire    load        =   (msg_type == `MSG_TYPE_LOAD_REQ) ||
                             (msg_type == `MSG_TYPE_LOAD_MEM);
-    wire    ncload      =   (msg_type == `MSG_TYPE_NC_LOAD_REQ);
+    wire    ncload      =   (msg_type == `MSG_TYPE_NC_LOAD_MEM);
     wire    rd          =   load || ncload;
 
     `ifndef SDCTRL_TEST

@@ -41,8 +41,12 @@
   #define PITON_NUMTILES 1
 #endif
 
-#ifndef PITON_NUMTILES
+#ifndef PITON_NUMCHIPS
   #define PITON_NUMCHIPS 1
+#endif
+
+#ifndef PITON_NUMCHIPS_SM
+  #define PITON_NUMCHIPS_SM PITON_NUMCHIPS
 #endif
 
   .section ".text.init"
@@ -155,7 +159,7 @@ _start:
   # get core id
   csrr a0, mhartid
   # for now, assume only 1 core
-  li a1, PITON_NUMCHIPS*PITON_NUMTILES
+  li a1, PITON_NUMCHIPS_SM*PITON_NUMTILES
 1:bgeu a0, a1, 1b
 
   # give each core 128KB of stack + TLS
@@ -174,21 +178,21 @@ _start:
 # [25:18] = x, [33:26] = y, [47:34] = chip_id, [51:48] = fbits
 # Note that P-Mesh is big endian so our 8B word is flipped
 #ifndef NO_PMESH_NOC_WAKEUP
-  li t0, 0
-  li t1, 0
-  li t2, PITON_NUMCHIPS*PITON_NUMTILES
+  li t2, PITON_NUMCHIPS_SM*PITON_NUMTILES
   addi t2, t2, -1
   
-  beq t2, t1, _init
-  bne a0, t1, _init
-  li t2, 0
+  beq t2, zero, _init
+  bne a0, zero, _init
 
 # set a3 a4 a5 to number of tiles in x and y and number of chips
 # t0 t1 t2 are the current x and y and chip
   li a3, PITON_X_TILES
   li a4, PITON_Y_TILES
-  li a5, PITON_NUMCHIPS
+  li a5, PITON_NUMCHIPS_SM
 
+  li t0, 0
+  li t1, 0
+  li t2, 0
 loop:
   # skip (0,0,0)
   addi t0, t0, 1
@@ -229,7 +233,7 @@ xy_determined:
 
   li   t4, 0x0000ff0000000000
   and  t4, t5, t4
-  srli t4, t4, 16
+  srli t4, t4, 24
   or   t6, t4, t6
 
   li t4, 0x9800000800

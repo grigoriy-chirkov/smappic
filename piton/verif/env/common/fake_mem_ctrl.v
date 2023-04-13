@@ -318,7 +318,7 @@ begin
             msg_send_type = `MSG_TYPE_STORE_MEM_ACK;
             msg_send_length = 8'd0;
         end
-        `MSG_TYPE_NC_LOAD_REQ:
+        `MSG_TYPE_NC_LOAD_MEM:
         begin
             $display("Non-cacheable load request, size: %h, address: %h", msg_data_size, msg_addr);
             msg_send_type = `MSG_TYPE_NC_LOAD_MEM_ACK;
@@ -460,7 +460,7 @@ begin
             end
             endcase
         end
-        `MSG_TYPE_NC_STORE_REQ:
+        `MSG_TYPE_NC_STORE_MEM:
         begin
             $display("Non-cacheable store request, size: %h, address: %h", msg_data_size, msg_addr);
             msg_send_type = `MSG_TYPE_NC_STORE_MEM_ACK;

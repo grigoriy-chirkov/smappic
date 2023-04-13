@@ -26,6 +26,16 @@ reg error;
 wire go1 = rdy1 & val1;
 wire go2 = rdy2 & val2;
 
+reg [`NOC_DATA_WIDTH-1:0] dat2_except_mshr;
+reg [`NOC_DATA_WIDTH-1:0] buffer_except_mshr;
+
+always @(*) begin
+	dat2_except_mshr = dat2;
+	dat2_except_mshr[`MSG_MSHRID] = `MSG_MSHRID_WIDTH'b0;
+	buffer_except_mshr = buffer[out];
+	buffer_except_mshr[`MSG_MSHRID] = `MSG_MSHRID_WIDTH'b0;
+end
+
 always @(posedge clk) begin
 	if(~rst_n) begin
 		in <= {PTR_WIDTH{1'b0}};
@@ -47,7 +57,7 @@ always @(posedge clk) begin
 			if (out == in) begin
 				extradata <= 1'b1;
 			end
-			if (dat2 != buffer[out]) begin
+			if (dat2_except_mshr != buffer_except_mshr) begin
 				error <= 1'b1;
 			end
 		end

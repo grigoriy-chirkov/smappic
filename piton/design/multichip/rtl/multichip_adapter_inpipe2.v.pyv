@@ -45,7 +45,21 @@ module multichip_adapter_inpipe2 (
     // CEP interace
     input  wire                                    cep_val,
     input  wire  [`CEP_DATA_WIDTH-1:0]             cep_data,
-    output wire                                    cep_rdy
+    output wire                                    cep_rdy,
+
+    output wire                                   mshr_out_write_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_write_index,
+    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_out_write_data,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_read_index,
+    input  wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_out_read_data,
+    input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_out_read_state,
+
+    input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_empty_index,
+    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_in_empty_slots,
+    output wire                                   mshr_in_write_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_write_index,
+    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_in_write_data, 
+    input  wire                                   stall_mshr_in_from_p3
 );
 
 
@@ -59,7 +73,7 @@ reg val_S3;
 
 // Stage 1
 
-wire val_S2_next = val_S1;
+wire val_S2_next = val_S1 & ~stall_S1;
 wire [`CEP_DATA_WIDTH-1:0]  data_S1 = cep_data;
 wire [`CEP_DATA_WIDTH-1:0] data_S2_next = data_S1;
 assign val_S1 = cep_val;
@@ -80,12 +94,89 @@ always @(posedge clk) begin
     end
 end
 
-assign stall_S2 = stall_S3 & val_S2;
 
 // Stage 2
 
-wire val_S3_next = val_S2;
-wire [`CEP_DATA_WIDTH-1:0] data_S3_next = data_S2;
+wire val_S3_next = val_S2 & ~stall_S2;
+wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid = data_S2[`MSG_MSHRID];
+wire [`MSG_TYPE_WIDTH-1:0] msg_type = data_S2[`MSG_TYPE];
+wire do_read_mshr = (msg_type != `MSG_TYPE_LOAD_FWD)    & 
+                    (msg_type != `MSG_TYPE_STORE_FWD)   &
+                    (msg_type != `MSG_TYPE_INV_FWD)     &
+                    (msg_type != `MSG_TYPE_LOAD_MEM)    &
+                    (msg_type != `MSG_TYPE_STORE_MEM)   &
+                    (msg_type != `MSG_TYPE_NC_LOAD_MEM) &
+                    (msg_type != `MSG_TYPE_NC_STORE_MEM);
+assign mshr_out_write_en = val_S2 & ~stall_S2 & do_read_mshr;
+assign mshr_out_write_index = msg_mshrid[`MA_MSHR_INDEX_WIDTH-1:0];
+assign mshr_out_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
+assign mshr_out_read_index = msg_mshrid[`MA_MSHR_INDEX_WIDTH-1:0];
+wire [`MSG_MSHRID_WIDTH-1:0] old_mshrid;
+
+multichip_adapter_mshr_decoder mshr_decoder(
+    .data(mshr_out_read_data),
+
+    .addr(),
+    .way(),
+    .mshrid(old_mshrid),
+    .cache_type(),
+    .data_size(),
+    .msg_type(),
+    .msg_l2_miss(),
+    .src_chipid(),
+    .src_x(),
+    .src_y(),
+    .src_fbits(),
+    .sdid(),
+    .lsid(),
+    .miss_lsid(),
+    .smc_miss(),
+    .recycled(),
+    .inv_fwd_pending()
+);
+
+wire do_write_mshr = (msg_type != `MSG_TYPE_LOAD_FWD)   & 
+                     (msg_type != `MSG_TYPE_STORE_FWD)  & 
+                     (msg_type != `MSG_TYPE_INV_FWD)    & 
+                     (msg_type != `MSG_TYPE_NODATA_ACK) & 
+                     (msg_type != `MSG_TYPE_DATA_ACK)   ;
+assign mshr_in_write_en = val_S2 & ~stall_S2 & do_write_mshr;
+assign mshr_in_write_index = mshr_in_empty_index;
+
+wire stall_mshr_in_full = (mshr_in_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
+wire stall_mshr = do_write_mshr & (stall_mshr_in_full | stall_mshr_in_from_p3);
+
+multichip_adapter_mshr_encoder mshr_encoder(
+    .data(mshr_in_write_data),
+
+    .addr(data_S2[`MSG_ADDR]),
+    .way(`MA_WAYS_WIDTH'd0),
+    .mshrid(data_S2[`MSG_MSHRID]),
+    .cache_type(data_S2[`MSG_CACHE_TYPE]),
+    .data_size(data_S2[`MSG_DATA_SIZE]),
+    .msg_type(data_S2[`MSG_TYPE]),
+    .msg_l2_miss(data_S2[`MSG_L2_MISS]),
+    .src_chipid(data_S2[`MSG_SRC_CHIPID]),
+    .src_x(data_S2[`MSG_SRC_X]),
+    .src_y(data_S2[`MSG_SRC_Y]),
+    .src_fbits(data_S2[`MSG_SRC_FBITS]),
+    .sdid(data_S2[`MSG_SDID]),
+    .lsid(data_S2[`MSG_LSID]),
+    .miss_lsid(`MSG_LSID_WIDTH'd0),
+    .smc_miss(1'b0),
+    .recycled(1'b0),
+    .inv_fwd_pending(1'b0)
+);
+
+reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
+always @(*) begin
+    data_S3_next = data_S2;
+    if (do_write_mshr)
+        data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
+    if (do_read_mshr)
+        data_S3_next[`MSG_MSHRID] = old_mshrid;
+end
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr);
 
 // Stage 2-> 3
 

@@ -291,8 +291,8 @@ devices = pyhplib.ReadDevicesXMLFile()
         invalid_access  = 1'b0;
         if (flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_LOAD_MEM ||
             flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_STORE_MEM ||
-            flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_REQ ||
-            flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_NC_STORE_REQ) begin
+            flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_MEM ||
+            flit_buffer_0_reg[`MSG_TYPE] == `MSG_TYPE_NC_STORE_MEM) begin
 <%
 
 elseStr = ""

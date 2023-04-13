@@ -109,12 +109,12 @@ reg [`MA_OWNER_BITS-1:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
 
 always @ *
 begin
-    empty_slots = 0;
+    empty_slots = {`MA_MSHR_ENTRIES+1{1'b0}};
 <%
 for i in range(MA_MSHR_ENTRIES):
     print("    if (state_mem_f[%d] == `MA_MSHR_STATE_INVAL)" % (i))
     print("    begin")
-    print("        empty_slots = empty_slots + 1;")
+    print("        empty_slots = empty_slots + {{`MA_MSHR_ENTRIES{1'b0}}, 1'b1};")
     print("    end")
 %>
 end
@@ -266,12 +266,12 @@ for i in range(MA_MSHR_ENTRIES):
         counter_mem_f[pending_index] <= {`MA_OWNER_BITS{1'b0}};
         if (inc_counter_en2 && (pending_index != wr_index_in))
         begin
-            counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + 1;
+            counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS'd1;
         end
     end
     else if (inc_counter_en2)
     begin
-        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + 1;
+        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS'd1;
     end
 end
 

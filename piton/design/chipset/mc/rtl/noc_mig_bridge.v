@@ -333,7 +333,7 @@ generate begin
                               app_rd_data_valid_reg               & 
                               app_rd_data_end_reg                     ?   `READY            :
                               (ii == buf_current_cmd)             &
-                              app_en & app_rdy_trans                        ? ((pkt_cmd_buf[ii] == `MSG_TYPE_NC_STORE_REQ) |
+                              app_en & app_rdy_trans                        ? ((pkt_cmd_buf[ii] == `MSG_TYPE_NC_STORE_MEM) |
                                                                          (pkt_cmd_buf[ii] == `MSG_TYPE_STORE_MEM) ?    `READY            :
                                                                                                                       `WAITING_DATA     
                                                                         )                   :
@@ -559,7 +559,7 @@ assign app_addr_virt = pkt_w2[buf_current_cmd][`MSG_ADDR_];
   assign cl_addr      = uart_boot_en ? cl_addr_uart_boot : 
                                       pkt_w2[buf_current_cmd][LOC_ADDR_HI: LOC_ADDR_LO];  // Alexey: bug fix. 512 = 64 * 8 = 64 * ( 1 << 3)
 
-assign app_cmd       = (pkt_cmd_buf[buf_current_cmd] == `MSG_TYPE_NC_STORE_REQ ||
+assign app_cmd       = (pkt_cmd_buf[buf_current_cmd] == `MSG_TYPE_NC_STORE_MEM ||
                         pkt_cmd_buf[buf_current_cmd] == `MSG_TYPE_STORE_MEM) ? `MIG_WR_CMD : `MIG_RD_CMD;
 
 always@(posedge clk) begin
@@ -569,7 +569,7 @@ always@(posedge clk) begin
     r_app_wdf_wren <= 0;
   end
   else begin
-    if( (pkt_cmd_buf[buf_current_wdf] == `MSG_TYPE_NC_LOAD_REQ || 
+    if( (pkt_cmd_buf[buf_current_wdf] == `MSG_TYPE_NC_LOAD_MEM || 
          pkt_cmd_buf[buf_current_wdf] == `MSG_TYPE_LOAD_MEM) && 
         (pkt_state_buf[buf_current_wdf] != `INACTIVE) ) 
     begin  //no need to write data for read commands
@@ -614,7 +614,7 @@ always @(posedge clk) begin
     buf_current_data_rcv <= 0;
   end
 	else begin
-		if( (pkt_cmd_buf[buf_current_data_rcv] == `MSG_TYPE_NC_STORE_REQ || 
+		if( (pkt_cmd_buf[buf_current_data_rcv] == `MSG_TYPE_NC_STORE_MEM || 
              pkt_cmd_buf[buf_current_data_rcv] == `MSG_TYPE_STORE_MEM) && 
             (pkt_state_buf[buf_current_data_rcv][2:0] != `INACTIVE)) 
     begin //no need to receive data for write commands
@@ -654,7 +654,7 @@ always @(posedge clk) begin
             buf_current_out <= buf_current_out+`ADDR_ONE;
 
             //load response - data is attached
-            if( pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_LOAD_REQ || 
+            if( pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_LOAD_MEM || 
                 pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_LOAD_MEM
                 ) begin 
                 remaining_flt_out <= 9;   // 9 down to 1
@@ -668,7 +668,7 @@ always @(posedge clk) begin
                 flit_out_buffer[8][`MSG_LENGTH] <= MAX_PKT_LEN-3;    // Alexey: bug fix: removed nonblocking assignment
 
                 //determine return message type
-                if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_LOAD_REQ) begin
+                if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_LOAD_MEM) begin
                   flit_out_buffer[8][`MSG_TYPE] <=  `MSG_TYPE_NC_LOAD_MEM_ACK; // Alexey: bug fix: removed nonblocking assignment
                 end
                 if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_LOAD_MEM) begin
@@ -699,7 +699,7 @@ always @(posedge clk) begin
                 flit_out_buffer[0][`MSG_DST_FBITS   ] <= pkt_w3[buf_current_out+`ADDR_ONE][`MSG_SRC_FBITS_  ];
                 flit_out_buffer[0][`MSG_MSHRID      ] <= pkt_w1[buf_current_out+`ADDR_ONE][`MSG_MSHRID      ];
 
-                if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_STORE_REQ) begin
+                if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_NC_STORE_MEM) begin
                   flit_out_buffer[0][`MSG_TYPE] <=  `MSG_TYPE_NC_STORE_MEM_ACK; // Alexey: bug fix: removed nonblocking assignment
                 end
                 if(pkt_cmd_buf[buf_current_out+`ADDR_ONE] == `MSG_TYPE_STORE_MEM) begin

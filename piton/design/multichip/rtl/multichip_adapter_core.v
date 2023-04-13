@@ -77,59 +77,256 @@ module multichip_adapter_core (
     output wire                               cep_queue3_rdy_in
 );
 
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_empty_index;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_pending_index;
-wire mshr_pending;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_empty_slots;
-wire [`MA_OWNER_BITS-1:0] mshr_inv_counter;
-wire mshr_hit;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_hit_index;
-wire [`MA_MSHR_STATE_BITS-1:0] mshr_rd_state;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_rd_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_cam_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_pending_data;
-wire mshr_write_state_en;
-wire mshr_write_data_en;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_write_data;
 
-multichip_adapter_mshr mshr (
+wire mshr_out1_p1_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p1_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out1_p1_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_empty_index;
+
+wire mshr_out1_p2_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_out1_p2_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_rd_data;
+
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_pending_index;
+wire mshr_out1_pending;
+wire [`MA_OWNER_BITS-1:0] mshr_out1_inv_counter;
+wire mshr_out1_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_cam_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_pending_data;
+
+multichip_adapter_mshr mshr_out1 (
     .clk(clk),
     .rst_n(rst_n),
-    .pipe_wr_sel(1'b0),
+    .pipe_wr_sel(mshr_out1_p2_write_en),
 
-    .cam_en1(1'b1),
-    .wr_state_en1(mshr_write_state_en),
-    .wr_data_en1(mshr_write_data_en),
-    .pending_ready1(1'b1),
+    .wr_state_en1(mshr_out1_p1_write_en),
+    .wr_data_en1(mshr_out1_p1_write_en),
     .state_in1(`MA_MSHR_STATE_WAIT),
-    .data_in1(mshr_write_data),
+    .data_in1(mshr_out1_p1_write_data),
     .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
     .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in1(mshr_empty_index),
+    .wr_index_in1(mshr_out1_p1_write_index),
     .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_out1_p1_empty_slots),
+    .empty_index(mshr_out1_p1_empty_index),
 
-    .wr_state_en2(1'b0),
-    .wr_data_en2(1'b0),
+    .wr_state_en2(mshr_out1_p2_write_en),
+    .wr_data_en2(mshr_out1_p2_write_en),
     .inc_counter_en2(1'b0),
-    .state_in2(`MA_MSHR_STATE_BITS'b0),
-    .data_in2(`MA_MSHR_ARRAY_WIDTH'b0),
-    .data_mask_in2(`MA_MSHR_ARRAY_WIDTH'b0),
-    .rd_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_out1_p2_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .rd_index_in2(mshr_out1_p2_read_index),
+    .wr_index_in2(mshr_out1_p2_write_index),
+    .rd_state_out(mshr_out1_p2_rd_state),
+    .rd_data_out(mshr_out1_p2_rd_data),
 
-    .hit(mshr_hit),
-    .hit_index(mshr_hit_index),
-    .rd_state_out(mshr_rd_state),
-    .rd_data_out(mshr_rd_data),
-    .cam_data_out(mshr_cam_data),
-    .pending_data_out(mshr_pending_data),
-
-    .inv_counter_out(mshr_inv_counter),
-    .empty_slots(mshr_empty_slots),
-    .pending(mshr_pending),
-    .pending_index(mshr_pending_index),
-    .empty_index(mshr_empty_index)
+    .cam_en1(1'b0),
+    .hit(mshr_out1_hit),
+    .hit_index(mshr_out1_hit_index),
+    .cam_data_out(mshr_out1_cam_data),
+    .pending_data_out(mshr_out1_pending_data),
+    .inv_counter_out(mshr_out1_inv_counter),
+    .pending(mshr_out1_pending),
+    .pending_index(mshr_out1_pending_index),
+    .pending_ready1(1'b1)
 );
+
+wire mshr_out2_p2_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out2_p2_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_empty_index;
+
+wire mshr_out2_p3_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_out2_p3_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_rd_data;
+
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_pending_index;
+wire mshr_out2_pending;
+wire [`MA_OWNER_BITS-1:0] mshr_out2_inv_counter;
+wire mshr_out2_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_cam_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_pending_data;
+
+multichip_adapter_mshr mshr_out2 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_out2_p3_write_en),
+
+    .wr_state_en1(mshr_out2_p2_write_en),
+    .wr_data_en1(mshr_out2_p2_write_en),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_out2_p2_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
+    .wr_index_in1(mshr_out2_p2_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_index(mshr_out2_p2_empty_index),
+    .empty_slots(mshr_out2_p2_empty_slots),
+
+    .wr_state_en2(mshr_out2_p3_write_en),
+    .wr_data_en2(mshr_out2_p3_write_en),
+    .inc_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_out2_p3_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .rd_index_in2(mshr_out2_p3_read_index),
+    .wr_index_in2(mshr_out2_p3_write_index),
+    .rd_state_out(mshr_out2_p3_rd_state),
+    .rd_data_out(mshr_out2_p3_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_out2_hit),
+    .hit_index(mshr_out2_hit_index),
+    .cam_data_out(mshr_out2_cam_data),
+    .pending_data_out(mshr_out2_pending_data),
+    .inv_counter_out(mshr_out2_inv_counter),
+    .pending(mshr_out2_pending),
+    .pending_index(mshr_out2_pending_index),
+    .pending_ready1(1'b1)
+);
+
+wire mshr_in1_p1_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p1_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in1_p1_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_empty_index;
+
+wire mshr_in1_p2_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_in1_p2_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_rd_data;
+
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_pending_index;
+wire mshr_in1_pending;
+wire [`MA_OWNER_BITS-1:0] mshr_in1_inv_counter;
+wire mshr_in1_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_cam_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_pending_data;
+
+multichip_adapter_mshr mshr_in1 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_in1_p2_write_en),
+
+    .wr_state_en1(mshr_in1_p1_write_en),
+    .wr_data_en1(mshr_in1_p1_write_en),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_in1_p1_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
+    .wr_index_in1(mshr_in1_p1_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_in1_p1_empty_slots),
+    .empty_index(mshr_in1_p1_empty_index),
+
+    .wr_state_en2(mshr_in1_p2_write_en),
+    .wr_data_en2(mshr_in1_p2_write_en),
+    .inc_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_in1_p2_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .rd_index_in2(mshr_in1_p2_read_index),
+    .wr_index_in2(mshr_in1_p2_write_index),
+    .rd_state_out(mshr_in1_p2_rd_state),
+    .rd_data_out(mshr_in1_p2_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_in1_hit),
+    .hit_index(mshr_in1_hit_index),
+    .cam_data_out(mshr_in1_cam_data),
+    .pending_data_out(mshr_in1_pending_data),
+    .inv_counter_out(mshr_in1_inv_counter),
+    .pending(mshr_in1_pending),
+    .pending_index(mshr_in1_pending_index),
+    .pending_ready1(1'b1)
+);
+
+wire mshr_in2_p2_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in2_p2_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_empty_index;
+
+wire mshr_in2_p3_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_in2_p3_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_rd_data;
+
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_pending_index;
+wire mshr_in2_pending;
+wire [`MA_OWNER_BITS-1:0] mshr_in2_inv_counter;
+wire mshr_in2_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_cam_data;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_pending_data;
+
+multichip_adapter_mshr mshr_in2 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_in2_p3_write_en),
+
+    .wr_state_en1(mshr_in2_p2_write_en),
+    .wr_data_en1(mshr_in2_p2_write_en),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_in2_p2_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
+    .wr_index_in1(mshr_in2_p2_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_in2_p2_empty_slots),
+    .empty_index(mshr_in2_p2_empty_index),
+
+    .wr_state_en2(mshr_in2_p3_write_en),
+    .wr_data_en2(mshr_in2_p3_write_en),
+    .inc_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_in2_p3_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .rd_index_in2(mshr_in2_p3_read_index),
+    .wr_index_in2(mshr_in2_p3_write_index),
+    .rd_state_out(mshr_in2_p3_rd_state),
+    .rd_data_out(mshr_in2_p3_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_in2_hit),
+    .hit_index(mshr_in2_hit_index),
+    .cam_data_out(mshr_in2_cam_data),
+    .pending_data_out(mshr_in2_pending_data),
+    .inv_counter_out(mshr_in2_inv_counter),
+    .pending(mshr_in2_pending),
+    .pending_index(mshr_in2_pending_index),
+    .pending_ready1(1'b1)
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 multichip_adapter_outpipe1 outpipe1 (
     .clk(clk), 
@@ -144,9 +341,12 @@ multichip_adapter_outpipe1 outpipe1 (
     .cep_chipid(cep_queue1_chipid_out),
     .cep_rdy(cep_queue1_rdy_out), 
 
-    .mshr_write_state_en(mshr_write_state_en),
-    .mshr_write_data_en(mshr_write_data_en),
-    .mshr_write_data(mshr_write_data)
+    .mshr_empty_index(mshr_out1_p1_empty_index),
+    .mshr_empty_slots(mshr_out1_p1_empty_slots),
+    .mshr_write_en(mshr_out1_p1_write_en),
+    .mshr_write_index(mshr_out1_p1_write_index),
+    .mshr_write_data(mshr_out1_p1_write_data), 
+    .stall_mshr_from_p2(mshr_out1_p2_write_en)
 );
 
 multichip_adapter_outpipe2 outpipe2 (
@@ -160,7 +360,22 @@ multichip_adapter_outpipe2 outpipe2 (
     .cep_val(cep_queue2_val_out),
     .cep_data(cep_queue2_data_out),
     .cep_chipid(cep_queue2_chipid_out),
-    .cep_rdy(cep_queue2_rdy_out)
+    .cep_rdy(cep_queue2_rdy_out), 
+
+    .mshr_out_empty_index(mshr_out2_p2_empty_index),
+    .mshr_out_empty_slots(mshr_out2_p2_empty_slots),
+    .mshr_out_write_en(mshr_out2_p2_write_en),
+    .mshr_out_write_index(mshr_out2_p2_write_index),
+    .mshr_out_write_data(mshr_out2_p2_write_data), 
+    .stall_mshr_out_from_p3(mshr_out2_p3_write_en), 
+
+    .mshr_in_write_en(mshr_in1_p2_write_en),
+    .mshr_in_write_index(mshr_in1_p2_write_index),
+    .mshr_in_write_data(mshr_in1_p2_write_data),
+    .mshr_in_read_index(mshr_in1_p2_read_index),
+    .mshr_in_read_data(mshr_in1_p2_rd_data),
+    .mshr_in_read_state(mshr_in1_p2_rd_state)
+
 );
 
 multichip_adapter_outpipe3 outpipe3 (
@@ -187,7 +402,14 @@ multichip_adapter_inpipe1 inpipe1 (
 
     .cep_val(cep_queue1_val_in),
     .cep_data(cep_queue1_data_in),
-    .cep_rdy(cep_queue1_rdy_in)
+    .cep_rdy(cep_queue1_rdy_in), 
+
+    .mshr_empty_index(mshr_in1_p1_empty_index),
+    .mshr_empty_slots(mshr_in1_p1_empty_slots),
+    .mshr_write_en(mshr_in1_p1_write_en),
+    .mshr_write_index(mshr_in1_p1_write_index),
+    .mshr_write_data(mshr_in1_p1_write_data), 
+    .stall_mshr_from_p2(mshr_in1_p2_write_en)
 );
 
 multichip_adapter_inpipe2 inpipe2 (
@@ -200,7 +422,21 @@ multichip_adapter_inpipe2 inpipe2 (
 
     .cep_val(cep_queue2_val_in),
     .cep_data(cep_queue2_data_in),
-    .cep_rdy(cep_queue2_rdy_in)
+    .cep_rdy(cep_queue2_rdy_in),
+
+    .mshr_in_empty_index(mshr_in2_p2_empty_index),
+    .mshr_in_empty_slots(mshr_in2_p2_empty_slots),
+    .mshr_in_write_en(mshr_in2_p2_write_en),
+    .mshr_in_write_index(mshr_in2_p2_write_index),
+    .mshr_in_write_data(mshr_in2_p2_write_data), 
+    .stall_mshr_in_from_p3(mshr_in2_p2_write_en),
+
+    .mshr_out_write_en(mshr_out1_p2_write_en),
+    .mshr_out_write_index(mshr_out1_p2_write_index),
+    .mshr_out_write_data(mshr_out1_p2_write_data),
+    .mshr_out_read_index(mshr_out1_p2_read_index),
+    .mshr_out_read_data(mshr_out1_p2_rd_data),
+    .mshr_out_read_state(mshr_out1_p2_rd_state)
 );
 
 multichip_adapter_inpipe3 inpipe3 (
@@ -213,7 +449,14 @@ multichip_adapter_inpipe3 inpipe3 (
 
     .cep_val(cep_queue3_val_in),
     .cep_data(cep_queue3_data_in),
-    .cep_rdy(cep_queue3_rdy_in)
+    .cep_rdy(cep_queue3_rdy_in),
+
+    .mshr_write_en(mshr_out2_p3_write_en),
+    .mshr_write_index(mshr_out2_p3_write_index),
+    .mshr_write_data(mshr_out2_p3_write_data),
+    .mshr_read_index(mshr_out2_p3_read_index),
+    .mshr_read_data(mshr_out2_p3_rd_data),
+    .mshr_read_state(mshr_out2_p3_rd_state)
 );
 
 endmodule

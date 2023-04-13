@@ -48,9 +48,12 @@ module multichip_adapter_outpipe1 (
     output wire [`CEP_CHIPID_WIDTH-1:0]           cep_chipid,
     input  wire                                   cep_rdy,
 
-    output wire                                   mshr_write_state_en,
-    output wire                                   mshr_write_data_en,
-    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data
+    input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_empty_index,
+    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_empty_slots,
+    output wire                                   mshr_write_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
+    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data, 
+    input  wire                                   stall_mshr_from_p2
 );
 
 
@@ -83,7 +86,7 @@ noc_deserializer noc_deserializer(
 
 assign stall_S1 = stall_S2 & val_S1;
 
-wire val_S2_next = val_S1;
+wire val_S2_next = val_S1 & ~stall_S1;
 wire [`PKG_DATA_WIDTH-1:0] data_S2_next = data_S1;
 
 // Stage 1 -> 2
@@ -101,15 +104,25 @@ always @(posedge clk) begin
     end 
 end
 
-assign stall_S2 = stall_S3 & val_S2;
-
 // Stage 2
 
-wire val_S3_next = val_S2;
-wire [`PKG_DATA_WIDTH-1:0] data_S3_next = data_S2;
+wire val_S3_next = val_S2 & ~stall_S2;
+wire [`MSG_TYPE_WIDTH-1:0] msg_type = data_S2[`MSG_TYPE];
+wire do_write_mshr = (msg_type != `MSG_TYPE_INTERRUPT_FWD);
 
-assign mshr_write_state_en = val_S2 & ~stall_S2;
-assign mshr_write_data_en = val_S2 & ~stall_S2;
+reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
+always @(*) begin
+    data_S3_next = data_S2;
+    if (do_write_mshr)
+        data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_empty_index};
+end
+
+assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr;
+assign mshr_write_index = mshr_empty_index;
+
+wire stall_mshr_full = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
+wire stall_mshr = do_write_mshr & (stall_mshr_full | stall_mshr_from_p2);
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr);
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_write_data),

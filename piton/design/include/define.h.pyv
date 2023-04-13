@@ -235,6 +235,8 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 //Memory requests from L2 to DRAM
 `define MSG_TYPE_LOAD_MEM           8'd19
 `define MSG_TYPE_STORE_MEM          8'd20
+`define MSG_TYPE_NC_LOAD_MEM        8'd61
+`define MSG_TYPE_NC_STORE_MEM       8'd62
 
 
 

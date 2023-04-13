@@ -174,7 +174,7 @@ assign m_axi_wid = {{`AXI4_ID_WIDTH-`NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE{1'b0}}, re
 wire [`PHY_ADDR_WIDTH-1:0] virt_addr = req_header_f[`MSG_ADDR];
 wire [`AXI4_ADDR_WIDTH-1:0] phys_addr;
 wire sd_card = (virt_addr[`PHY_ADDR_WIDTH-1]) & ~uart_boot_en;
-wire uncacheable = (req_header_f[`MSG_TYPE] == `MSG_TYPE_NC_STORE_REQ) & ~uart_boot_en;
+wire uncacheable = (req_header_f[`MSG_TYPE] == `MSG_TYPE_NC_STORE_MEM) & ~uart_boot_en;
 
 // If running uart tests - we need to do address translation
 `ifdef PITONSYS_UART_BOOT

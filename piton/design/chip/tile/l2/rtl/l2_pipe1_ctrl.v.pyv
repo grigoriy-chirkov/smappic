@@ -2879,10 +2879,8 @@ begin
                             end
                             else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                             begin
-                                //TODO
-                                //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
                                 `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
+                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                                 `else
                                     cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                                 `endif
@@ -2900,10 +2898,8 @@ begin
                             end
                             else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                             begin
-                                //TODO
-                                //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    y,          `MSG_TYPE_STORE_MEM};
                                 `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    y,          `MSG_TYPE_STORE_MEM};
+                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                                 `else
                                     cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                                 `endif
@@ -2944,15 +2940,13 @@ begin
                         end
                         else
                         begin
-                            cs_S4 = {n,          y,          `MSG_TYPE_NC_STORE_REQ,n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,          y,          `MSG_TYPE_NC_STORE_MEM,n,          `MSG_TYPE_ERROR};
                         end
                     end
                     else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                     begin
-                        //TODO
-                        //cs_S4 = {y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
                         `ifdef L2_SEND_NC_REQ
-                            cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_REQ,    n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                         `else
                             cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
                         `endif
@@ -3009,7 +3003,7 @@ begin
                         case (l2_way_state_vd_S4)
                         `L2_VD_CLEAN:
                         begin
-                            cs_S4 = {n,         y,          `MSG_TYPE_NC_STORE_REQ,    n,          `MSG_TYPE_ERROR};
+                            cs_S4 = {n,         y,          `MSG_TYPE_NC_STORE_MEM,    n,          `MSG_TYPE_ERROR};
                         end
                         `L2_VD_DIRTY:
                         begin
@@ -3268,7 +3262,7 @@ end
 always @ *
 begin
     load_store_mem_S4 = cs_S4[`CS_MSG0_SEND_EN_S4] && cs_S4[`CS_MSG1_SEND_EN_S4] &&
-                       (msg0_send_type_S4 == `MSG_TYPE_LOAD_MEM || msg0_send_type_S4 == `MSG_TYPE_NC_LOAD_REQ)
+                       (msg0_send_type_S4 == `MSG_TYPE_LOAD_MEM || msg0_send_type_S4 == `MSG_TYPE_NC_LOAD_MEM)
                      &&(msg1_send_type_S4 == `MSG_TYPE_STORE_MEM);
 end
 
@@ -3369,7 +3363,7 @@ always @ *
 begin
     if (smc_miss_S4)
     begin
-        msg_send_type_S4 = `MSG_TYPE_NC_LOAD_REQ;
+        msg_send_type_S4 = `MSG_TYPE_NC_LOAD_MEM;
     end
     else
     begin
@@ -3588,7 +3582,7 @@ begin
             msg_send_cache_type_S4 = `MSG_CACHE_TYPE_DATA;
             msg_send_mshrid_S4 = mshr_wr_index_in_S4;
         end
-        `MSG_TYPE_NC_LOAD_REQ:
+        `MSG_TYPE_NC_LOAD_MEM:
         begin
             msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_3H0D;
             msg_send_length_S4 = `MSG_LENGTH_WIDTH'd2;
@@ -3608,7 +3602,7 @@ begin
             msg_send_mshrid_S4 = mshr_wr_index_in_S4;
         end
 
-        `MSG_TYPE_NC_STORE_REQ:
+        `MSG_TYPE_NC_STORE_MEM:
         begin
             msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_3H1D;
             msg_send_length_S4 = `MSG_LENGTH_WIDTH'd3;

@@ -211,10 +211,10 @@ localparam STORE_ACK = 1'd1;
     assign splitter_io_msg_type_mux_out =
         (!splitter_bridge_val) ? MSG_TYPE_INVAL :
         (((splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_LOAD_REQ   )  ||
-          (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_REQ)  ||
+          (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_MEM)  ||
           (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_LOAD_MEM   )     ) ? MSG_TYPE_LOAD  :
          ((splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_STORE_REQ   ) ||
-          (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_NC_STORE_REQ) ||
+          (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_NC_STORE_MEM) ||
           (splitter_bridge_data[`MSG_TYPE] == `MSG_TYPE_STORE_MEM   )    ) ? MSG_TYPE_STORE :
                                                                             MSG_TYPE_INVAL );
 
@@ -437,10 +437,10 @@ localparam STORE_ACK = 1'd1;
     assign r_resp_buf_header0_next[`MSG_DST_X]      = r_req_buf_header2_f[`MSG_SRC_X_];
     assign r_resp_buf_header0_next[`MSG_DST_Y]      = r_req_buf_header2_f[`MSG_SRC_Y_];
     assign r_resp_buf_header0_next[`MSG_DST_FBITS]  = r_req_buf_header2_f[`MSG_SRC_FBITS_]; //TODO check this...
-    assign r_resp_buf_header0_next[`MSG_LENGTH]     = (r_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_REQ &&
+    assign r_resp_buf_header0_next[`MSG_LENGTH]     = (r_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_MEM &&
                                                        r_req_buf_header1_f[`MSG_DATA_SIZE_] <= `MSG_DATA_SIZE_8B) ? `MSG_LENGTH_WIDTH'd1 :
                                                        `MSG_LENGTH_WIDTH'd8; //loads return 8(cacheable) or 1(nc) words 
-    assign r_resp_buf_header0_next[`MSG_TYPE]       = (r_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_REQ) ? `MSG_TYPE_NC_LOAD_MEM_ACK :
+    assign r_resp_buf_header0_next[`MSG_TYPE]       = (r_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_MEM) ? `MSG_TYPE_NC_LOAD_MEM_ACK :
                                                       (r_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_LOAD_MEM) ? `MSG_TYPE_LOAD_MEM_ACK :
                                                       `MSG_TYPE_WIDTH'dx;
     assign r_resp_buf_header0_next[`MSG_MSHRID]     = r_req_buf_header0_f[`MSG_MSHRID];//TODO check this...
@@ -451,7 +451,7 @@ localparam STORE_ACK = 1'd1;
     assign w_resp_buf_header0_next[`MSG_DST_Y]      = w_req_buf_header2_f[`MSG_SRC_Y_];
     assign w_resp_buf_header0_next[`MSG_DST_FBITS]  = w_req_buf_header2_f[`MSG_SRC_FBITS_]; //TODO check this...
     assign w_resp_buf_header0_next[`MSG_LENGTH]     = `MSG_LENGTH_WIDTH'd0;
-    assign w_resp_buf_header0_next[`MSG_TYPE]       = (w_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_STORE_REQ) ? `MSG_TYPE_NC_STORE_MEM_ACK :
+    assign w_resp_buf_header0_next[`MSG_TYPE]       = (w_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_NC_STORE_MEM) ? `MSG_TYPE_NC_STORE_MEM_ACK :
                                                       (w_req_buf_header0_f[`MSG_TYPE] == `MSG_TYPE_STORE_MEM) ? `MSG_TYPE_STORE_MEM_ACK :
                                                       `MSG_TYPE_WIDTH'dx;
     assign w_resp_buf_header0_next[`MSG_MSHRID]     = w_req_buf_header0_f[`MSG_MSHRID];//TODO check this...

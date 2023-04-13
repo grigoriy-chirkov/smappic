@@ -157,7 +157,7 @@ reg [5:0] offset[`NOC_AXI4_BRIDGE_IN_FLIGHT_LIMIT-1:0];
 reg [`NOC_AXI4_BRIDGE_BUFFER_ADDR_SIZE-1:0] resp_id_f;
 wire resp_go;
 wire sd_card = (virt_addr[`PHY_ADDR_WIDTH-1]) & ~uart_boot_en;
-wire uncacheable = (req_header_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_REQ) & ~uart_boot_en;
+wire uncacheable = (req_header_f[`MSG_TYPE] == `MSG_TYPE_NC_LOAD_MEM) & ~uart_boot_en;
 
 generate begin
     genvar i;

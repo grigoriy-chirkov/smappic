@@ -1621,7 +1621,7 @@ begin
         msg_send_dst_fbits_S4 = `NOC_FBITS_L1;
 
     end
-    `MSG_TYPE_LOAD_MEM, `MSG_TYPE_NC_LOAD_REQ, `MSG_TYPE_NC_STORE_REQ, `MSG_TYPE_STORE_MEM:
+    `MSG_TYPE_LOAD_MEM, `MSG_TYPE_NC_LOAD_MEM, `MSG_TYPE_NC_STORE_MEM, `MSG_TYPE_STORE_MEM:
     begin
         // if upper bit == 1, then request is to some device, route it always to 
         // chip0, otherwise to its home dram controller
