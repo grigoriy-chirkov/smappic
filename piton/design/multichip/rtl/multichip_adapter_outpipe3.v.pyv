@@ -118,22 +118,26 @@ assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
 assign mshr_write_index = msg_mshrid[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
 assign mshr_read_index = msg_mshrid[`MA_MSHR_INDEX_WIDTH-1:0];
-wire [`MSG_MSHRID_WIDTH-1:0] old_mshrid;
+wire [`MSG_MSHRID_WIDTH-1:0] src_mshrid;
+wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid;
+wire [`MSG_SRC_X_WIDTH-1:0] src_x;
+wire [`MSG_SRC_Y_WIDTH-1:0] src_y;
+wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_read_data),
 
     .addr(),
     .way(),
-    .mshrid(old_mshrid),
+    .mshrid(src_mshrid),
     .cache_type(),
     .data_size(),
     .msg_type(),
     .msg_l2_miss(),
-    .src_chipid(),
-    .src_x(),
-    .src_y(),
-    .src_fbits(),
+    .src_chipid(src_chipid),
+    .src_x(src_x),
+    .src_y(src_y),
+    .src_fbits(src_fbits),
     .sdid(),
     .lsid(),
     .miss_lsid(),
@@ -145,8 +149,13 @@ multichip_adapter_mshr_decoder mshr_decoder(
 reg [`CEP_DATA_WIDTH-1:0] data_S3_next;
 always @(*) begin
     data_S3_next = data_S2;
-    if (do_read_mshr)
-        data_S3_next[`MSG_MSHRID] = old_mshrid;
+    if (do_read_mshr) begin
+        data_S3_next[`MSG_MSHRID] = src_mshrid;
+        data_S3_next[`MSG_SRC_CHIPID] = src_chipid;
+        data_S3_next[`MSG_SRC_X] = src_x;
+        data_S3_next[`MSG_SRC_Y] = src_y;
+        data_S3_next[`MSG_SRC_FBITS] = src_fbits;
+    end
 end
 
 assign stall_S2 = stall_S3 & val_S2;
