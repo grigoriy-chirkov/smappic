@@ -1455,6 +1455,9 @@ sub generic_sim_build
 #      push (@{$opt{icv_build_args}}, "-I $ENV{DV_ROOT}/design/chipset/include") ;
       push (@{$opt{icv_build_args}}, "-g 2001") ;
     }
+    if ($opt{vlt_build}) {
+      push (@{$opt{vlt_build_args}}, "--trace") if ($opt{debug_all}) ;
+    }
 
     # copy vcs/icv/ncv/msm/vlt_build_args to generic sim_build_args
     if ($opt{vcs_build}) {
@@ -1562,6 +1565,9 @@ sub generic_sim_build
       $build_cmd .= "-DPITON_DPI " ;
       $build_cmd .= "--unroll-count 256 " ;
       $build_cmd .= "-CFLAGS -DVERILATOR " ;
+      if ($opt{debug_all}) {
+        $build_cmd .= "-CFLAGS -DVERILATOR_VCD " ;
+      }
       $build_cmd .= "-CFLAGS -DPITON_DPI " ;
       $build_cmd .= "-CFLAGS -lstdc++ " ;
       $build_cmd .= "-CFLAGS -I$dv_root/tools/pli/iop " ;

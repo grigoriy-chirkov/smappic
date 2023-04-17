@@ -782,7 +782,10 @@ module ariane #(
   logic [63:0] cycles;
 
   initial begin
-    f = $fopen("trace_hart_00.dasm", "w");
+    string fn;
+    $sformat(fn, "trace_hart_%0.0f.dasm", hart_id_i);
+    $display("[TRACER] Output filename is: %s", fn);
+    f = $fopen(fn,"w");
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin

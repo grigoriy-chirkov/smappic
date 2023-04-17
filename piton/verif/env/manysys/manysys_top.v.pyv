@@ -47,8 +47,10 @@ import "DPI-C" function void init_jbus_model_call(string str, int oram);
 module cmp_top (
 `ifdef VERILATOR
 input reg                             core_ref_clk,
+input reg                             axi_clk,
 
 input reg                             sys_rst_n,
+input reg                             axi_rst_n,
 
 input reg                             pll_rst_n,
 
@@ -123,9 +125,9 @@ always #5000 core_ref_clk = ~core_ref_clk;                      // 100MHz
 `else
 always #500 core_ref_clk = ~core_ref_clk;                       // 1000MHz
 `endif
+always #500 axi_clk = ~axi_clk;                      // 1000MHz
 `endif
 
-always #500 axi_clk = ~axi_clk;                      // 1000MHz
 
 `ifndef SYNC_MUX
 always #1429 io_clk = ~io_clk;                                  // 350MHz
@@ -427,9 +429,9 @@ system system(
     .chipset_clk(core_ref_clk),
 `endif
 `ifndef PITONSYS_NO_MC
-`ifdef PITON_FPGA_MC_DDR3
+`ifdef PITON_FPGA_MC_DDR
     .mc_clk(mem_clk),
-`endif // endif PITON_FPGA_MC_DDR3
+`endif // endif PITON_FPGA_MC_DDR
 `endif // endif PITONSYS_NO_MC
 `ifdef PITONSYS_SPI
     .spi_sys_clk(spi_sys_clk),
@@ -505,7 +507,7 @@ system system(
 
     // DRAM and I/O interfaces
 `ifndef PITONSYS_NO_MC
-`ifdef PITON_FPGA_MC_DDR3
+`ifdef PITON_FPGA_MC_DDR
     // FPGA DDR MC interface, currently not supported in simulation
     .init_calib_complete(),
     .ddr_addr(),
@@ -523,7 +525,7 @@ system system(
     .ddr_cs_n(),
     .ddr_dm(),
     .ddr_odt(),
-`endif // endif PITON_FPGA_MC_DDR3
+`endif // endif PITON_FPGA_MC_DDR
 `endif // endif PITONSYS_NO_MC
 
 `ifdef PITONSYS_IOCTRL
@@ -595,9 +597,9 @@ system system1(
     .chipset_clk(core_ref_clk),
 `endif
 `ifndef PITONSYS_NO_MC
-`ifdef PITON_FPGA_MC_DDR3
+`ifdef PITON_FPGA_MC_DDR
     .mc_clk(mem_clk),
-`endif // endif PITON_FPGA_MC_DDR3
+`endif // endif PITON_FPGA_MC_DDR
 `endif // endif PITONSYS_NO_MC
 `ifdef PITONSYS_SPI
     .spi_sys_clk(spi_sys_clk),

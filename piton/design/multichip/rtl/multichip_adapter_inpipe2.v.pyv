@@ -118,7 +118,7 @@ wire [`MSG_SRC_Y_WIDTH-1:0] src_y;
 wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits;
 
 multichip_adapter_mshr_decoder mshr_decoder(
-    .data(mshr_in_read_data),
+    .data(mshr_out_read_data),
 
     .addr(),
     .way(),
@@ -179,10 +179,10 @@ always @(*) begin
         data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
     if (do_read_mshr) begin
         data_S3_next[`MSG_MSHRID] = src_mshrid;
-        data_S3_next[`MSG_SRC_CHIPID] = src_chipid;
-        data_S3_next[`MSG_SRC_X] = src_x;
-        data_S3_next[`MSG_SRC_Y] = src_y;
-        data_S3_next[`MSG_SRC_FBITS] = src_fbits;
+        data_S3_next[`MSG_DST_CHIPID] = src_chipid;
+        data_S3_next[`MSG_DST_X] = src_x;
+        data_S3_next[`MSG_DST_Y] = src_y;
+        data_S3_next[`MSG_DST_FBITS] = src_fbits;
     end
 end
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr);

@@ -46,12 +46,14 @@ return main_time; // converts to double, to match
 
 void tick() {
     top->core_ref_clk = !top->core_ref_clk;
+    top->axi_clk = !top->axi_clk;
     main_time += 250;
     top->eval();
 #ifdef VERILATOR_VCD
     tfp->dump(main_time);
 #endif
     top->core_ref_clk = !top->core_ref_clk;
+    top->axi_clk = !top->axi_clk;
     main_time += 250;
     top->eval();
 #ifdef VERILATOR_VCD
@@ -67,9 +69,11 @@ void reset_and_init() {
 
 //    // Clocks initial value
     top->core_ref_clk = 0;
+    top->axi_clk = 0;
 
 //    // Resets are held low at start of boot
     top->sys_rst_n = 0;
+    top->axi_rst_n = 0;
     top->pll_rst_n = 0;
 
     top->ok_iob = 0;
@@ -126,6 +130,7 @@ void reset_and_init() {
         tick();
     }
     top->sys_rst_n = 1;
+    top->axi_rst_n = 1;
 
 //    // Wait for SRAM init, trin: 5000 cycles is about the lowest
 //    repeat(5000)@(posedge `CHIP_INT_CLK);

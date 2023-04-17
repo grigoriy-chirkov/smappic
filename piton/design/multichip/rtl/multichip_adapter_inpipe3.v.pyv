@@ -133,10 +133,10 @@ always @(*) begin
     data_S3_next = data_S2;
     if (do_read_mshr) begin
         data_S3_next[`MSG_MSHRID] = src_mshrid;
-        data_S3_next[`MSG_SRC_CHIPID] = src_chipid;
-        data_S3_next[`MSG_SRC_X] = src_x;
-        data_S3_next[`MSG_SRC_Y] = src_y;
-        data_S3_next[`MSG_SRC_FBITS] = src_fbits;
+        data_S3_next[`MSG_DST_CHIPID] = src_chipid;
+        data_S3_next[`MSG_DST_X] = src_x;
+        data_S3_next[`MSG_DST_Y] = src_y;
+        data_S3_next[`MSG_DST_FBITS] = src_fbits;
     end
 end
 
