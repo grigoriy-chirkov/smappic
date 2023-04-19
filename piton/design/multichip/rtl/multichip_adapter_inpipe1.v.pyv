@@ -47,6 +47,7 @@ module multichip_adapter_inpipe1 (
     input  wire  [`CEP_DATA_WIDTH-1:0]             cep_data,
     output wire                                    cep_rdy,
 
+    // MSHR interface
     input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_empty_index,
     input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_empty_slots,
     output wire                                   mshr_write_en,
@@ -71,6 +72,7 @@ wire [`CEP_DATA_WIDTH-1:0]  data_S1 = cep_data;
 wire [`CEP_DATA_WIDTH-1:0] data_S2_next = data_S1;
 assign val_S1 = cep_val;
 assign cep_rdy = ~stall_S1;
+
 assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1-> 2
@@ -90,28 +92,26 @@ end
 // Stage 2
 
 wire val_S3_next = val_S2 & ~stall_S2;
-wire [`MSG_TYPE_WIDTH-1:0] msg_type = data_S2[`MSG_TYPE];
-wire do_write_mshr = (msg_type != `MSG_TYPE_INTERRUPT_FWD);
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
+wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S2 = data_S2[`MSG_ADDR];
+wire skip_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
 
 reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
 always @(*) begin
     data_S3_next = data_S2;
-    if (do_write_mshr)
+    if (~skip_msg_S2)
         data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_empty_index};
 end
 
-assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr;
+assign mshr_write_en = val_S2 & ~stall_S2 & ~skip_msg_S2;
 assign mshr_write_index = mshr_empty_index;
 
-wire stall_mshr_full = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr = do_write_mshr & (stall_mshr_full | stall_mshr_from_p2);
-assign stall_S2 = val_S2 & (stall_S3 | stall_mshr);
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_write_data),
 
     .addr(data_S2[`MSG_ADDR]),
-    .way(`MA_WAYS_WIDTH'd0),
+    .way(`MA_WAY_WIDTH'd0),
     .mshrid(data_S2[`MSG_MSHRID]),
     .cache_type(data_S2[`MSG_CACHE_TYPE]),
     .data_size(data_S2[`MSG_DATA_SIZE]),
@@ -130,7 +130,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
 );
 
 
-// Stage 2-> 3
+wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
+wire stall_mshr_S2 = ~skip_msg_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
+
+// Stage 2 -> 3
 
 reg [`CEP_DATA_WIDTH-1:0] data_S3;
 always @(posedge clk) begin

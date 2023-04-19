@@ -1,0 +1,109 @@
+/*
+Copyright (c) 2023 Princeton University
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Princeton University nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL PRINCETON UNIVERSITY BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+`include "multichip_adapter.vh"
+`include "define.tmp.h"
+
+<%
+from pyhplib import *
+import math
+
+MA_SIZE = 65536
+MA_NUM_WAYS = 4
+MA_LINE_SIZE = 64
+MA_NUM_SETS = int(MA_SIZE / (MA_LINE_SIZE * MA_NUM_WAYS))
+MA_WAY_WIDTH = (math.log(MA_NUM_WAYS,2))
+%>
+
+
+module multichip_adapter_dir_decoder (
+    input wire [`MA_ADDR_WIDTH-1:0] addr_in,
+    input wire [`MA_WIDTH-1:0] data_in,
+
+    output reg hit,
+    output reg [`MA_SET_WIDTH-1:0] set,
+    output reg [`MA_WAY_WIDTH-1:0] way,
+    output reg [`MA_TAG_WIDTH-1:0] tag,
+    output reg [`MA_STATE_WIDTH-1:0] state,
+    output reg shared,
+    output reg [`MA_OWNER_BITS_WIDTH-1:0] sharer_set,
+    output reg [`MA_WAY_WIDTH:0] num_empty_ways,
+    output reg [`MA_WAY_WIDTH-1:0] empty_way
+);
+
+reg [`MA_ENTRY_WIDTH-1:0] entries[`MA_WAYS-1:0];
+reg [`MA_STATE_WIDTH-1:0] states[`MA_WAYS-1:0];
+reg [`MA_OWNER_BITS_WIDTH-1:0] sharer_sets[`MA_WAYS-1:0];
+reg [`MA_TAG_WIDTH-1:0] tags[`MA_WAYS-1:0];
+reg [`MA_WAYS-1:0] hits;
+
+always @(*) begin
+  set = addr_in[`MA_ADDR_SET];
+  tag = addr_in[`MA_ADDR_TAG];
+  empty_way = `MA_WAYS;
+  num_empty_ways = {`MA_WAYS+1{1'b0}};
+
+<%
+for i in range(MA_NUM_WAYS):
+  print(f"""\
+  entries[{i}] = data_in[{i+1}*`MA_ENTRY_WIDTH-1:{i}*`MA_ENTRY_WIDTH];
+  states[{i}] = entries[{i}][`MA_ENTRY_STATE];
+  sharer_sets[{i}] = entries[{i}][`MA_ENTRY_OWNER_BITS];
+  tags[{i}] = entries[{i}][`MA_ENTRY_TAG];
+  hits[{i}] = (tag == tags[{i}]) & (states[{i}] != `MA_STATE_INVALID);
+  if (states[{i}] == `MA_STATE_INVALID) begin
+    empty_way = `MA_WAY_WIDTH'd{i};
+    num_empty_ways = num_empty_ways + {{{{`MA_WAY_WIDTH{{1'b0}}}}, 1'd1}};
+  end
+""")
+%>
+  case (hits)
+<%
+for i in range(MA_NUM_WAYS):
+  print(f"""\
+    `MA_WAYS'b{(1 << i):0{MA_NUM_WAYS}b}: begin
+      way = `MA_WAY_WIDTH'd{i};
+      hit = 1'b1;
+      state = states[{i}];
+      sharer_set = sharer_sets[{i}];
+      shared = |(sharer_set & (sharer_set - `MA_OWNER_BITS_WIDTH'd1));
+    end
+""")
+%>
+    default: begin// should never happen
+      way = `MA_WAY_WIDTH'd0;
+      hit = 1'b0;
+      state = `MA_STATE_INVALID;
+      sharer_set = `MA_OWNER_BITS_WIDTH'd0;
+      shared = 1'b0;
+    end
+  endcase
+
+end
+
+endmodule

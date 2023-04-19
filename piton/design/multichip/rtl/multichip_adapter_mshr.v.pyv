@@ -60,7 +60,7 @@ module multichip_adapter_mshr (
     output reg [`MA_MSHR_ARRAY_WIDTH-1:0] cam_data_out,
     output reg [`MA_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
 
-    output reg [`MA_OWNER_BITS-1:0] inv_counter_out,
+    output reg [`MA_OWNER_BITS_WIDTH-1:0] inv_counter_out,
     output reg [`MA_MSHR_INDEX_WIDTH:0] empty_slots,
     output reg pending,
     output reg [`MA_MSHR_INDEX_WIDTH-1:0] pending_index,
@@ -105,7 +105,7 @@ MA_MSHR_INDEX_WIDTH = 3
 
 reg [`MA_MSHR_STATE_BITS-1:0] state_mem_f [`MA_MSHR_ENTRIES-1:0];
 reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_mem_f [`MA_MSHR_ENTRIES-1:0];
-reg [`MA_OWNER_BITS-1:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
+reg [`MA_OWNER_BITS_WIDTH-1:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
 
 always @ *
 begin
@@ -258,20 +258,20 @@ begin
     begin
 <%
 for i in range(MA_MSHR_ENTRIES):
-    print("        counter_mem_f[%d] <= {`MA_OWNER_BITS{1'b0}};" % (i))
+    print("        counter_mem_f[%d] <= {`MA_OWNER_BITS_WIDTH{1'b0}};" % (i))
 %>
     end
     else if (pending && pending_ready1)
     begin
-        counter_mem_f[pending_index] <= {`MA_OWNER_BITS{1'b0}};
+        counter_mem_f[pending_index] <= {`MA_OWNER_BITS_WIDTH{1'b0}};
         if (inc_counter_en2 && (pending_index != wr_index_in))
         begin
-            counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS'd1;
+            counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS_WIDTH'd1;
         end
     end
     else if (inc_counter_en2)
     begin
-        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS'd1;
+        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS_WIDTH'd1;
     end
 end
 

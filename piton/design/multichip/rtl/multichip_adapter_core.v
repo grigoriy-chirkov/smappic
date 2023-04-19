@@ -93,7 +93,7 @@ wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_rd_data;
 
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_pending_index;
 wire mshr_out1_pending;
-wire [`MA_OWNER_BITS-1:0] mshr_out1_inv_counter;
+wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_out1_inv_counter;
 wire mshr_out1_hit;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_hit_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_cam_data;
@@ -152,7 +152,7 @@ wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_rd_data;
 
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_pending_index;
 wire mshr_out2_pending;
-wire [`MA_OWNER_BITS-1:0] mshr_out2_inv_counter;
+wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_out2_inv_counter;
 wire mshr_out2_hit;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_hit_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_cam_data;
@@ -211,7 +211,7 @@ wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_rd_data;
 
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_pending_index;
 wire mshr_in1_pending;
-wire [`MA_OWNER_BITS-1:0] mshr_in1_inv_counter;
+wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_in1_inv_counter;
 wire mshr_in1_hit;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_hit_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_cam_data;
@@ -270,7 +270,7 @@ wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_rd_data;
 
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_pending_index;
 wire mshr_in2_pending;
-wire [`MA_OWNER_BITS-1:0] mshr_in2_inv_counter;
+wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_in2_inv_counter;
 wire mshr_in2_hit;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_hit_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_cam_data;
@@ -315,14 +315,48 @@ multichip_adapter_mshr mshr_in2 (
 );
 
 
+wire dir_rd_en;
+wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr;
+wire dir_rd_hit;
+wire [`MA_SET_WIDTH-1:0] dir_rd_set;
+wire [`MA_WAY_WIDTH-1:0] dir_rd_way;
+wire [`MA_TAG_WIDTH-1:0] dir_rd_tag;
+wire [`MA_STATE_WIDTH-1:0] dir_rd_state;
+wire dir_rd_shared;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set;
+wire [`MA_WAY_WIDTH:0] dir_num_empty_ways;
+wire [`MA_WAY_WIDTH-1:0] dir_empty_way;
+wire dir_wr_en;
+wire [`MA_SET_WIDTH-1:0] dir_wr_set;
+wire [`MA_WAY_WIDTH-1:0] dir_wr_way;
+wire [`MA_TAG_WIDTH-1:0] dir_wr_tag;
+wire [`MA_STATE_WIDTH-1:0] dir_wr_state;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set;
 
 
+multichip_adapter_dir dir(
+    .clk(clk),
+    .rst_n(rst_n),
 
+    .rd_en(dir_rd_en),
+    .rd_addr(dir_rd_addr),
+    .rd_hit(dir_rd_hit),
+    .rd_set(dir_rd_set),
+    .rd_way(dir_rd_way),
+    .rd_tag(dir_rd_tag),
+    .rd_state(dir_rd_state),
+    .rd_shared(dir_rd_shared),
+    .rd_sharer_set(dir_rd_sharer_set),
+    .num_empty_ways(dir_num_empty_ways),
+    .empty_way(dir_empty_way),
 
-
-
-
-
+    .wr_en(dir_wr_en),
+    .wr_set(dir_wr_set),
+    .wr_way(dir_wr_way),
+    .wr_tag(dir_wr_tag),
+    .wr_state(dir_wr_state),
+    .wr_sharer_set(dir_wr_sharer_set)
+);
 
 
 
@@ -346,7 +380,25 @@ multichip_adapter_outpipe1 outpipe1 (
     .mshr_write_en(mshr_out1_p1_write_en),
     .mshr_write_index(mshr_out1_p1_write_index),
     .mshr_write_data(mshr_out1_p1_write_data), 
-    .stall_mshr_from_p2(mshr_out1_p2_write_en)
+    .stall_mshr_from_p2(mshr_out1_p2_write_en),
+
+    .dir_rd_en(dir_rd_en),
+    .dir_rd_addr(dir_rd_addr),
+    .dir_rd_hit(dir_rd_hit),
+    .dir_rd_set(dir_rd_set),
+    .dir_rd_way(dir_rd_way),
+    .dir_rd_tag(dir_rd_tag),
+    .dir_rd_state(dir_rd_state),
+    .dir_rd_shared(dir_rd_shared),
+    .dir_rd_sharer_set(dir_rd_sharer_set),
+    .dir_num_empty_ways(dir_num_empty_ways),
+    .dir_empty_way(dir_empty_way),
+    .dir_wr_en(dir_wr_en),
+    .dir_wr_set(dir_wr_set),
+    .dir_wr_way(dir_wr_way),
+    .dir_wr_tag(dir_wr_tag),
+    .dir_wr_state(dir_wr_state),
+    .dir_wr_sharer_set(dir_wr_sharer_set)
 );
 
 multichip_adapter_outpipe2 outpipe2 (

@@ -29,50 +29,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `include "multichip_adapter.vh"
 `include "define.tmp.h"
 
-module multichip_adapter_mshr_encoder(
+module multichip_adapter_dir_encoder (
+    output reg [`MA_WIDTH-1:0] data_out,
+    output reg [`MA_WIDTH-1:0] mask_out,
 
-    output reg [`MA_MSHR_ARRAY_WIDTH-1:0] data,
-
-    input wire [`MA_MSHR_ADDR_OUT_WIDTH-1:0] addr,
     input wire [`MA_WAY_WIDTH-1:0] way,
-    input wire [`MSG_MSHRID_WIDTH-1:0] mshrid,
-    input wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
-    input wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
-    input wire [`MSG_TYPE_WIDTH-1:0] msg_type,
-    input wire [`MSG_L2_MISS_BITS-1:0] msg_l2_miss,
-    input wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid,
-    input wire [`MSG_SRC_X_WIDTH-1:0] src_x,
-    input wire [`MSG_SRC_Y_WIDTH-1:0] src_y,
-    input wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits,
-    input wire [`MSG_SDID_WIDTH-1:0] sdid,
-    input wire [`MSG_LSID_WIDTH-1:0] lsid,
-    input wire [`MSG_LSID_WIDTH-1:0] miss_lsid,
-    input wire smc_miss,
-    input wire recycled,
-    input wire inv_fwd_pending
+    input wire [`MA_TAG_WIDTH-1:0] tag,
+    input wire [`MA_STATE_WIDTH-1:0] state,
+    input wire [`MA_OWNER_BITS_WIDTH-1:0] sharer_set
 );
 
+reg [`MA_ENTRY_WIDTH-1:0] entry;
 
-always @ *
-begin
-    data = `MA_MSHR_ARRAY_WIDTH'b0;
-    data[`MA_MSHR_ADDR] = addr;
-    data[`MA_MSHR_WAY] = way;
-    data[`MA_MSHR_MSHRID] = mshrid;
-    data[`MA_MSHR_CACHE_TYPE] = cache_type;
-    data[`MA_MSHR_DATA_SIZE] = data_size;
-    data[`MA_MSHR_MSG_TYPE] = msg_type;
-    data[`MA_MSHR_L2_MISS] = msg_l2_miss;
-    data[`MA_MSHR_SRC_CHIPID] = src_chipid;
-    data[`MA_MSHR_SRC_X] = src_x;
-    data[`MA_MSHR_SRC_Y] = src_y;
-    data[`MA_MSHR_SRC_FBITS] = src_fbits;
-    data[`MA_MSHR_SDID] = sdid;
-    data[`MA_MSHR_LSID] = lsid;
-    data[`MA_MSHR_MISS_LSID] = miss_lsid;
-    data[`MA_MSHR_SMC_MISS] = smc_miss;
-    data[`MA_MSHR_RECYCLED] = recycled;
-    data[`MA_MSHR_INV_FWD_PENDING] = inv_fwd_pending;
+
+always @(*) begin
+  entry = `MA_ENTRY_WIDTH'h0;
+  entry[`MA_ENTRY_STATE] = state;
+  entry[`MA_ENTRY_TAG] = tag;
+  entry[`MA_ENTRY_OWNER_BITS] = sharer_set;
+
+  data_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, entry} << (way * `MA_ENTRY_WIDTH);
+  mask_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, {`MA_ENTRY_WIDTH{1'b1}}} << (way * `MA_ENTRY_WIDTH);
 end
 
 endmodule

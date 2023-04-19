@@ -33,12 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   from pyhplib import * 
 
   pyhplib.MakeGenericCacheDefine(
-    modulename="multichip_adapter_tags_sram", 
-    type="1rw", 
-    #height=CONFIG_SRAM_MA_TAG_HEIGHT, 
-    #width=CONFIG_SRAM_MA_TAG_WIDTH
-    height_define="`MA_TAG_ARRAY_HEIGHT",
-    heightlog2_define="`MA_TAG_ARRAY_HEIGHT_LOG2",
-    width_define="`MA_TAG_ARRAY_WIDTH"
+    modulename="multichip_adapter_dir_sram", 
+    type="1r1w", 
+    height_define="`MA_HEIGHT",
+    heightlog2_define="`MA_HEIGHT_LOG2",
+    width_define="`MA_WIDTH"
     );
 %>

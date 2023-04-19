@@ -19,3 +19,7 @@ multichip_adapter_inpipe3.v
 multichip_adapter_mshr.v
 multichip_adapter_mshr_encoder.v
 multichip_adapter_mshr_decoder.v
+multichip_adapter_dir.v
+multichip_adapter_dir_sram.v
+multichip_adapter_dir_decoder.v
+multichip_adapter_dir_encoder.v
