@@ -85,7 +85,8 @@ always @(posedge clk) begin
     end
 end
 
-assign flit_data = (dbuf >> (`NOC_DATA_WIDTH*flit_id)) & {`NOC_DATA_WIDTH{1'b1}};
+wire [`PKG_DATA_WIDTH-1:0] flit_data_uncut = dbuf >> (`NOC_DATA_WIDTH*flit_id);
+assign flit_data = flit_data_uncut[`NOC_DATA_WIDTH-1:0];
 assign flit_val = dbuf_val & (flit_id < dbuf_size);
 assign pkg_rdy = ~dbuf_val | ((flit_id == dbuf_size - `MSG_LENGTH_WIDTH'd1) & flit_go);
 

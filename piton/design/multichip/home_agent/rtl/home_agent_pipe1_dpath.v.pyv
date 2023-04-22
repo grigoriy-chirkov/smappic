@@ -48,18 +48,6 @@ module home_agent_pipe1_dpath(
     //Inputs to Stage 1   
 
     //inputs from the mshr
-    input wire [`L2_MSHR_ADDR_OUT_WIDTH-1:0] cam_mshr_addr_S1,
-    input wire [`MSG_MSHRID_WIDTH-1:0] cam_mshr_mshrid_S1,
-    input wire [`L2_WAYS_WIDTH-1:0] cam_mshr_way_S1,
-    input wire [`MSG_SRC_CHIPID_WIDTH-1:0] cam_mshr_src_chipid_S1,
-    input wire [`MSG_SRC_X_WIDTH-1:0] cam_mshr_src_x_S1,
-    input wire [`MSG_SRC_Y_WIDTH-1:0] cam_mshr_src_y_S1,
-    input wire [`MSG_SRC_FBITS_WIDTH-1:0] cam_mshr_src_fbits_S1,
-    input wire [`MSG_SDID_WIDTH-1:0] cam_mshr_sdid_S1,
-    input wire [`MSG_LSID_WIDTH-1:0] cam_mshr_lsid_S1,
-    input wire [`MSG_LSID_WIDTH-1:0] cam_mshr_miss_lsid_S1,
-    input wire cam_mshr_recycled_S1,
-    //inputs from the mshr
     input wire mshr_pending_S1,
     input wire [`L2_MSHR_ADDR_OUT_WIDTH-1:0] pending_mshr_addr_S1,
     input wire [`MSG_MSHRID_WIDTH-1:0] pending_mshr_mshrid_S1,
@@ -176,7 +164,6 @@ module home_agent_pipe1_dpath(
     //Outputs from Stage 1
     
     output reg [`PHY_ADDR_WIDTH-1:0] addr_S1,
-    output reg [`L2_MSHR_ADDR_IN_WIDTH-1:0] mshr_addr_in_S1,
     output reg [`L2_TAG_INDEX_WIDTH-1:0] tag_addr_S1,
     output reg [`L2_TAG_INDEX_WIDTH-1:0] state_rd_addr_S1,
     output reg [`L2_P1_DATA_BUF_IN_WIDTH-1:0] reg_data_in_S1,
@@ -223,7 +210,6 @@ module home_agent_pipe1_dpath(
     output reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S4,
     output reg req_from_owner_S4,
     output reg cas_cmp_S4,
-    output reg [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S4,
     output reg [`MSG_LSID_WIDTH-1:0] lsid_S4,
     output reg corr_error_S4,
     output reg uncorr_error_S4,
@@ -306,19 +292,6 @@ begin
     end
 end
 
-
-always @ *
-begin
-    if (~msg_from_mshr_S1)
-    begin
-        mshr_addr_in_S1 = addr_trans_S1[`L2_TAG_INDEX];
-    end
-    else 
-    begin
-        mshr_addr_in_S1 = {`L2_MSHR_ADDR_IN_WIDTH{1'b0}};
-    end
-end
-
 always @ *
 begin
     tag_addr_S1 = addr_trans_S1[`L2_TAG_INDEX];
@@ -387,8 +360,6 @@ reg [`MSG_SRC_Y_WIDTH-1:0] src_y_S2_f;
 reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S2_f;
 reg [`MSG_SDID_WIDTH-1:0] sdid_S2_f;
 reg [`MSG_LSID_WIDTH-1:0] lsid_S2_f;
-reg [`L2_WAYS_WIDTH-1:0] mshr_way_S2_f;
-reg [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S2_f;
 reg [`L2_DATA_DATA_WIDTH-1:0] atomic_read_data_S2_f;
 reg recycled_S2_f;
 
@@ -404,8 +375,6 @@ begin
         src_fbits_S2_f <= 0;
         sdid_S2_f <= 0;
         lsid_S2_f <= 0;
-        mshr_way_S2_f <= 0;
-        mshr_miss_lsid_S2_f <= 0;
         atomic_read_data_S2_f <= 0;
         recycled_S2_f <= 0;
     end
@@ -420,8 +389,6 @@ begin
         sdid_S2_f <= sdid_S1;
         lsid_S2_f <= lsid_S1;
         // trin: ambiguous??
-        mshr_way_S2_f <= (mshr_pending_S1 == 1'b1) ? pending_mshr_way_S1 : cam_mshr_way_S1;
-        mshr_miss_lsid_S2_f <= (mshr_pending_S1 == 1'b1) ? pending_mshr_miss_lsid_S1 : cam_mshr_miss_lsid_S1;
         atomic_read_data_S2_f <= atomic_read_data_S1_f;
         recycled_S2_f <= recycled_S1;
     end
@@ -665,13 +632,6 @@ end
 
 always @ *
 begin
-/*
-    if (msg_from_mshr_S2)
-    begin
-        l2_way_sel_S2 = mshr_way_S2_f;
-    end
-    else 
-*/
     if (special_addr_type_S2 || msg_type_S2 == `MSG_TYPE_L2_LINE_FLUSH_REQ)
     begin
         l2_way_sel_S2 = addr_S2[`L2_ADDR_WAY];
@@ -1127,7 +1087,6 @@ reg [`MSG_SRC_Y_WIDTH-1:0] src_y_S3_f;
 reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S3_f;
 reg [`MSG_SDID_WIDTH-1:0] sdid_S3_f;
 reg [`MSG_LSID_WIDTH-1:0] lsid_S3_f;
-reg [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S3_f;
 reg [`PHY_ADDR_WIDTH-1:0] evict_addr_S3_f;
 reg l2_tag_hit_S3_f;
 reg l2_evict_S3_f;
@@ -1157,7 +1116,6 @@ begin
         src_fbits_S3_f <= 0;
         sdid_S3_f <= 0;
         lsid_S3_f <= 0;
-        mshr_miss_lsid_S3_f <= 0;
         evict_addr_S3_f <= 0;
         l2_tag_hit_S3_f <= 0;
         l2_evict_S3_f <= 0;
@@ -1185,7 +1143,6 @@ begin
         src_fbits_S3_f <= src_fbits_S2_f;
         sdid_S3_f <= sdid_S2_f;
         lsid_S3_f <= lsid_S2_f;
-        mshr_miss_lsid_S3_f <= mshr_miss_lsid_S2_f;
         evict_addr_S3_f <= evict_addr_S2;
         l2_tag_hit_S3_f <= l2_tag_hit_S2;
         l2_evict_S3_f <= l2_evict_S2;
@@ -1226,7 +1183,6 @@ reg [`MSG_SRC_Y_WIDTH-1:0] src_y_S4_f;
 reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S4_f;
 reg [`MSG_SDID_WIDTH-1:0] sdid_S4_f;
 reg [`MSG_LSID_WIDTH-1:0] lsid_S4_f;
-reg [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S4_f;
 reg [`PHY_ADDR_WIDTH-1:0] evict_addr_S4_f;
 reg l2_tag_hit_S4_f;
 reg l2_evict_S4_f;
@@ -1259,7 +1215,6 @@ begin
         src_fbits_S4_f <= 0;
         sdid_S4_f <= 0;
         lsid_S4_f <= 0;
-        mshr_miss_lsid_S4_f <= 0;
         evict_addr_S4_f <= 0;
         l2_tag_hit_S4_f <= 0;
         l2_evict_S4_f <= 0;
@@ -1287,7 +1242,6 @@ begin
         src_fbits_S4_f <= src_fbits_S3_f;
         sdid_S4_f <= sdid_S3_f;
         lsid_S4_f <= lsid_S3_f;
-        mshr_miss_lsid_S4_f <= mshr_miss_lsid_S3_f;
         evict_addr_S4_f <= evict_addr_S3_f;
         l2_tag_hit_S4_f <= l2_tag_hit_S3_f;
         l2_evict_S4_f <= l2_evict_S3_f;
@@ -1345,7 +1299,6 @@ begin
     l2_way_state_vd_S4 = l2_way_state_vd_S4_f;
     l2_way_state_subline_S4 = l2_way_state_subline_S4_f; 
     l2_way_state_cache_type_S4 = l2_way_state_cache_type_S4_f;
-    mshr_miss_lsid_S4 = mshr_miss_lsid_S4_f;
     lsid_S4 = lsid_S4_f;
     data_data_S4 = data_data_S4_f;
     data_addr_S4 = data_addr_S4_f;
@@ -1717,26 +1670,29 @@ begin
     end
 end
 
-always @ *
-begin
-    mshr_data_in_S4 = {inv_fwd_pending_S4,
-                       (req_recycle_S4 && (!msg_from_mshr_S4 || recycled_S4_f)),
-                       1'b0,
-                       {`L2_LSID_WIDTH{1'b0}},
-                       lsid_S4_f, 
-                       sdid_S4,
-                       src_fbits_S4_f,
-                       src_y_S4_f,
-                       src_x_S4_f,
-                       src_chipid_S4_f,
-                       l2_miss_S4,
-                       msg_type_S4,
-                       data_size_S4,
-                       cache_type_S4,
-                       mshrid_S4_f,
-                       l2_way_sel_S4_f,
-                       addr_S4_f};
-end
+l2_mshr_encoder l2_mshr_encoder (
+    .data(mshr_data_in_S4),
+
+    .addr(addr_S4_f),
+    .way(l2_way_sel_S4_f),
+    .mshrid(mshrid_S4_f),
+    .cache_type(cache_type_S4),
+    .data_size(data_size_S4),
+    .msg_type(msg_type_S4),
+    .msg_l2_miss(l2_miss_S4),
+    .src_chipid(src_chipid_S4_f),
+    .src_x(src_x_S4_f),
+    .src_y(src_y_S4_f),
+    .src_fbits(src_fbits_S4_f),
+    .sdid(sdid_S4),
+    .lsid(lsid_S4_f),
+    .miss_lsid({`L2_LSID_WIDTH{1'b0}}),
+    .smc_miss(1'b0),
+    .recycled(req_recycle_S4 && (!msg_from_mshr_S4 || recycled_S4_f)),
+    .inv_fwd_pending(inv_fwd_pending_S4)
+);
+
+
 assign mshr_data_mask_in_S4 = {`L2_MSHR_ARRAY_WIDTH{1'b1}}; 
 
 

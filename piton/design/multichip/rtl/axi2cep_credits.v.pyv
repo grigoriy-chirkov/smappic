@@ -74,7 +74,7 @@ afifo_w16_d16 async_credit_fifo1(
     .rd_clk(axi_clk),
     .rd_en(1'b1),
     .wr_en(|cep_queue1_credits_return),
-    .din(cep_queue1_credits_return),
+    .din({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue1_credits_return}),
     .dout(cep_queue1_credits_return_synced),
     .full(),
     .empty(credit_fifo1_empty)
@@ -91,7 +91,7 @@ async_credit_fifo1(
     .rclk(axi_clk),
     .ren(1'b1),
     .wval(|cep_queue1_credits_return),
-    .wdata(cep_queue1_credits_return),
+    .wdata({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue1_credits_return}),
     .rdata(cep_queue1_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo1_empty)
@@ -107,7 +107,7 @@ afifo_w16_d16 async_credit_fifo2(
     .rd_clk(axi_clk),
     .rd_en(1'b1),
     .wr_en(|cep_queue2_credits_return),
-    .din(cep_queue2_credits_return),
+    .din({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue2_credits_return}),
     .dout(cep_queue2_credits_return_synced),
     .full(),
     .empty(credit_fifo2_empty)
@@ -124,7 +124,7 @@ async_credit_fifo2(
     .rclk(axi_clk),
     .ren(1'b1),
     .wval(|cep_queue2_credits_return),
-    .wdata(cep_queue2_credits_return),
+    .wdata({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue2_credits_return}),
     .rdata(cep_queue2_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo2_empty)
@@ -140,7 +140,7 @@ afifo_w16_d16 async_credit_fifo3(
     .rd_clk(axi_clk),
     .rd_en(1'b1),
     .wr_en(|cep_queue3_credits_return),
-    .din(cep_queue3_credits_return),
+    .din({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue3_credits_return}),
     .dout(cep_queue3_credits_return_synced),
     .full(),
     .empty(credit_fifo3_empty)
@@ -157,7 +157,7 @@ async_credit_fifo3(
     .rclk(axi_clk),
     .ren(1'b1),
     .wval(|cep_queue3_credits_return),
-    .wdata(cep_queue3_credits_return),
+    .wdata({{15-`PITON_NUM_CHIPS{1'b0}}, cep_queue3_credits_return}),
     .rdata(cep_queue3_credits_return_synced),
     .wfull(),   
     .rempty(credit_fifo3_empty)
@@ -209,9 +209,9 @@ str += f'''\
 '''
 for i in range(PITON_NUM_CHIPS):
     str += f'''\
-    credits1[{i}] <= credits1[{i}] + credits1_chip{i}_up - credits_chip{i}_down*credits1[{i}];
-    credits2[{i}] <= credits2[{i}] + credits2_chip{i}_up - credits_chip{i}_down*credits2[{i}];
-    credits3[{i}] <= credits3[{i}] + credits3_chip{i}_up - credits_chip{i}_down*credits3[{i}];
+    credits1[{i}] <= credits1[{i}] + {{7'd0, credits1_chip{i}_up}} - credits_chip{i}_down*credits1[{i}];
+    credits2[{i}] <= credits2[{i}] + {{7'd0, credits2_chip{i}_up}} - credits_chip{i}_down*credits2[{i}];
+    credits3[{i}] <= credits3[{i}] + {{7'd0, credits3_chip{i}_up}} - credits_chip{i}_down*credits3[{i}];
 '''
 str += f'''\
   end

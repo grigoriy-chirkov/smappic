@@ -55,10 +55,8 @@ module home_agent_mshr_wrap(
     input wire [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in2,
 
     output reg hit,
-    output reg [`L2_MSHR_INDEX_WIDTH-1:0] hit_index,
     output reg [`L2_MSHR_STATE_BITS-1:0] rd_state_out,
     output reg [`L2_MSHR_ARRAY_WIDTH-1:0] rd_data_out,
-    output reg [`L2_MSHR_ARRAY_WIDTH-1:0] cam_data_out,
     output reg [`L2_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
 
     output reg [`L2_OWNER_BITS-1:0] inv_counter_out,
@@ -74,6 +72,8 @@ reg [`L2_MSHR_STATE_BITS-1:0] state_in;
 reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_in;
 reg [`L2_MSHR_ARRAY_WIDTH-1:0] data_mask_in;
 reg [`L2_MSHR_INDEX_WIDTH-1:0] wr_index_in;
+reg [`L2_MSHR_INDEX_WIDTH-1:0] hit_index;
+
 
 always @ *
 begin
@@ -169,7 +169,6 @@ always @ *
 begin
     rd_state_out = state_mem_f[rd_index_in2];
     rd_data_out = data_mem_f[rd_index_in2];
-    cam_data_out = data_mem_f[hit_index];
     pending_data_out = data_mem_f[pending_index];
 end
 
@@ -177,6 +176,7 @@ always @ *
 begin
     inv_counter_out = counter_mem_f[inv_counter_rd_index_in1];
 end
+
 
 always @ *
 begin

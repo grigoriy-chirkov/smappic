@@ -44,7 +44,6 @@ module home_agent_pipe2_ctrl(
     input wire [`MSG_LAST_SUBLINE_WIDTH-1:0] msg_last_subline_S1,
     input wire [`MSG_MESI_BITS-1:0] msg_mesi_S1,
 
-    //input wire mshr_hit_S1,
     input wire [`MSG_TYPE_WIDTH-1:0] mshr_msg_type_S1,
     input wire [`MSG_L2_MISS_BITS-1:0] mshr_l2_miss_S1,
     input wire [`MSG_DATA_SIZE_WIDTH-1:0] mshr_data_size_S1,
@@ -436,24 +435,19 @@ begin
                     begin
                         if (msg_length_S2_f != 0)
                         begin
-                            //       data   dir        dir         dir      state      state        state        state       state 
-                            //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
-                            cs_S2 = {y,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                            //       state   state          state    state           state   state
-                            //       vd_en   vd             mesi_en  mesi            lru_en  lru
-                                        y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
+                            //       data   dir        dir         dir      state      state        state        state       state    state   state          state    state           state   state
+                            //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en    vd_en   vd             mesi_en  mesi            lru_en  lru 
+                            cs_S2 = {y,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n,      y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
                         end     
                         else
                         begin       
-                            cs_S2 = {n,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                        y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
+                            cs_S2 = {n,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n,      y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
 
                         end
                     end
                     else
                     begin
-                        cs_S2 = {n,     y,         wr,         n,       y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                    y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};    
+                            cs_S2 = {n,     y,         wr,         n,       y,         `OP_CLR,     n,           `OP_CLR,    n,       y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};    
                     end
                 end
                 else
@@ -462,26 +456,22 @@ begin
                     begin
                         if (msg_length_S2_f != 0)
                         begin
-                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
                         end
                         else
                         begin
-                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
                         end
                     end
                     else
                     begin
-                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
                     end
                 end  
             end
             `L2_MESI_I:
             begin
-                cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,      n,           `OP_CLR,    n,       
-                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,      n,           `OP_CLR,    n,      n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
             end
             default:
             begin
@@ -500,20 +490,17 @@ begin
                     begin
                         if (msg_length_S2_f != 0)
                         begin
-                            cs_S2 = {y,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
+                            cs_S2 = {y,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n,       y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
                         end
                         else
                         begin
-                            cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
+                            cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n,       y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
                         end
                         
                     end
                     else
                     begin
-                        cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                 y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
+                            cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n,       y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
                     end  
                 end
                 else
@@ -522,26 +509,22 @@ begin
                     begin
                         if (msg_length_S2_f != 0)
                         begin
-                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
                         end
                         else
                         begin
-                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
                         end
                     end
                     else
                     begin
-                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
                     end 
                 end 
             end
             `L2_MESI_I:
             begin
-                cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
             end
             default:
             begin
@@ -555,36 +538,30 @@ begin
             begin
                 if ((l2_way_state_owner_S2 == 1) && (~inv_fwd_pending_S2_f))
                 begin
-                    cs_S2 = {n,     n,         rd,         n,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                n,      `L2_VD_ERROR,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};    
+                            cs_S2 = {n,     n,         rd,         n,       y,         `OP_CLR,     y,           `OP_CLR,    n,      n,      `L2_VD_ERROR,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};    
                 end
                 else
                 begin
-                    cs_S2 = {n,     n,         rd,         n,       y,         `OP_SUB,     n,           `OP_CLR,    n, 
-                                n,      `L2_VD_ERROR,  n,      `L2_MESI_I, n,      `L2_LRU_CLR};    
+                            cs_S2 = {n,     n,         rd,         n,       y,         `OP_SUB,     n,           `OP_CLR,    n,      n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};    
                 end
             end
             else
             begin
-                cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,      n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
             end  
         end
 
         `MSG_TYPE_LOAD_MEM_ACK:
         begin
-            cs_S2 = {y,     y,         wr,         y,       n,         `OP_CLR,     y,           `OP_CLR,    n,       
-                     y,      `L2_VD_CLEAN,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     y,         wr,         y,       n,         `OP_CLR,     y,           `OP_CLR,    n,      y,      `L2_VD_CLEAN,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
         end
         `MSG_TYPE_NC_LOAD_MEM_ACK:
         begin
-            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                        y,      `L2_VD_CLEAN,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,      y,      `L2_VD_CLEAN,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
         end
         `MSG_TYPE_STORE_MEM_ACK, `MSG_TYPE_NC_STORE_MEM_ACK:
         begin
-            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,      n,      `L2_VD_ERROR,  n,      `L2_MESI_I,      n,      `L2_LRU_CLR};
         end
         `MSG_TYPE_WB_REQ:
         begin
@@ -592,13 +569,11 @@ begin
             //should be the last line
             if (l2_way_state_subline_S2 == ({{(`L2_SUBLINE_BITS-1){1'b0}}, 1'b1} << addr_S2[`L2_DATA_SUBLINE]))
             begin
-                cs_S2 = {y,     y,         wr,         y,       n,         `OP_CLR,     y,        `OP_SUB,    n,       
-                         y,     `L2_VD_DIRTY,  y,      `L2_MESI_I,     n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     y,         wr,         y,       n,         `OP_CLR,     y,        `OP_SUB,    n,         y,     `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};
             end
             else
             begin
-                cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     y,        `OP_SUB,    n,       
-                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,     n,      `L2_LRU_CLR};
+                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     y,        `OP_SUB,    n,         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,     n,      `L2_LRU_CLR};
             end
             end
          end

@@ -1866,6 +1866,9 @@ if ($opt{riv_run}) {
       $cmd .= "$model_path/obj_dir/Vcmp_top " ;
       $cmd .= " " ;
       $cmd .= join (" ", @{$opt{sim_run_args}}) ;
+      if ($opt{debug_all}) {
+        $cmd .= " +vcd " ;
+      }
     }
 
     if ($opt{other_sim_run}) {

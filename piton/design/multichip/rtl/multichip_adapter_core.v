@@ -315,47 +315,85 @@ multichip_adapter_mshr mshr_in2 (
 );
 
 
-wire dir_rd_en;
-wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr;
-wire dir_rd_hit;
-wire [`MA_SET_WIDTH-1:0] dir_rd_set;
-wire [`MA_WAY_WIDTH-1:0] dir_rd_way;
-wire [`MA_TAG_WIDTH-1:0] dir_rd_tag;
-wire [`MA_STATE_WIDTH-1:0] dir_rd_state;
-wire dir_rd_shared;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set;
-wire [`MA_WAY_WIDTH:0] dir_num_empty_ways;
-wire [`MA_WAY_WIDTH-1:0] dir_empty_way;
-wire dir_wr_en;
-wire [`MA_SET_WIDTH-1:0] dir_wr_set;
-wire [`MA_WAY_WIDTH-1:0] dir_wr_way;
-wire [`MA_TAG_WIDTH-1:0] dir_wr_tag;
-wire [`MA_STATE_WIDTH-1:0] dir_wr_state;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set;
+wire dir_rd_en1;
+wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr1;
+wire dir_rd_hit1;
+wire [`MA_SET_WIDTH-1:0] dir_rd_set1;
+wire [`MA_WAY_WIDTH-1:0] dir_rd_way1;
+wire [`MA_TAG_WIDTH-1:0] dir_rd_tag1;
+wire [`MA_STATE_WIDTH-1:0] dir_rd_state1;
+wire dir_rd_shared1;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set1;
+wire [`MA_WAY_WIDTH:0] dir_num_empty_ways1;
+wire [`MA_WAY_WIDTH-1:0] dir_empty_way1;
+wire dir_wr_en1;
+wire [`MA_SET_WIDTH-1:0] dir_wr_set1;
+wire [`MA_WAY_WIDTH-1:0] dir_wr_way1;
+wire [`MA_TAG_WIDTH-1:0] dir_wr_tag1;
+wire [`MA_STATE_WIDTH-1:0] dir_wr_state1;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set1;
+wire dir_rd_en2;
+wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr2;
+wire dir_rd_hit2;
+wire [`MA_SET_WIDTH-1:0] dir_rd_set2;
+wire [`MA_WAY_WIDTH-1:0] dir_rd_way2;
+wire [`MA_TAG_WIDTH-1:0] dir_rd_tag2;
+wire [`MA_STATE_WIDTH-1:0] dir_rd_state2;
+wire dir_rd_shared2;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set2;
+wire [`MA_WAY_WIDTH:0] dir_num_empty_ways2;
+wire [`MA_WAY_WIDTH-1:0] dir_empty_way2;
+wire dir_wr_en2;
+wire [`MA_SET_WIDTH-1:0] dir_wr_set2;
+wire [`MA_WAY_WIDTH-1:0] dir_wr_way2;
+wire [`MA_TAG_WIDTH-1:0] dir_wr_tag2;
+wire [`MA_STATE_WIDTH-1:0] dir_wr_state2;
+wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set2;
 
 
 multichip_adapter_dir dir(
     .clk(clk),
     .rst_n(rst_n),
+    .pipe_rd_sel(dir_rd_en2), 
+    .pipe_wr_sel(dir_wr_en2),
 
-    .rd_en(dir_rd_en),
-    .rd_addr(dir_rd_addr),
-    .rd_hit(dir_rd_hit),
-    .rd_set(dir_rd_set),
-    .rd_way(dir_rd_way),
-    .rd_tag(dir_rd_tag),
-    .rd_state(dir_rd_state),
-    .rd_shared(dir_rd_shared),
-    .rd_sharer_set(dir_rd_sharer_set),
-    .num_empty_ways(dir_num_empty_ways),
-    .empty_way(dir_empty_way),
+    .rd_en1(dir_rd_en1),
+    .rd_addr1(dir_rd_addr1),
+    .rd_hit1(dir_rd_hit1),
+    .rd_set1(dir_rd_set1),
+    .rd_way1(dir_rd_way1),
+    .rd_tag1(dir_rd_tag1),
+    .rd_state1(dir_rd_state1),
+    .rd_shared1(dir_rd_shared1),
+    .rd_sharer_set1(dir_rd_sharer_set1),
+    .num_empty_ways1(dir_num_empty_ways1),
+    .empty_way1(dir_empty_way1),
 
-    .wr_en(dir_wr_en),
-    .wr_set(dir_wr_set),
-    .wr_way(dir_wr_way),
-    .wr_tag(dir_wr_tag),
-    .wr_state(dir_wr_state),
-    .wr_sharer_set(dir_wr_sharer_set)
+    .wr_en1(dir_wr_en1),
+    .wr_set1(dir_wr_set1),
+    .wr_way1(dir_wr_way1),
+    .wr_tag1(dir_wr_tag1),
+    .wr_state1(dir_wr_state1),
+    .wr_sharer_set1(dir_wr_sharer_set1),
+
+    .rd_en2(dir_rd_en2),
+    .rd_addr2(dir_rd_addr2),
+    .rd_hit2(dir_rd_hit2),
+    .rd_set2(dir_rd_set2),
+    .rd_way2(dir_rd_way2),
+    .rd_tag2(dir_rd_tag2),
+    .rd_state2(dir_rd_state2),
+    .rd_shared2(dir_rd_shared2),
+    .rd_sharer_set2(dir_rd_sharer_set2),
+    .num_empty_ways2(dir_num_empty_ways2),
+    .empty_way2(dir_empty_way2),
+
+    .wr_en2(dir_wr_en2),
+    .wr_set2(dir_wr_set2),
+    .wr_way2(dir_wr_way2),
+    .wr_tag2(dir_wr_tag2),
+    .wr_state2(dir_wr_state2),
+    .wr_sharer_set2(dir_wr_sharer_set2)
 );
 
 
@@ -382,24 +420,113 @@ multichip_adapter_outpipe1 outpipe1 (
     .mshr_write_data(mshr_out1_p1_write_data), 
     .stall_mshr_from_p2(mshr_out1_p2_write_en),
 
-    .dir_rd_en(dir_rd_en),
-    .dir_rd_addr(dir_rd_addr),
-    .dir_rd_hit(dir_rd_hit),
-    .dir_rd_set(dir_rd_set),
-    .dir_rd_way(dir_rd_way),
-    .dir_rd_tag(dir_rd_tag),
-    .dir_rd_state(dir_rd_state),
-    .dir_rd_shared(dir_rd_shared),
-    .dir_rd_sharer_set(dir_rd_sharer_set),
-    .dir_num_empty_ways(dir_num_empty_ways),
-    .dir_empty_way(dir_empty_way),
-    .dir_wr_en(dir_wr_en),
-    .dir_wr_set(dir_wr_set),
-    .dir_wr_way(dir_wr_way),
-    .dir_wr_tag(dir_wr_tag),
-    .dir_wr_state(dir_wr_state),
-    .dir_wr_sharer_set(dir_wr_sharer_set)
+    .dir_rd_en(dir_rd_en1),
+    .dir_rd_addr(dir_rd_addr1),
+    .dir_rd_hit(dir_rd_hit1),
+    .dir_rd_set(dir_rd_set1),
+    .dir_rd_way(dir_rd_way1),
+    .dir_rd_tag(dir_rd_tag1),
+    .dir_rd_state(dir_rd_state1),
+    .dir_rd_shared(dir_rd_shared1),
+    .dir_rd_sharer_set(dir_rd_sharer_set1),
+    .dir_num_empty_ways(dir_num_empty_ways1),
+    .dir_empty_way(dir_empty_way1),
+    .dir_rd_stall_from_p2(dir_rd_en2),
+    .dir_wr_en(dir_wr_en1),
+    .dir_wr_set(dir_wr_set1),
+    .dir_wr_way(dir_wr_way1),
+    .dir_wr_tag(dir_wr_tag1),
+    .dir_wr_state(dir_wr_state1),
+    .dir_wr_sharer_set(dir_wr_sharer_set1),
+    .dir_wr_stall_from_p2(dir_wr_en2)
 );
+
+multichip_adapter_inpipe2 inpipe2 (
+    .clk(clk), 
+    .rst_n(rst_n),
+
+    .noc_val(noc2_val_out),
+    .noc_data(noc2_data_out),
+    .noc_rdy(noc2_rdy_out),
+
+    .cep_val(cep_queue2_val_in),
+    .cep_data(cep_queue2_data_in),
+    .cep_rdy(cep_queue2_rdy_in),
+
+    .mshr_in_empty_index(mshr_in2_p2_empty_index),
+    .mshr_in_empty_slots(mshr_in2_p2_empty_slots),
+    .mshr_in_write_en(mshr_in2_p2_write_en),
+    .mshr_in_write_index(mshr_in2_p2_write_index),
+    .mshr_in_write_data(mshr_in2_p2_write_data), 
+    .stall_mshr_in_from_p3(mshr_in2_p3_write_en),
+
+    .mshr_out_write_en(mshr_out1_p2_write_en),
+    .mshr_out_write_index(mshr_out1_p2_write_index),
+    .mshr_out_write_data(mshr_out1_p2_write_data),
+    .mshr_out_read_index(mshr_out1_p2_read_index),
+    .mshr_out_read_data(mshr_out1_p2_rd_data),
+    .mshr_out_read_state(mshr_out1_p2_rd_state),
+
+    .dir_rd_en(dir_rd_en2),
+    .dir_rd_addr(dir_rd_addr2),
+    .dir_rd_hit(dir_rd_hit2),
+    .dir_rd_set(dir_rd_set2),
+    .dir_rd_way(dir_rd_way2),
+    .dir_rd_tag(dir_rd_tag2),
+    .dir_rd_state(dir_rd_state2),
+    .dir_rd_shared(dir_rd_shared2),
+    .dir_rd_sharer_set(dir_rd_sharer_set2),
+    .dir_num_empty_ways(dir_num_empty_ways2),
+    .dir_empty_way(dir_empty_way2),
+    .dir_wr_en(dir_wr_en2),
+    .dir_wr_set(dir_wr_set2),
+    .dir_wr_way(dir_wr_way2),
+    .dir_wr_tag(dir_wr_tag2),
+    .dir_wr_state(dir_wr_state2),
+    .dir_wr_sharer_set(dir_wr_sharer_set2)
+);
+
+multichip_adapter_outpipe3 outpipe3 (
+    .clk(clk), 
+    .rst_n(rst_n),
+    
+    .noc_val(noc3_val_in),
+    .noc_data(noc3_data_in),
+    .noc_rdy(noc3_rdy_in),
+
+    .cep_val(cep_queue3_val_out),
+    .cep_data(cep_queue3_data_out),
+    .cep_chipid(cep_queue3_chipid_out),
+    .cep_rdy(cep_queue3_rdy_out), 
+
+    .mshr_write_en(mshr_in2_p3_write_en),
+    .mshr_write_index(mshr_in2_p3_write_index),
+    .mshr_write_data(mshr_in2_p3_write_data),
+    .mshr_read_index(mshr_in2_p3_read_index),
+    .mshr_read_data(mshr_in2_p3_rd_data),
+    .mshr_read_state(mshr_in2_p3_rd_state)
+);
+
+multichip_adapter_inpipe1 inpipe1 (
+    .clk(clk), 
+    .rst_n(rst_n),
+
+    .noc_val(noc1_val_out),
+    .noc_data(noc1_data_out),
+    .noc_rdy(noc1_rdy_out),
+
+    .cep_val(cep_queue1_val_in),
+    .cep_data(cep_queue1_data_in),
+    .cep_rdy(cep_queue1_rdy_in), 
+
+    .mshr_empty_index(mshr_in1_p1_empty_index),
+    .mshr_empty_slots(mshr_in1_p1_empty_slots),
+    .mshr_write_en(mshr_in1_p1_write_en),
+    .mshr_write_index(mshr_in1_p1_write_index),
+    .mshr_write_data(mshr_in1_p1_write_data), 
+    .stall_mshr_from_p2(mshr_in1_p2_write_en)
+);
+
 
 multichip_adapter_outpipe2 outpipe2 (
     .clk(clk), 
@@ -428,67 +555,6 @@ multichip_adapter_outpipe2 outpipe2 (
     .mshr_in_read_data(mshr_in1_p2_rd_data),
     .mshr_in_read_state(mshr_in1_p2_rd_state)
 
-);
-
-multichip_adapter_outpipe3 outpipe3 (
-    .clk(clk), 
-    .rst_n(rst_n),
-    
-    .noc_val(noc3_val_in),
-    .noc_data(noc3_data_in),
-    .noc_rdy(noc3_rdy_in),
-
-    .cep_val(cep_queue3_val_out),
-    .cep_data(cep_queue3_data_out),
-    .cep_chipid(cep_queue3_chipid_out),
-    .cep_rdy(cep_queue3_rdy_out)
-);
-
-multichip_adapter_inpipe1 inpipe1 (
-    .clk(clk), 
-    .rst_n(rst_n),
-
-    .noc_val(noc1_val_out),
-    .noc_data(noc1_data_out),
-    .noc_rdy(noc1_rdy_out),
-
-    .cep_val(cep_queue1_val_in),
-    .cep_data(cep_queue1_data_in),
-    .cep_rdy(cep_queue1_rdy_in), 
-
-    .mshr_empty_index(mshr_in1_p1_empty_index),
-    .mshr_empty_slots(mshr_in1_p1_empty_slots),
-    .mshr_write_en(mshr_in1_p1_write_en),
-    .mshr_write_index(mshr_in1_p1_write_index),
-    .mshr_write_data(mshr_in1_p1_write_data), 
-    .stall_mshr_from_p2(mshr_in1_p2_write_en)
-);
-
-multichip_adapter_inpipe2 inpipe2 (
-    .clk(clk), 
-    .rst_n(rst_n),
-
-    .noc_val(noc2_val_out),
-    .noc_data(noc2_data_out),
-    .noc_rdy(noc2_rdy_out),
-
-    .cep_val(cep_queue2_val_in),
-    .cep_data(cep_queue2_data_in),
-    .cep_rdy(cep_queue2_rdy_in),
-
-    .mshr_in_empty_index(mshr_in2_p2_empty_index),
-    .mshr_in_empty_slots(mshr_in2_p2_empty_slots),
-    .mshr_in_write_en(mshr_in2_p2_write_en),
-    .mshr_in_write_index(mshr_in2_p2_write_index),
-    .mshr_in_write_data(mshr_in2_p2_write_data), 
-    .stall_mshr_in_from_p3(mshr_in2_p2_write_en),
-
-    .mshr_out_write_en(mshr_out1_p2_write_en),
-    .mshr_out_write_index(mshr_out1_p2_write_index),
-    .mshr_out_write_data(mshr_out1_p2_write_data),
-    .mshr_out_read_index(mshr_out1_p2_read_index),
-    .mshr_out_read_data(mshr_out1_p2_rd_data),
-    .mshr_out_read_state(mshr_out1_p2_rd_state)
 );
 
 multichip_adapter_inpipe3 inpipe3 (

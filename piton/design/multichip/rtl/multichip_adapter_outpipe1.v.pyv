@@ -67,13 +67,15 @@ module multichip_adapter_outpipe1 (
     input  wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_rd_sharer_set,
     input  wire [`MA_WAY_WIDTH:0]                 dir_num_empty_ways,
     input  wire [`MA_WAY_WIDTH-1:0]               dir_empty_way,
+    input  wire                                   dir_rd_stall_from_p2,
 
     output wire                                   dir_wr_en,
     output wire [`MA_SET_WIDTH-1:0]               dir_wr_set,
     output wire [`MA_WAY_WIDTH-1:0]               dir_wr_way,
     output wire [`MA_TAG_WIDTH-1:0]               dir_wr_tag,
     output wire [`MA_STATE_WIDTH-1:0]             dir_wr_state,
-    output wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_wr_sharer_set
+    output wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_wr_sharer_set,
+    input  wire                                   dir_wr_stall_from_p2
 );
 
 
@@ -109,10 +111,15 @@ wire val_S2_next = val_S1 & ~stall_S1;
 wire [`PKG_DATA_WIDTH-1:0] data_S2_next = data_S1;
 
 wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S1 = data_S1[`MSG_ADDR];
-assign dir_rd_en = val_S1 & ~stall_S1;
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1 = data_S1[`MSG_TYPE];
+wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
+wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
+                 (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
+wire do_rd_tag_S1 = ~nc_msg_S1 & ~int_msg_S1;
+assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
 assign dir_rd_addr = msg_addr_S1[`MA_ADDR_WIDTH-1:0];
 
-assign stall_S1 = stall_S2 & val_S1;
+assign stall_S1 = (stall_S2 | dir_rd_stall_from_p2) & val_S1;
 
 
 // Stage 1 -> 2
@@ -135,16 +142,20 @@ end
 wire val_S3_next = val_S2 & ~stall_S2;
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
 wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S2 = data_S2[`MSG_ADDR];
-wire skip_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
+wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ ) | 
+                 (msg_type_S2 == `MSG_TYPE_NC_STORE_REQ) ;
+wire int_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
+wire do_write_mshr_S2 = ~int_msg_S2;
+
 
 reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
 always @(*) begin
     data_S3_next = data_S2;
-    if (~skip_msg_S2)
+    if (do_write_mshr_S2)
         data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_empty_index};
 end
 
-assign mshr_write_en = val_S2 & ~stall_S2 & ~skip_msg_S2;
+assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;
 
 
@@ -170,8 +181,8 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .inv_fwd_pending(1'b0)
 );
 
-
-assign dir_wr_en = val_S2 & ~stall_S2 & ~skip_msg_S2;
+wire do_write_tag_S2 = ~nc_msg_S2 & ~int_msg_S2;
+assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
 assign dir_wr_set = dir_rd_set;
 assign dir_wr_way = dir_rd_hit ? dir_rd_way : dir_empty_way;
 assign dir_wr_tag = msg_addr_S2[`MA_ADDR_TAG];
@@ -187,9 +198,9 @@ xy_to_flat_id xy_to_flat_id(
 );
 assign dir_wr_sharer_set = dir_rd_hit ? (`MA_OWNER_BITS_WIDTH'b1 << flat_id_S2) | dir_rd_sharer_set : (`MA_OWNER_BITS_WIDTH'b1 << flat_id_S2);
 
-wire stall_mshr_full = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr = ~skip_msg_S2 & (stall_mshr_full | stall_mshr_from_p2);
-assign stall_S2 = val_S2 & (stall_S3 | stall_mshr);
+wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
+wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | dir_wr_stall_from_p2);
 
 // Stage 2 -> 3
 
@@ -210,6 +221,6 @@ assign stall_S3 = ~cep_rdy & val_S3;
 
 assign cep_val = val_S3;
 assign cep_data = data_S3;
-assign cep_chipid = data_S3[`MSG_DST_ONCHIPID];
+assign cep_chipid = {1'b0, data_S3[`MSG_DST_ONCHIPID]};
 
 endmodule

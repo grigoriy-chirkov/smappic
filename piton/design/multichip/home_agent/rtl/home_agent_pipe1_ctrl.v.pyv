@@ -61,12 +61,6 @@ module home_agent_pipe1_ctrl(
     input wire [`L2_MSHR_INDEX_WIDTH:0] mshr_empty_slots_S1,
 
     //input from the mshr
-    input wire [`MSG_TYPE_WIDTH-1:0] cam_mshr_msg_type_S1,
-    input wire [`MSG_L2_MISS_BITS-1:0] cam_mshr_l2_miss_S1,
-    input wire [`MSG_DATA_SIZE_WIDTH-1:0] cam_mshr_data_size_S1,
-    input wire [`MSG_CACHE_TYPE_WIDTH-1:0] cam_mshr_cache_type_S1,
-
-    //input from the mshr
     input wire [`MSG_TYPE_WIDTH-1:0] pending_mshr_msg_type_S1,
     input wire [`MSG_L2_MISS_BITS-1:0] pending_mshr_l2_miss_S1,
     input wire [`MSG_DATA_SIZE_WIDTH-1:0] pending_mshr_data_size_S1,
@@ -125,7 +119,6 @@ module home_agent_pipe1_ctrl(
     input wire [`L2_DI_BIT-1:0] l2_way_state_cache_type_S4,
     input wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S4,
     input wire req_from_owner_S4,
-    input wire [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S4,
     input wire [`MSG_LSID_WIDTH-1:0] lsid_S4,
 
     input wire [`PHY_ADDR_WIDTH-1:0] addr_S4,
@@ -1756,7 +1749,7 @@ begin
     &&  (~special_addr_type_S2_f)
     &&  ((pipe2_valid_S1 && (pipe2_msg_type_S1 == `MSG_TYPE_WB_REQ)
         && (addr_S2[`L2_TAG_PLUS_INDEX] == pipe2_addr_S1[`L2_TAG_PLUS_INDEX]))
-    ||   (pipe2_valid_S2 && (pipe2_msg_type_S1 == `MSG_TYPE_WB_REQ)
+    ||   (pipe2_valid_S2 && (pipe2_msg_type_S2 == `MSG_TYPE_WB_REQ)
         && (addr_S2[`L2_TAG_PLUS_INDEX] == pipe2_addr_S2[`L2_TAG_PLUS_INDEX]))
     ||   (pipe2_valid_S3 && (pipe2_msg_type_S3 == `MSG_TYPE_WB_REQ)
         && (addr_S2[`L2_TAG_PLUS_INDEX] == pipe2_addr_S3[`L2_TAG_PLUS_INDEX])));
@@ -2169,8 +2162,6 @@ reg [`MSG_TYPE_WIDTH-1:0] msg0_send_type_S4;
 reg msg1_send_valid_S4;
 reg [`MSG_TYPE_WIDTH-1:0] msg1_send_type_S4;
 
-reg mshr_inv_flag_S4;
-
 always @ *
 begin
     valid_S4 = valid_S4_f;
@@ -2190,10 +2181,6 @@ begin
     if (~special_addr_type_S4_f && req_recycle_S4)
     begin
         mshr_state_in_S4 = `L2_MSHR_STATE_PENDING;
-    end
-    else if(mshr_inv_flag_S4)
-    begin
-        mshr_state_in_S4 = `L2_MSHR_STATE_INVAL;
     end
     else
     begin
@@ -2257,13 +2244,11 @@ begin
         begin
             mshr_wr_data_en_S4 = ~stall_S4;
             mshr_wr_state_en_S4 = ~stall_S4;
-            mshr_inv_flag_S4 = 1'b0;
         end
         else if (load_store_mem_S4)
         begin
             mshr_wr_data_en_S4 = msg_send_valid_S4 && (msg_send_type_S4 == msg0_send_type_S4) && msg_send_ready_S4;
             mshr_wr_state_en_S4 = msg_send_valid_S4 && (msg_send_type_S4 == msg0_send_type_S4) && msg_send_ready_S4;
-            mshr_inv_flag_S4 = 1'b0;
         end
         else if (msg_send_type_S4 == `MSG_TYPE_INV_FWD)
         begin
@@ -2271,7 +2256,6 @@ begin
                               && mshr_wr_data_en_S4_f;
             mshr_wr_state_en_S4 = ((msg_send_valid_S4 && msg_send_ready_S4 && (dir_sharer_counter_S4 == 1)) || (~stall_S4))
                                && mshr_wr_state_en_S4_f;
-            mshr_inv_flag_S4 = 1'b0;
         end
         else if ((msg_type_S4 == `MSG_TYPE_WBGUARD_REQ) && l2_tag_hit_S4
               && (l2_way_state_mesi_S4 == `L2_MESI_E) && l2_way_state_subline_S4[addr_S4[`L2_DATA_SUBLINE]]
@@ -2279,20 +2263,17 @@ begin
         begin
             mshr_wr_data_en_S4 = ~stall_S4;
             mshr_wr_state_en_S4 = ~stall_S4;
-            mshr_inv_flag_S4 = 1'b0;
         end
         else
         begin
             mshr_wr_data_en_S4 = ~stall_S4 && mshr_wr_data_en_S4_f;
             mshr_wr_state_en_S4 = ~stall_S4 && mshr_wr_state_en_S4_f;
-            mshr_inv_flag_S4 = 1'b0;
         end
     end
     else
     begin
         mshr_wr_data_en_S4 = 1'b0;
         mshr_wr_state_en_S4 = 1'b0;
-        mshr_inv_flag_S4 = 1'b0;
     end
 end
 

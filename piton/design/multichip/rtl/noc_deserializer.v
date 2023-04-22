@@ -63,7 +63,7 @@ always @(*) begin
         data_buf_next[`NOC_DATA_WIDTH-1:0] = flit_data;
     end
     else begin
-        data_buf_next = data_buf | (flit_data << (`NOC_DATA_WIDTH*flit_id));
+        data_buf_next = data_buf | ({{`PKG_DATA_WIDTH-`NOC_DATA_WIDTH{1'b0}}, flit_data} << (`NOC_DATA_WIDTH*flit_id));
     end
 end
 

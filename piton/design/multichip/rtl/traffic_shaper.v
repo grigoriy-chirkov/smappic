@@ -64,14 +64,14 @@ end
 
 wire out_go = valid_out & ready_out;
 reg [31:0] pkg_counter;
-wire [31:0] pkg_counter_plus_request = pkg_counter + out_go;
+wire [31:0] pkg_counter_plus_request = pkg_counter + {31'b0, out_go};
 always @(posedge clk_out) begin
     if (~rst_n_out) begin
         pkg_counter <= 32'b0;
     end
     else begin
         if (clock[6:0] == 0) begin
-            pkg_counter <= 32'b0 | out_go;
+            pkg_counter <= {31'b0, out_go};
         end
         else begin
             pkg_counter <= pkg_counter_plus_request;

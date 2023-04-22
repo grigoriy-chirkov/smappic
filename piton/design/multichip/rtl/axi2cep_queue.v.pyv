@@ -137,6 +137,6 @@ end
 
 assign cep_val_out = shaper_out_valid[cep_chipid];
 assign cep_data_out = shaper_out[cep_chipid];
-assign cep_credits = ({`PITON_NUM_CHIPS{1'b0}} | (read_shaper & shaper_out_valid[cep_chipid])) << cep_chipid;
+assign cep_credits = {{`PITON_NUM_CHIPS{1'b0}}, (read_shaper & shaper_out_valid[cep_chipid])} << cep_chipid;
 
 endmodule

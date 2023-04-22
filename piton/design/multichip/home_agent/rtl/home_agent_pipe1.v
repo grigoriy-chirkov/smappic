@@ -62,7 +62,6 @@ module home_agent_pipe1(
     input wire global_stall_S4,
 
     input wire mshr_hit,
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] cam_mshr_data_out,
     input wire [`L2_MSHR_ARRAY_WIDTH-1:0] pending_mshr_data_out,
     input wire [`L2_OWNER_BITS-1:0] mshr_inv_counter_out,
     input wire [`L2_MSHR_INDEX_WIDTH:0] mshr_empty_slots,
@@ -78,7 +77,6 @@ module home_agent_pipe1(
     input wire [`L2_DATA_ARRAY_WIDTH-1:0] data_data_out,
     input wire [`L2_P1_DATA_BUF_IN_WIDTH-1:0] reg_data_out,
 
-    output wire mshr_cam_en,
     output wire mshr_wr_state_en,
     output wire mshr_wr_data_en,
     output wire mshr_pending_ready,
@@ -87,7 +85,6 @@ module home_agent_pipe1(
     output wire [`L2_MSHR_ARRAY_WIDTH-1:0] mshr_data_mask_in,
     output wire [`L2_MSHR_INDEX_WIDTH-1:0] mshr_inv_counter_rd_index_in,
     output wire [`L2_MSHR_INDEX_WIDTH-1:0] mshr_wr_index_in,
-    output wire [`L2_MSHR_ADDR_IN_WIDTH-1:0] mshr_addr_in,
 
     output wire state_rd_en,
     output wire state_wr_en,
@@ -144,23 +141,6 @@ wire [`MSG_SRC_FBITS_WIDTH-1:0] msg_src_fbits;
 wire [`MSG_SDID_WIDTH-1:0] msg_sdid;
 wire [`MSG_LSID_WIDTH-1:0] msg_lsid;
 
-
-wire [`MSG_TYPE_WIDTH-1:0] cam_mshr_msg_type;
-wire [`MSG_MSHRID_WIDTH-1:0] cam_mshr_mshrid;
-wire [`MSG_DATA_SIZE_WIDTH-1:0] cam_mshr_data_size;
-wire [`MSG_CACHE_TYPE_WIDTH-1:0] cam_mshr_cache_type;
-wire [`PHY_ADDR_WIDTH-1:0] cam_mshr_addr;
-wire [`L2_WAYS_WIDTH-1:0] cam_mshr_way;
-wire [`MSG_L2_MISS_BITS-1:0] cam_mshr_l2_miss;
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] cam_mshr_src_chipid;
-wire [`MSG_SRC_X_WIDTH-1:0] cam_mshr_src_x;
-wire [`MSG_SRC_Y_WIDTH-1:0] cam_mshr_src_y;
-wire [`MSG_SRC_FBITS_WIDTH-1:0] cam_mshr_src_fbits;
-wire [`MSG_SDID_WIDTH-1:0] cam_mshr_sdid;
-wire [`MSG_LSID_WIDTH-1:0] cam_mshr_lsid;
-wire [`MSG_LSID_WIDTH-1:0] cam_mshr_miss_lsid;
-
-wire cam_mshr_recycled;
 
 wire [`MSG_TYPE_WIDTH-1:0] pending_mshr_msg_type;
 wire [`MSG_MSHRID_WIDTH-1:0] pending_mshr_mshrid;
@@ -262,7 +242,6 @@ wire [`MSG_TYPE_WIDTH-1:0] msg_type_S4;
 wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S4;
 wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S4;
 wire [`MSG_L2_MISS_BITS-1:0] l2_miss_S4;
-wire [`MSG_LSID_WIDTH-1:0] mshr_miss_lsid_S4;
 wire [`MSG_LSID_WIDTH-1:0] lsid_S4;
 wire special_addr_type_S4;
 wire state_wr_sel_S4;
@@ -335,26 +314,6 @@ home_agent_decoder decoder(
 );
 
 
-home_agent_mshr_decoder cam_mshr_decoder(
-    .data_in            (cam_mshr_data_out),
-    .addr_out           (cam_mshr_addr),
-    .way_out            (cam_mshr_way),
-    .mshrid_out         (cam_mshr_mshrid),
-    .cache_type_out     (cam_mshr_cache_type), 
-    .data_size_out      (cam_mshr_data_size),
-    .msg_type_out       (cam_mshr_msg_type),
-    .msg_l2_miss_out    (cam_mshr_l2_miss),
-    .src_chipid_out     (cam_mshr_src_chipid),
-    .src_x_out          (cam_mshr_src_x),
-    .src_y_out          (cam_mshr_src_y),
-    .src_fbits_out      (cam_mshr_src_fbits),
-    .sdid_out           (cam_mshr_sdid),
-    .lsid_out           (cam_mshr_lsid),
-    .miss_lsid_out      (cam_mshr_miss_lsid),
-    .recycled           (cam_mshr_recycled),
-    .inv_fwd_pending    ()
-);
-
 home_agent_mshr_decoder pending_mshr_decoder(
     .data_in            (pending_mshr_data_out),
     .addr_out           (pending_mshr_addr),
@@ -396,10 +355,6 @@ home_agent_pipe1_ctrl ctrl(
     .msg_data_size_S1           (msg_data_size),
     .msg_cache_type_S1          (msg_cache_type),
     .mshr_hit_S1                (mshr_hit),
-    .cam_mshr_msg_type_S1       (cam_mshr_msg_type),
-    .cam_mshr_l2_miss_S1        (cam_mshr_l2_miss),
-    .cam_mshr_data_size_S1      (cam_mshr_data_size),
-    .cam_mshr_cache_type_S1     (cam_mshr_cache_type), 
     .mshr_pending_S1            (mshr_pending),
     .mshr_pending_index_S1      (mshr_pending_index),
     .mshr_empty_slots_S1        (mshr_empty_slots),
@@ -437,7 +392,6 @@ home_agent_pipe1_ctrl ctrl(
     .l2_way_state_cache_type_S4 (l2_way_state_cache_type_S4),
     .mshrid_S4                  (mshrid_S4),
     .req_from_owner_S4          (req_from_owner_S4),
-    .mshr_miss_lsid_S4          (mshr_miss_lsid_S4),
     .lsid_S4                    (lsid_S4),
     .addr_S4                    (addr_S4),
     .cas_cmp_S4                 (cas_cmp_S4),
@@ -448,7 +402,6 @@ home_agent_pipe1_ctrl ctrl(
     .stall_S1                   (stall_S1),    
     .msg_from_mshr_S1           (msg_from_mshr_S1), 
     .dis_flush_S1               (dis_flush_S1),
-    .mshr_cam_en_S1             (mshr_cam_en),
     .mshr_pending_ready_S1      (mshr_pending_ready),
     .msg_header_ready_S1        (msg_header_ready),
     .tag_clk_en_S1              (tag_clk_en),
@@ -542,18 +495,6 @@ home_agent_pipe1_dpath dpath(
     .clk                        (clk),
     .rst_n                      (rst_n),
     .smt_base_addr              (smt_base_addr),
-    
-    .cam_mshr_addr_S1           (cam_mshr_addr),
-    .cam_mshr_mshrid_S1         (cam_mshr_mshrid),
-    .cam_mshr_way_S1            (cam_mshr_way),
-    .cam_mshr_src_chipid_S1     (cam_mshr_src_chipid),
-    .cam_mshr_src_x_S1          (cam_mshr_src_x),
-    .cam_mshr_src_y_S1          (cam_mshr_src_y),
-    .cam_mshr_src_fbits_S1      (cam_mshr_src_fbits),
-    .cam_mshr_sdid_S1           (cam_mshr_sdid),
-    .cam_mshr_lsid_S1           (cam_mshr_lsid),
-    .cam_mshr_miss_lsid_S1      (cam_mshr_miss_lsid),
-    .cam_mshr_recycled_S1       (cam_mshr_recycled),
     
     .mshr_pending_S1            (mshr_pending),
     .pending_mshr_addr_S1       (pending_mshr_addr),
@@ -649,7 +590,6 @@ home_agent_pipe1_dpath dpath(
     .reg_data_out_S4            (reg_data_out),
  
     .addr_S1                    (addr_S1),
-    .mshr_addr_in_S1            (mshr_addr_in),
     .tag_addr_S1                (tag_addr),
     .tag_data_in_S1             (tag_data_in),  
     .tag_data_mask_in_S1        (tag_data_mask_in),
@@ -687,7 +627,6 @@ home_agent_pipe1_dpath dpath(
     .l2_way_state_cache_type_S4 (l2_way_state_cache_type_S4),
     .mshrid_S4                  (mshrid_S4),
     .req_from_owner_S4          (req_from_owner_S4),
-    .mshr_miss_lsid_S4          (mshr_miss_lsid_S4),
     .lsid_S4                    (lsid_S4),
     .corr_error_S4              (data_ecc_corr_error),
     .uncorr_error_S4            (data_ecc_uncorr_error),

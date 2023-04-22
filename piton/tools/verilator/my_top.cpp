@@ -35,6 +35,7 @@ uint64_t main_time = 0; // Current simulation time
 uint64_t clk = 0;
 Vcmp_top* top;
 #ifdef VERILATOR_VCD
+bool dump_vcd = false;
 VerilatedVcdC* tfp;
 #endif
 // This is a 64-bit integer to reduce wrap over issues and
@@ -50,14 +51,18 @@ void tick() {
     main_time += 250;
     top->eval();
 #ifdef VERILATOR_VCD
-    tfp->dump(main_time);
+    if (dump_vcd) {
+        tfp->dump(main_time);
+    }
 #endif
     top->core_ref_clk = !top->core_ref_clk;
     top->axi_clk = !top->axi_clk;
     main_time += 250;
     top->eval();
 #ifdef VERILATOR_VCD
-    tfp->dump(main_time);
+    if (dump_vcd) {
+        tfp->dump(main_time);
+    }
 #endif
 }
 
@@ -95,9 +100,9 @@ void reset_and_init() {
 
     init_jbus_model_call((char *) "mem.image", 0);
 
-    std::cout << "Before first ticks" << std::endl << std::flush;
+    std::cout << "Before first ticks" << std::endl;
     tick();
-    std::cout << "After very first tick" << std::endl << std::flush;
+    std::cout << "After very first tick" << std::endl;
 //    // Reset PLL for 100 cycles
 //    repeat(100)@(posedge core_ref_clk);
 //    pll_rst_n = 1'b1;
@@ -106,14 +111,14 @@ void reset_and_init() {
     }
     top->pll_rst_n = 1;
 
-    std::cout << "Before second ticks" << std::endl << std::flush;
+    std::cout << "Before second ticks" << std::endl;
 //    // Wait for PLL lock
 //    wait( pll_lock == 1'b1 );
     while (!top->pll_lock) {
         tick();
     }
 
-    std::cout << "Before third ticks" << std::endl << std::flush;
+    std::cout << "Before third ticks" << std::endl;
 //    // After 10 cycles turn on chip-level clock enable
 //    repeat(10)@(posedge `CHIP_INT_CLK);
 //    clk_en = 1'b1;
@@ -142,33 +147,43 @@ void reset_and_init() {
 
     //top->ciop_fake_iob.ok_iob = 1;
     top->ok_iob = 1;
-    std::cout << "Reset complete" << std::endl << std::flush;
+    std::cout << "Reset complete" << std::endl;
 }
 
 int main(int argc, char **argv, char **env) {
-std::cout << "Started" << std::endl << std::flush;
-Verilated::commandArgs(argc, argv);
-top = new Vcmp_top;
-std::cout << "Vcmp_top created" << std::endl << std::flush;
+    std::cout << "Started" << std::endl;
+    Verilated::commandArgs(argc, argv);
+    top = new Vcmp_top;
+    std::cout << "Vcmp_top created" << std::endl;
 
-#ifdef VERILATOR_VCD
-Verilated::traceEverOn(true);
-tfp = new VerilatedVcdC;
-top->trace (tfp, 99);
-tfp->open ("my_top.vcd");
+    #ifdef VERILATOR_VCD
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "+vcd") == 0) {
+            dump_vcd = true;
+        }
+    }
+    if (dump_vcd){
+        Verilated::traceEverOn(true);
+        tfp = new VerilatedVcdC;
+        top->trace (tfp, 99);
+        const char* vcdfile = "my_top.vcd";
+        std::cout << "Trace file: " << vcdfile << std::endl;
+        tfp->open (vcdfile);
+        Verilated::debug(1);
+    }
+    #endif
 
-Verilated::debug(1);
-#endif
+    reset_and_init();
 
-reset_and_init();
+    while (!Verilated::gotFinish()) { tick(); }
 
-while (!Verilated::gotFinish()) { tick(); }
+    #ifdef VERILATOR_VCD
+    if (dump_vcd) {
+        std::cout << "Trace done" << std::endl;
+        tfp->close();
+    }
+    #endif
 
-#ifdef VERILATOR_VCD
-std::cout << "Trace done" << std::endl;
-tfp->close();
-#endif
-
-delete top;
-exit(0);
+    delete top;
+    exit(0);
 }

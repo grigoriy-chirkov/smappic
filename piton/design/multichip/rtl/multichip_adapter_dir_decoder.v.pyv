@@ -42,6 +42,10 @@ MA_WAY_WIDTH = (math.log(MA_NUM_WAYS,2))
 
 
 module multichip_adapter_dir_decoder (
+    input wire clk, 
+    input wire rst_n,
+
+    input wire rd_en,
     input wire [`MA_ADDR_WIDTH-1:0] addr_in,
     input wire [`MA_WIDTH-1:0] data_in,
 
@@ -56,6 +60,28 @@ module multichip_adapter_dir_decoder (
     output reg [`MA_WAY_WIDTH-1:0] empty_way
 );
 
+reg [`MA_ADDR_WIDTH-1:0] addr_in_f;
+reg rd_en_f;
+reg [`MA_WIDTH-1:0] data_in_f;
+
+always @(posedge clk) begin
+  if (~rst_n) begin
+    addr_in_f <= `MA_ADDR_WIDTH'h0;
+    rd_en_f <= 1'b0;
+    data_in_f <= `MA_WIDTH'h0;
+  end
+  else begin
+    if (rd_en) 
+      addr_in_f <= addr_in;
+    rd_en_f <= rd_en;
+    data_in_f <= rd_en_f ? data_in : data_in_f;
+  end
+end
+wire [`MA_WIDTH-1:0] data = rd_en_f ? data_in : data_in_f;
+
+
+
+
 reg [`MA_ENTRY_WIDTH-1:0] entries[`MA_WAYS-1:0];
 reg [`MA_STATE_WIDTH-1:0] states[`MA_WAYS-1:0];
 reg [`MA_OWNER_BITS_WIDTH-1:0] sharer_sets[`MA_WAYS-1:0];
@@ -63,15 +89,15 @@ reg [`MA_TAG_WIDTH-1:0] tags[`MA_WAYS-1:0];
 reg [`MA_WAYS-1:0] hits;
 
 always @(*) begin
-  set = addr_in[`MA_ADDR_SET];
-  tag = addr_in[`MA_ADDR_TAG];
-  empty_way = `MA_WAYS;
-  num_empty_ways = {`MA_WAYS+1{1'b0}};
+  set = addr_in_f[`MA_ADDR_SET];
+  tag = addr_in_f[`MA_ADDR_TAG];
+  empty_way = `MA_WAY_WIDTH'd0;
+  num_empty_ways = {`MA_WAY_WIDTH+1{1'b0}};
 
 <%
 for i in range(MA_NUM_WAYS):
   print(f"""\
-  entries[{i}] = data_in[{i+1}*`MA_ENTRY_WIDTH-1:{i}*`MA_ENTRY_WIDTH];
+  entries[{i}] = data[{i+1}*`MA_ENTRY_WIDTH-1:{i}*`MA_ENTRY_WIDTH];
   states[{i}] = entries[{i}][`MA_ENTRY_STATE];
   sharer_sets[{i}] = entries[{i}][`MA_ENTRY_OWNER_BITS];
   tags[{i}] = entries[{i}][`MA_ENTRY_TAG];
