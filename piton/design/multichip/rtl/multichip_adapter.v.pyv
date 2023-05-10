@@ -259,6 +259,7 @@ for i in range(PITON_NUM_CHIPS):
 multichip_adapter_core multichip_adapter_core(
     .clk(sys_clk),
     .rst_n(sys_rst_n),
+    .mychipid(chipid),
 
     // noc interface
     .noc1_val_in(noc1_val_in),

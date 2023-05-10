@@ -36,6 +36,7 @@ from pyhplib import *
 module multichip_adapter_outpipe1 (
     input clk,
     input rst_n,
+    input [`CEP_CHIPID_WIDTH-1:0]                 mychipid,
     
     // Noc interface
     input  wire                                   noc_val,
@@ -64,7 +65,7 @@ module multichip_adapter_outpipe1 (
     input  wire [`MA_TAG_WIDTH-1:0]               dir_rd_tag,
     input  wire [`MA_STATE_WIDTH-1:0]             dir_rd_state,
     input  wire                                   dir_rd_shared,
-    input  wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_rd_sharer_set,
+    input  wire [`MA_SHARER_SET_WIDTH-1:0]        dir_rd_sharer_set,
     input  wire [`MA_WAY_WIDTH:0]                 dir_num_empty_ways,
     input  wire [`MA_WAY_WIDTH-1:0]               dir_empty_way,
     input  wire                                   dir_rd_stall_from_p2,
@@ -74,7 +75,7 @@ module multichip_adapter_outpipe1 (
     output wire [`MA_WAY_WIDTH-1:0]               dir_wr_way,
     output wire [`MA_TAG_WIDTH-1:0]               dir_wr_tag,
     output wire [`MA_STATE_WIDTH-1:0]             dir_wr_state,
-    output wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_wr_sharer_set,
+    output wire [`MA_SHARER_SET_WIDTH-1:0]        dir_wr_sharer_set,
     input  wire                                   dir_wr_stall_from_p2
 );
 
@@ -151,8 +152,13 @@ wire do_write_mshr_S2 = ~int_msg_S2;
 reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
 always @(*) begin
     data_S3_next = data_S2;
-    if (do_write_mshr_S2)
+    if (do_write_mshr_S2) begin
         data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_empty_index};
+        data_S3_next[`MSG_SRC_CHIPID] = mychipid;
+        data_S3_next[`MSG_SRC_X] = {`MSG_SRC_X_WIDTH{1'b1}};
+        data_S3_next[`MSG_SRC_Y] = {`MSG_SRC_Y_WIDTH{1'b1}};
+        data_S3_next[`MSG_SRC_FBITS] = `NOC_FBITS_L1;
+    end
 end
 
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
@@ -196,7 +202,7 @@ xy_to_flat_id xy_to_flat_id(
     .y_coord(y_src_S2),
     .flat_id(flat_id_S2)
 );
-assign dir_wr_sharer_set = dir_rd_hit ? (`MA_OWNER_BITS_WIDTH'b1 << flat_id_S2) | dir_rd_sharer_set : (`MA_OWNER_BITS_WIDTH'b1 << flat_id_S2);
+assign dir_wr_sharer_set = dir_rd_hit ? (`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) | dir_rd_sharer_set : (`MA_SHARER_SET_WIDTH'b1 << flat_id_S2);
 
 wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
 wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);

@@ -25,31 +25,55 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 `include "multichip_adapter.vh"
 `include "define.tmp.h"
 
-module multichip_adapter_dir_encoder (
-    output reg [`MA_WIDTH-1:0] data_out,
-    output reg [`MA_WIDTH-1:0] mask_out,
+<%
+MA_SHARER_SET_WIDTH  = 64
+from math import log2, ceil
+def clog2(x):
+    return ceil(log2(x))
+%>
 
-    input wire [`MA_WAY_WIDTH-1:0] way,
-    input wire [`MA_TAG_WIDTH-1:0] tag,
-    input wire [`MA_STATE_WIDTH-1:0] state,
-    input wire [`MA_SHARER_SET_WIDTH-1:0] sharer_set
+<%
+def gen_bitsum(num_bits):
+    print(f'''
+module multichip_adapter_bitsum_{num_bits}(
+    input  wire [{num_bits-1}:0] data_in,
+    output reg [{clog2(num_bits)}:0] bitsum_out
 );
-
-reg [`MA_ENTRY_WIDTH-1:0] entry;
-
-
-always @(*) begin
-  entry = `MA_ENTRY_WIDTH'h0;
-  entry[`MA_ENTRY_STATE] = state;
-  entry[`MA_ENTRY_TAG] = tag;
-  entry[`MA_ENTRY_OWNER_BITS] = sharer_set;
-
-  data_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, entry} << (way * `MA_ENTRY_WIDTH);
-  mask_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, {`MA_ENTRY_WIDTH{1'b1}}} << (way * `MA_ENTRY_WIDTH);
-end
-
+''')
+    if num_bits == 1:
+        print('''
+    always @(*) begin
+        bitsum_out = data_in;
+    end
 endmodule
+''')
+    elif num_bits == 2:
+        print('''
+    always @(*) begin
+        bitsum_out = data_in[0] + data_in[1];
+    end
+endmodule
+''')
+    else:
+        print(f'''
+    wire [{clog2(num_bits)-1}:0] bitsum_low;
+    wire [{clog2(num_bits)-1}:0] bitsum_high;
+    multichip_adapter_bitsum_{num_bits//2} bitsum_low_(.data_in(data_in[{num_bits//2-1}:0]), .bitsum_out(bitsum_low));
+    multichip_adapter_bitsum_{num_bits//2} bitsum_high_(.data_in(data_in[{num_bits//2*2-1}:{num_bits//2}]), .bitsum_out(bitsum_high));
+    always @(*) begin
+        bitsum_out = bitsum_low + bitsum_high;
+        {"bitsum_out = bitsum_out + data_in[%d];" % (num_bits-1) if num_bits%2 == 1 else ""}
+    end
+endmodule
+''')
+
+for i in range(MA_SHARER_SET_WIDTH):
+    gen_bitsum(i+1)
+
+%>
+
+
+

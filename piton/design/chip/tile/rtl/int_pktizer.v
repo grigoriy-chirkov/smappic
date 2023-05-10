@@ -185,7 +185,7 @@ wire [`NOC_CHIPID_WIDTH-1:0] chipid_dst;
 wire [`NOC_X_WIDTH-1:0] x_dst;
 wire [`NOC_Y_WIDTH-1:0] y_dst;
 
-flat_id_to_xychip coords(
+int_flat_id_to_xychip coords(
     .flat_id(dst_hart), 
     .x_coord(x_dst),
     .y_coord(y_dst), 

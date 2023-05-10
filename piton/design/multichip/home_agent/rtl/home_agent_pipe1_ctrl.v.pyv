@@ -1808,14 +1808,12 @@ begin
     && (cache_type_S2_f == `MSG_CACHE_TYPE_INS))
     begin
         l2_ifill_32B_S2 = y;
-`ifdef L2_SEND_NC_REQ
         // NC ifill is on 4B, and do not need 2 cycles to read out the data.
         // So l2_ifill for it is "n"
         if (msg_type_S2_f == `MSG_TYPE_NC_LOAD_MEM && data_size_S2_f != `MSG_DATA_SIZE_32B)
         begin
             l2_ifill_32B_S2 = n;
         end
-`endif
     end
     else
     begin
@@ -2357,62 +2355,47 @@ begin
             end
             else if (l2_evict_S4)
             begin
+                case (l2_way_state_mesi_S4)
+                `L2_MESI_S, `L2_MESI_B:
                 begin
-                    case (l2_way_state_mesi_S4)
-                    `L2_MESI_S, `L2_MESI_B:
+                    cs_S4 = {y,         y,          `MSG_TYPE_INV_FWD,    n,          `MSG_TYPE_ERROR};
+                end
+                `L2_MESI_E:
+                begin
+                    cs_S4 = {y,         y,          `MSG_TYPE_STORE_FWD,    n,          `MSG_TYPE_ERROR};
+                end
+                `L2_MESI_I:
+                begin
+                    case (l2_way_state_vd_S4)
+                    `L2_VD_CLEAN:
                     begin
-                        cs_S4 = {y,         y,          `MSG_TYPE_INV_FWD,    n,          `MSG_TYPE_ERROR};
+                        if (msg_type_S4_f == `MSG_TYPE_L2_LINE_FLUSH_REQ)
+                        begin
+                            cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    n,          `MSG_TYPE_ERROR};
+                        end
+                        else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
+                        begin
+                                cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
+                        end
+                        else
+                        begin
+                            cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
+                        end
                     end
-                    `L2_MESI_E:
+                    `L2_VD_DIRTY:
                     begin
-                        cs_S4 = {y,         y,          `MSG_TYPE_STORE_FWD,    n,          `MSG_TYPE_ERROR};
-                    end
-                    `L2_MESI_I:
-                    begin
-                        case (l2_way_state_vd_S4)
-                        `L2_VD_CLEAN:
+                        if (msg_type_S4_f == `MSG_TYPE_L2_LINE_FLUSH_REQ)
                         begin
-                            if (msg_type_S4_f == `MSG_TYPE_L2_LINE_FLUSH_REQ)
-                            begin
-                                cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    n,          `MSG_TYPE_ERROR};
-                            end
-                            else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
-                            begin
-                                `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
-                                `else
-                                    cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
-                                `endif
-                            end
-                            else
-                            begin
-                                cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
-                            end
+                            cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    y,          `MSG_TYPE_STORE_MEM};
                         end
-                        `L2_VD_DIRTY:
+                        else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                         begin
-                            if (msg_type_S4_f == `MSG_TYPE_L2_LINE_FLUSH_REQ)
-                            begin
-                                cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    y,          `MSG_TYPE_STORE_MEM};
-                            end
-                            else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
-                            begin
-                                `ifdef L2_SEND_NC_REQ
-                                    cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
-                                `else
-                                    cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
-                                `endif
-                            end
-                            else
-                            begin
-                                cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
-                            end
+                            cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                         end
-                        default:
+                        else
                         begin
-                            cs_S4 = {`CS_SIZE_S4{1'bx}};
+                            cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    y,          `MSG_TYPE_STORE_MEM};
                         end
-                        endcase
                     end
                     default:
                     begin
@@ -2420,6 +2403,11 @@ begin
                     end
                     endcase
                 end
+                default:
+                begin
+                    cs_S4 = {`CS_SIZE_S4{1'bx}};
+                end
+                endcase
             end
 
             else if (!l2_tag_hit_S4)
@@ -2444,11 +2432,7 @@ begin
                     end
                     else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
                     begin
-                        `ifdef L2_SEND_NC_REQ
                             cs_S4 = {n,         y,          `MSG_TYPE_NC_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
-                        `else
-                            cs_S4 = {n,         y,          `MSG_TYPE_LOAD_MEM,    n,          `MSG_TYPE_ERROR};
-                        `endif
                     end
                     else
                     begin
@@ -2602,7 +2586,7 @@ begin
                     end
                     endcase
                 end
-                `MSG_TYPE_LR_REQ:   // Jsut same as a store req
+                `MSG_TYPE_STORE_REQ,`MSG_TYPE_LR_REQ:
                 begin
                     case (l2_way_state_mesi_S4)
                     `L2_MESI_I:
@@ -2633,35 +2617,6 @@ begin
                 `MSG_TYPE_PREFETCH_REQ:
                 begin
                     cs_S4 = {n,         y,          `MSG_TYPE_NODATA_ACK,    n,          `MSG_TYPE_ERROR};
-                end
-
-                `MSG_TYPE_STORE_REQ:
-                begin
-                    case (l2_way_state_mesi_S4)
-                    `L2_MESI_I:
-                    begin
-                        cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    n,          `MSG_TYPE_ERROR};
-                    end
-                    `L2_MESI_S, `L2_MESI_B:
-                    begin
-                        cs_S4 = {y,         y,          `MSG_TYPE_INV_FWD,    n,          `MSG_TYPE_ERROR};
-                    end
-                    `L2_MESI_E:
-                    begin
-                        if (req_from_owner_S4 && (cache_type_S4_f == l2_way_state_cache_type_S4))
-                        begin
-                            cs_S4 = {n,         y,          `MSG_TYPE_DATA_ACK,    n,          `MSG_TYPE_ERROR};
-                        end
-                        else
-                        begin
-                            cs_S4 = {y,         y,          `MSG_TYPE_STORE_FWD,    n,          `MSG_TYPE_ERROR};
-                        end
-                    end
-                    default:
-                    begin
-                        cs_S4 = {`CS_SIZE_S4{1'bx}};
-                    end
-                    endcase
                 end
                 `MSG_TYPE_CAS_P1_REQ, `MSG_TYPE_SWAP_P1_REQ,
                 `MSG_TYPE_AMO_ADD_P1_REQ,
@@ -2886,7 +2841,6 @@ begin
                 msg_send_cache_type_S4 = cache_type_S4_f;
                 msg_send_mshrid_S4 = mshrid_S4;
             end
-`ifdef L2_SEND_NC_REQ
             else if (msg_type_S4_f == `MSG_TYPE_NC_LOAD_REQ)
             begin
                 if (cache_type_S4_f == `MSG_CACHE_TYPE_INS && data_size_S4_f == `MSG_DATA_SIZE_32B)
@@ -2913,7 +2867,6 @@ begin
                     msg_send_mshrid_S4 = mshrid_S4;
                 end
             end
-`endif
             else if (cache_type_S4_f == `MSG_CACHE_TYPE_DATA)
             begin
                 msg_send_mode_S4 = `L2_P1_BUF_OUT_MODE_1H2D;

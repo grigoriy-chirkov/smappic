@@ -43,7 +43,7 @@ module multichip_adapter_dir (
     output wire [`MA_TAG_WIDTH-1:0] rd_tag1,
     output wire [`MA_STATE_WIDTH-1:0] rd_state1,
     output wire rd_shared1,
-    output wire [`MA_OWNER_BITS_WIDTH-1:0] rd_sharer_set1,
+    output wire [`MA_SHARER_SET_WIDTH-1:0] rd_sharer_set1,
     output wire [`MA_WAY_WIDTH:0] num_empty_ways1,
     output wire [`MA_WAY_WIDTH-1:0] empty_way1,
 
@@ -52,7 +52,7 @@ module multichip_adapter_dir (
     input wire [`MA_WAY_WIDTH-1:0] wr_way1,
     input wire [`MA_TAG_WIDTH-1:0] wr_tag1,
     input wire [`MA_STATE_WIDTH-1:0] wr_state1,
-    input wire [`MA_OWNER_BITS_WIDTH-1:0] wr_sharer_set1,
+    input wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set1,
 
     input wire rd_en2,
     input wire [`MA_ADDR_WIDTH-1:0] rd_addr2,
@@ -62,7 +62,7 @@ module multichip_adapter_dir (
     output wire [`MA_TAG_WIDTH-1:0] rd_tag2,
     output wire [`MA_STATE_WIDTH-1:0] rd_state2,
     output wire rd_shared2,
-    output wire [`MA_OWNER_BITS_WIDTH-1:0] rd_sharer_set2,
+    output wire [`MA_SHARER_SET_WIDTH-1:0] rd_sharer_set2,
     output wire [`MA_WAY_WIDTH:0] num_empty_ways2,
     output wire [`MA_WAY_WIDTH-1:0] empty_way2,
 
@@ -71,7 +71,7 @@ module multichip_adapter_dir (
     input wire [`MA_WAY_WIDTH-1:0] wr_way2,
     input wire [`MA_TAG_WIDTH-1:0] wr_tag2,
     input wire [`MA_STATE_WIDTH-1:0] wr_state2,
-    input wire [`MA_OWNER_BITS_WIDTH-1:0] wr_sharer_set2
+    input wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set2
 );
 
 wire rd_en = pipe_rd_sel ? rd_en2 : rd_en1;
@@ -81,7 +81,7 @@ wire [`MA_SET_WIDTH-1:0] wr_set = pipe_wr_sel ? wr_set2 : wr_set1;
 wire [`MA_WAY_WIDTH-1:0] wr_way = pipe_wr_sel ? wr_way2 : wr_way1;
 wire [`MA_TAG_WIDTH-1:0] wr_tag = pipe_wr_sel ? wr_tag2 : wr_tag1;
 wire [`MA_STATE_WIDTH-1:0] wr_state = pipe_wr_sel ? wr_state2 : wr_state1;
-wire [`MA_OWNER_BITS_WIDTH-1:0] wr_sharer_set = pipe_wr_sel ? wr_sharer_set2 : wr_sharer_set1;
+wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set = pipe_wr_sel ? wr_sharer_set2 : wr_sharer_set1;
 
 
 

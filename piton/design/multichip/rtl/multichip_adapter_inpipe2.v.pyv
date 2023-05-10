@@ -31,11 +31,13 @@
 
 <%
 from pyhplib import *
+MA_SHARER_SET_WIDTH = 64
 %>
 
 module multichip_adapter_inpipe2 (
     input clk,
     input rst_n,
+    input [`CEP_CHIPID_WIDTH-1:0]                  mychipid,
 
     // Noc interface
     output  wire                                   noc_val,
@@ -59,6 +61,7 @@ module multichip_adapter_inpipe2 (
     output wire                                   mshr_in_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_in_write_data, 
+    output wire [`MA_SHARER_BITS_WIDTH:0]         mshr_in_write_counter,
     input  wire                                   stall_mshr_in_from_p3,
 
     // Dir interface
@@ -70,7 +73,7 @@ module multichip_adapter_inpipe2 (
     input  wire [`MA_TAG_WIDTH-1:0]               dir_rd_tag,
     input  wire [`MA_STATE_WIDTH-1:0]             dir_rd_state,
     input  wire                                   dir_rd_shared,
-    input  wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_rd_sharer_set,
+    input  wire [`MA_SHARER_SET_WIDTH-1:0]        dir_rd_sharer_set,
     input  wire [`MA_WAY_WIDTH:0]                 dir_num_empty_ways,
     input  wire [`MA_WAY_WIDTH-1:0]               dir_empty_way,
 
@@ -79,7 +82,7 @@ module multichip_adapter_inpipe2 (
     output wire [`MA_WAY_WIDTH-1:0]               dir_wr_way,
     output wire [`MA_TAG_WIDTH-1:0]               dir_wr_tag,
     output wire [`MA_STATE_WIDTH-1:0]             dir_wr_state,
-    output wire [`MA_OWNER_BITS_WIDTH-1:0]        dir_wr_sharer_set
+    output wire [`MA_SHARER_SET_WIDTH-1:0]        dir_wr_sharer_set
 );
 
 
@@ -171,16 +174,14 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .inv_fwd_pending()
 );
 
-// wire do_write_mshr = (msg_type != `MSG_TYPE_LOAD_FWD)   & 
-//                      (msg_type != `MSG_TYPE_STORE_FWD)  & 
-//                      (msg_type != `MSG_TYPE_INV_FWD)    & 
-//                      (msg_type != `MSG_TYPE_NODATA_ACK) & 
-//                      (msg_type != `MSG_TYPE_DATA_ACK)   ;
 wire do_write_mshr_S2 = (msg_type_S2 != `MSG_TYPE_NODATA_ACK) & 
                         (msg_type_S2 != `MSG_TYPE_DATA_ACK)   ;
 assign mshr_in_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_in_write_index = mshr_in_empty_index;
-
+multichip_adapter_bitsum_64 bitsum(
+    .data_in(dir_rd_sharer_set),
+    .bitsum_out(mshr_in_write_counter)
+);
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_in_write_data),
@@ -207,8 +208,13 @@ multichip_adapter_mshr_encoder mshr_encoder(
 reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
 always @(*) begin
     data_S3_next = data_S2;
-    if (do_write_mshr_S2)
+    if (do_write_mshr_S2) begin
         data_S3_next[`MSG_MSHRID] = {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
+        data_S3_next[`MSG_SRC_CHIPID] = mychipid;
+        data_S3_next[`MSG_SRC_X] = {`MSG_SRC_X_WIDTH{1'b1}};
+        data_S3_next[`MSG_SRC_Y] = {`MSG_SRC_Y_WIDTH{1'b1}};
+        data_S3_next[`MSG_SRC_FBITS] = `NOC_FBITS_L2;
+    end
     if (do_read_mshr_S2) begin
         data_S3_next[`MSG_MSHRID] = src_mshrid_S2;
         data_S3_next[`MSG_DST_CHIPID] = src_chipid_S2;
@@ -232,29 +238,111 @@ xy_to_flat_id xy_to_flat_id(
     .y_coord(y_dst_S2),
     .flat_id(flat_id_S2)
 );
-assign dir_wr_sharer_set = ~(`MA_OWNER_BITS_WIDTH'b1 << flat_id_S2) & dir_rd_sharer_set;
+assign dir_wr_sharer_set = ~(`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) & dir_rd_sharer_set;
 assign dir_wr_state = |dir_wr_sharer_set;
 
 wire stall_mshr_in_full_S2 = (mshr_in_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
 wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_in_full_S2 | stall_mshr_in_from_p3);
-assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 
 
 
 // Stage 2-> 3
 
 reg [`CEP_DATA_WIDTH-1:0] data_S3;
+wire recycle_S3;
+
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S3 <= 1'b0;
         data_S3 <= `CEP_DATA_WIDTH'b0;
     end
-    else if (~stall_S3) begin
+    else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
         data_S3 <= data_S3_next;
     end
 end
 
+reg [`MA_SHARER_SET_WIDTH-1:0] inv_set_S3;
+wire [`MA_SHARER_SET_WIDTH-1:0] inv_set_mask_S3;
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        inv_set_S3 <= `MA_SHARER_SET_WIDTH'b0;
+    end
+    else if (~stall_S3 & ~recycle_S3 & inv_msg_S2) begin
+        inv_set_S3 <= dir_rd_sharer_set;
+    end
+    else if (~stall_S3) begin
+        inv_set_S3 <= inv_set_S3 & inv_set_mask_S3;
+    end
+end
+
+wire inval_routine = |inv_set_S3;
+
+// Stage 3
+
+wire [`MA_SHARER_BITS_WIDTH-1:0] inv_target_S3;
+<%
+import math
+def clog2(x):
+    return math.ceil(math.log2(x))
+print(f'multichip_adapter_prio_encoder_{clog2(MA_SHARER_SET_WIDTH)} prio_encoder')
+%>
+(
+    .data_in        (inv_set_S3),
+    .data_out       (inv_target_S3),
+    .data_out_mask  (inv_set_mask_S3),
+    .nonzero_out    ()
+);
+assign recycle_S3 = val_S3 & ((inv_set_S3 & inv_set_mask_S3) != `MA_SHARER_SET_WIDTH'b0);
+
+wire [`NOC_X_WIDTH-1:0] x_dst_S3;
+wire [`NOC_Y_WIDTH-1:0] y_dst_S3;
+flat_id_to_xy flat_id_to_xy(
+    .x_coord(x_dst_S3),
+    .y_coord(y_dst_S3),
+    .flat_id(inv_target_S3)
+);
+
+wire [`MSG_HEADER_WIDTH-1:0] msg_header_S3;
+
+multichip_adapter_inv_msg_encoder inv_msg_encoder(
+    .msg_dst_chipid(data_S3[`MSG_DST_CHIPID]),
+    .msg_dst_x(x_dst_S3),
+    .msg_dst_y(y_dst_S3),
+    .msg_dst_fbits(`NOC_FBITS_L1),
+    .msg_length(`MSG_LENGTH_WIDTH'd2),
+    .msg_type(data_S3[`MSG_TYPE]),
+    .msg_mshrid(data_S3[`MSG_MSHRID]),
+    .msg_data_size(`MSG_DATA_SIZE_16B),
+    .msg_cache_type(data_S3[`MSG_CACHE_TYPE]),
+    .msg_subline_vector({`L2_SUBLINE_BITS{1'b1}}),
+    .msg_mesi(`MSG_MESI_I),
+    .msg_l2_miss(1'b0),
+    .msg_last_subline({`MSG_LAST_SUBLINE_WIDTH{1'b0}}),
+    .msg_subline_id({`MSG_SUBLINE_ID_WIDTH{1'b0}}),
+    .msg_addr(data_S3[`MSG_ADDR]),
+    .msg_src_chipid(data_S3[`MSG_DST_CHIPID]),
+    .msg_src_x({`MSG_SRC_X_WIDTH{1'b1}}),
+    .msg_src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
+    .msg_src_fbits(`NOC_FBITS_L2),
+    .msg_sdid(`MSG_SDID_WIDTH'b0),
+    .msg_lsid(`MSG_LSID_WIDTH'b0),
+
+
+    .msg_header(msg_header_S3)
+);
+
+reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
+
+always @(*) begin
+    pkg_S3 = `PKG_DATA_WIDTH'b0;
+    if (inval_routine) 
+        pkg_S3[`MSG_HEADER_WIDTH-1:0] = msg_header_S3;
+    else 
+        pkg_S3[`CEP_DATA_WIDTH-1:0] = data_S3;
+end
 
 wire pkg_rdy;
 
@@ -267,7 +355,7 @@ noc_serializer noc_serializer(
     .flit_rdy(noc_rdy),
 
     .pkg_val(val_S3), 
-    .pkg_data(data_S3),
+    .pkg_data(pkg_S3),
     .pkg_rdy(pkg_rdy)
 );
 
@@ -275,6 +363,7 @@ assign stall_S3 = ~pkg_rdy & val_S3;
 
 
 // some mshr sanity checks 
+
 reg mshr_err;
 reg dir_err;
 

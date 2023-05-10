@@ -51,9 +51,13 @@ module multichip_adapter_outpipe3 (
     output wire                                   mshr_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data,
+    output wire [`MA_MSHR_STATE_BITS-1:0]         mshr_write_state,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_read_index,
     input  wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_read_data,
-    input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_read_state
+    input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_read_state,
+    output wire                                   mshr_read_dec_counter_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_read_inv_counter_index,
+    input wire  [`MA_SHARER_BITS_WIDTH:0]         mshr_read_inv_counter
 );
 
 
@@ -108,17 +112,21 @@ assign stall_S2 = stall_S3 & val_S2;
 
 // Stage 2
 
-wire val_S3_next = val_S2 & ~stall_S2;
+wire suppress_next_stage_S2;
+wire val_S3_next = val_S2 & ~stall_S2 & ~suppress_next_stage_S2;
 wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid_S2 = data_S2[`MSG_MSHRID];
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
+wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK  ) | 
+                     (msg_type_S2 == `MSG_TYPE_STORE_FWDACK) ;
 wire do_read_mshr = 1'b1;
-// wire do_read_mshr = (msg_type != `MSG_TYPE_LOAD_FWDACK)  & 
-//                     (msg_type != `MSG_TYPE_STORE_FWDACK) &
-//                     (msg_type != `MSG_TYPE_INV_FWDACK)   ;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
 assign mshr_write_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
-assign mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
+assign suppress_next_stage_S2 = (is_inv_ack_S2 & mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1});
+assign mshr_write_data =  suppress_next_stage_S2 ? mshr_read_data : `MA_MSHR_ARRAY_WIDTH'b0;
+assign mshr_write_state = suppress_next_stage_S2 ? mshr_read_state : `MA_MSHR_STATE_INVAL;
+assign mshr_read_dec_counter_en = val_S2 & ~stall_S2 & is_inv_ack_S2;
 assign mshr_read_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+assign mshr_read_inv_counter_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 wire [`MSG_MSHRID_WIDTH-1:0] src_mshrid_S2;
 wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 wire [`MSG_SRC_X_WIDTH-1:0] src_x_S2;

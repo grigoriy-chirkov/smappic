@@ -36,43 +36,50 @@ module multichip_adapter_mshr (
     input wire cam_en1,
     input wire wr_state_en1,
     input wire wr_data_en1,
-    input wire pending_ready1,
+    input wire wr_counter_en1,
+    // input wire pending_ready1,
     input wire [`MA_MSHR_STATE_BITS-1:0] state_in1,
     input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_in1,
     input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in1,
-    input wire [`MA_MSHR_INDEX_WIDTH-1:0] inv_counter_rd_index_in1,
+    input wire [`MA_SHARER_BITS_WIDTH:0] wr_counter_in1, 
     input wire [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in1,
     input wire [`MA_MSHR_ADDR_IN_WIDTH-1:0] addr_in1,
 
     input wire wr_state_en2,
     input wire wr_data_en2,
-    input wire inc_counter_en2,
+    input wire wr_counter_en2,
+    input wire dec_counter_en2,
     input wire [`MA_MSHR_STATE_BITS-1:0] state_in2,
     input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_in2,
     input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in2,
+    input wire [`MA_SHARER_BITS_WIDTH:0] wr_counter_in2, 
     input wire [`MA_MSHR_INDEX_WIDTH-1:0] rd_index_in2,
     input wire [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in2,
+    input wire [`MA_MSHR_INDEX_WIDTH-1:0] inv_counter_rd_index_in2,
+
 
     output reg hit,
     output reg [`MA_MSHR_INDEX_WIDTH-1:0] hit_index,
     output reg [`MA_MSHR_STATE_BITS-1:0] rd_state_out,
     output reg [`MA_MSHR_ARRAY_WIDTH-1:0] rd_data_out,
     output reg [`MA_MSHR_ARRAY_WIDTH-1:0] cam_data_out,
-    output reg [`MA_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
+    // output reg [`MA_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
 
-    output reg [`MA_OWNER_BITS_WIDTH-1:0] inv_counter_out,
+    output reg [`MA_SHARER_BITS_WIDTH:0] inv_counter_out,
     output reg [`MA_MSHR_INDEX_WIDTH:0] empty_slots,
-    output reg pending,
-    output reg [`MA_MSHR_INDEX_WIDTH-1:0] pending_index,
+    // output reg pending,
+    // output reg [`MA_MSHR_INDEX_WIDTH-1:0] pending_index,
     output reg [`MA_MSHR_INDEX_WIDTH-1:0] empty_index
 );
 
 reg wr_state_en;
 reg wr_data_en;
+reg wr_counter_en;
 reg [`MA_MSHR_STATE_BITS-1:0] state_in;
 reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_in;
 reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_mask_in;
 reg [`MA_MSHR_INDEX_WIDTH-1:0] wr_index_in;
+reg [`MA_SHARER_BITS_WIDTH:0] wr_counter_in;
 
 always @ *
 begin
@@ -80,19 +87,23 @@ begin
     begin
         wr_state_en = wr_state_en2;
         wr_data_en = wr_data_en2;
+        wr_counter_en = wr_counter_en2;
         state_in = state_in2;
         data_in = data_in2;
         data_mask_in = data_mask_in2;
         wr_index_in = wr_index_in2;
+        wr_counter_in = wr_counter_in2;
     end
     else
     begin
         wr_state_en = wr_state_en1;
         wr_data_en = wr_data_en1;
+        wr_counter_en = wr_counter_en1;
         state_in = state_in1;
         data_in = data_in1;
         data_mask_in = data_mask_in1;
         wr_index_in = wr_index_in1;
+        wr_counter_in = wr_counter_in1;
     end
 end
 
@@ -105,7 +116,7 @@ MA_MSHR_INDEX_WIDTH = 3
 
 reg [`MA_MSHR_STATE_BITS-1:0] state_mem_f [`MA_MSHR_ENTRIES-1:0];
 reg [`MA_MSHR_ARRAY_WIDTH-1:0] data_mem_f [`MA_MSHR_ENTRIES-1:0];
-reg [`MA_OWNER_BITS_WIDTH-1:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
+reg [`MA_SHARER_BITS_WIDTH:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
 
 always @ *
 begin
@@ -119,29 +130,29 @@ for i in range(MA_MSHR_ENTRIES):
 %>
 end
 
-always @ *
-begin
+// always @ *
+// begin
 <%
 for i in range(MA_MSHR_ENTRIES):
     if i == 0:
-        print("    if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
-        print("    begin")
-        print("        pending = 1'b1;" )
-        print("        pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
-        print("    end")
+        print("    // if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
+        print("    // begin")
+        print("    //     pending = 1'b1;" )
+        print("    //     pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
+        print("    // end")
     else:
-        print("    else if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
-        print("    begin")
-        print("        pending = 1'b1;" )
-        print("        pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
-        print("    end")
-print("    else")
-print("    begin")
-print("        pending = 1'b0;" )
-print("        pending_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
-print("    end")
+        print("    // else if (state_mem_f[%d] == `MA_MSHR_STATE_PENDING)" % (i))
+        print("    // begin")
+        print("    //     pending = 1'b1;" )
+        print("    //     pending_index = %d\'d%d;" % (MA_MSHR_INDEX_WIDTH, i))
+        print("    // end")
+print("    // else")
+print("    // begin")
+print("    //     pending = 1'b0;" )
+print("    //     pending_index = %d\'d0;" % (MA_MSHR_INDEX_WIDTH))
+print("    // end")
 %>
-end
+// end
 
 always @ *
 begin
@@ -169,12 +180,12 @@ begin
     rd_state_out = state_mem_f[rd_index_in2];
     rd_data_out = data_mem_f[rd_index_in2];
     cam_data_out = data_mem_f[hit_index];
-    pending_data_out = data_mem_f[pending_index];
+    // pending_data_out = data_mem_f[pending_index];
 end
 
 always @ *
 begin
-    inv_counter_out = counter_mem_f[inv_counter_rd_index_in1];
+    inv_counter_out = counter_mem_f[inv_counter_rd_index_in2];
 end
 
 always @ *
@@ -226,30 +237,30 @@ for i in range(MA_MSHR_ENTRIES):
     else if (wr_state_en)
     begin
         state_mem_f[wr_index_in] <= state_in;
-        if (pending && pending_ready1 && (pending_index != wr_index_in))
-        begin
-            //SMC miss entries are locked in the mshr
-            if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
-            begin
-                state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
-            end
-            else
-            begin
-                state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
-            end
-        end
+        // if (pending && pending_ready1 && (pending_index != wr_index_in))
+        // begin
+        //     //SMC miss entries are locked in the mshr
+        //     if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
+        //     begin
+        //         state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
+        //     end
+        //     else
+        //     begin
+        //         state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
+        //     end
+        // end
     end
-    else if (pending && pending_ready1)
-    begin
-        if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
-        begin
-            state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
-        end
-        else
-        begin
-            state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
-        end
-    end
+    // else if (pending && pending_ready1)
+    // begin
+    //     if (data_mem_f[pending_index][`MA_MSHR_SMC_MISS])
+    //     begin
+    //         state_mem_f[pending_index] <= `MA_MSHR_STATE_WAIT;
+    //     end
+    //     else
+    //     begin
+    //         state_mem_f[pending_index] <= `MA_MSHR_STATE_INVAL;
+    //     end
+    // end
 end
 
 always @ (posedge clk)
@@ -258,20 +269,23 @@ begin
     begin
 <%
 for i in range(MA_MSHR_ENTRIES):
-    print("        counter_mem_f[%d] <= {`MA_OWNER_BITS_WIDTH{1'b0}};" % (i))
+    print("        counter_mem_f[%d] <= {`MA_SHARER_BITS_WIDTH+1{1'b0}};" % (i))
 %>
     end
-    else if (pending && pending_ready1)
-    begin
-        counter_mem_f[pending_index] <= {`MA_OWNER_BITS_WIDTH{1'b0}};
-        if (inc_counter_en2 && (pending_index != wr_index_in))
-        begin
-            counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS_WIDTH'd1;
-        end
+    // else if (pending && pending_ready1)
+    // begin
+    //     counter_mem_f[pending_index] <= {`MA_SHARER_BITS_WIDTH+1{1'b0}};
+    //     if (dec_counter_en2 && (pending_index != wr_index_in))
+    //     begin
+    //         counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] == {`MA_SHARER_BITS_WIDTH+1{1'b0}} ? {`MA_SHARER_BITS_WIDTH+1{1'b0}} : counter_mem_f[wr_index_in] - {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1};
+    //     end
+    // end
+    else if (wr_counter_en) begin
+        counter_mem_f[wr_index_in] <= wr_counter_in;
     end
-    else if (inc_counter_en2)
+    else if (dec_counter_en2)
     begin
-        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] + `MA_OWNER_BITS_WIDTH'd1;
+        counter_mem_f[wr_index_in] <= counter_mem_f[wr_index_in] == {`MA_SHARER_BITS_WIDTH+1{1'b0}} ? {`MA_SHARER_BITS_WIDTH+1{1'b0}} : counter_mem_f[wr_index_in] - {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1};
     end
 end
 

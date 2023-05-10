@@ -32,7 +32,8 @@
 module multichip_adapter_core (
     input clk,
     input rst_n,
-    
+    input wire [`CEP_CHIPID_WIDTH-1:0]        mychipid,
+
     // Noc interface
     output wire                               noc1_val_out,
     output wire [`NOC_DATA_WIDTH-1:0]         noc1_data_out,
@@ -78,241 +79,7 @@ module multichip_adapter_core (
 );
 
 
-wire mshr_out1_p1_write_en;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_write_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p1_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out1_p1_empty_slots;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_empty_index;
 
-wire mshr_out1_p2_write_en;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_write_data;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_read_index;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_write_index;
-wire [`MA_MSHR_STATE_BITS-1:0] mshr_out1_p2_rd_state;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_rd_data;
-
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_pending_index;
-wire mshr_out1_pending;
-wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_out1_inv_counter;
-wire mshr_out1_hit;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_hit_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_cam_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_pending_data;
-
-multichip_adapter_mshr mshr_out1 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .pipe_wr_sel(mshr_out1_p2_write_en),
-
-    .wr_state_en1(mshr_out1_p1_write_en),
-    .wr_data_en1(mshr_out1_p1_write_en),
-    .state_in1(`MA_MSHR_STATE_WAIT),
-    .data_in1(mshr_out1_p1_write_data),
-    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in1(mshr_out1_p1_write_index),
-    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_out1_p1_empty_slots),
-    .empty_index(mshr_out1_p1_empty_index),
-
-    .wr_state_en2(mshr_out1_p2_write_en),
-    .wr_data_en2(mshr_out1_p2_write_en),
-    .inc_counter_en2(1'b0),
-    .state_in2(`MA_MSHR_STATE_INVAL),
-    .data_in2(mshr_out1_p2_write_data),
-    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .rd_index_in2(mshr_out1_p2_read_index),
-    .wr_index_in2(mshr_out1_p2_write_index),
-    .rd_state_out(mshr_out1_p2_rd_state),
-    .rd_data_out(mshr_out1_p2_rd_data),
-
-    .cam_en1(1'b0),
-    .hit(mshr_out1_hit),
-    .hit_index(mshr_out1_hit_index),
-    .cam_data_out(mshr_out1_cam_data),
-    .pending_data_out(mshr_out1_pending_data),
-    .inv_counter_out(mshr_out1_inv_counter),
-    .pending(mshr_out1_pending),
-    .pending_index(mshr_out1_pending_index),
-    .pending_ready1(1'b1)
-);
-
-wire mshr_out2_p2_write_en;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_write_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p2_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out2_p2_empty_slots;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_empty_index;
-
-wire mshr_out2_p3_write_en;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_write_data;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_read_index;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_write_index;
-wire [`MA_MSHR_STATE_BITS-1:0] mshr_out2_p3_rd_state;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_rd_data;
-
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_pending_index;
-wire mshr_out2_pending;
-wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_out2_inv_counter;
-wire mshr_out2_hit;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_hit_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_cam_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_pending_data;
-
-multichip_adapter_mshr mshr_out2 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .pipe_wr_sel(mshr_out2_p3_write_en),
-
-    .wr_state_en1(mshr_out2_p2_write_en),
-    .wr_data_en1(mshr_out2_p2_write_en),
-    .state_in1(`MA_MSHR_STATE_WAIT),
-    .data_in1(mshr_out2_p2_write_data),
-    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in1(mshr_out2_p2_write_index),
-    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_index(mshr_out2_p2_empty_index),
-    .empty_slots(mshr_out2_p2_empty_slots),
-
-    .wr_state_en2(mshr_out2_p3_write_en),
-    .wr_data_en2(mshr_out2_p3_write_en),
-    .inc_counter_en2(1'b0),
-    .state_in2(`MA_MSHR_STATE_INVAL),
-    .data_in2(mshr_out2_p3_write_data),
-    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .rd_index_in2(mshr_out2_p3_read_index),
-    .wr_index_in2(mshr_out2_p3_write_index),
-    .rd_state_out(mshr_out2_p3_rd_state),
-    .rd_data_out(mshr_out2_p3_rd_data),
-
-    .cam_en1(1'b0),
-    .hit(mshr_out2_hit),
-    .hit_index(mshr_out2_hit_index),
-    .cam_data_out(mshr_out2_cam_data),
-    .pending_data_out(mshr_out2_pending_data),
-    .inv_counter_out(mshr_out2_inv_counter),
-    .pending(mshr_out2_pending),
-    .pending_index(mshr_out2_pending_index),
-    .pending_ready1(1'b1)
-);
-
-wire mshr_in1_p1_write_en;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_write_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p1_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in1_p1_empty_slots;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_empty_index;
-
-wire mshr_in1_p2_write_en;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_write_data;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_read_index;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_write_index;
-wire [`MA_MSHR_STATE_BITS-1:0] mshr_in1_p2_rd_state;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_rd_data;
-
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_pending_index;
-wire mshr_in1_pending;
-wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_in1_inv_counter;
-wire mshr_in1_hit;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_hit_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_cam_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_pending_data;
-
-multichip_adapter_mshr mshr_in1 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .pipe_wr_sel(mshr_in1_p2_write_en),
-
-    .wr_state_en1(mshr_in1_p1_write_en),
-    .wr_data_en1(mshr_in1_p1_write_en),
-    .state_in1(`MA_MSHR_STATE_WAIT),
-    .data_in1(mshr_in1_p1_write_data),
-    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in1(mshr_in1_p1_write_index),
-    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_in1_p1_empty_slots),
-    .empty_index(mshr_in1_p1_empty_index),
-
-    .wr_state_en2(mshr_in1_p2_write_en),
-    .wr_data_en2(mshr_in1_p2_write_en),
-    .inc_counter_en2(1'b0),
-    .state_in2(`MA_MSHR_STATE_INVAL),
-    .data_in2(mshr_in1_p2_write_data),
-    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .rd_index_in2(mshr_in1_p2_read_index),
-    .wr_index_in2(mshr_in1_p2_write_index),
-    .rd_state_out(mshr_in1_p2_rd_state),
-    .rd_data_out(mshr_in1_p2_rd_data),
-
-    .cam_en1(1'b0),
-    .hit(mshr_in1_hit),
-    .hit_index(mshr_in1_hit_index),
-    .cam_data_out(mshr_in1_cam_data),
-    .pending_data_out(mshr_in1_pending_data),
-    .inv_counter_out(mshr_in1_inv_counter),
-    .pending(mshr_in1_pending),
-    .pending_index(mshr_in1_pending_index),
-    .pending_ready1(1'b1)
-);
-
-wire mshr_in2_p2_write_en;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_write_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p2_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in2_p2_empty_slots;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_empty_index;
-
-wire mshr_in2_p3_write_en;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_write_data;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_read_index;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_write_index;
-wire [`MA_MSHR_STATE_BITS-1:0] mshr_in2_p3_rd_state;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_rd_data;
-
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_pending_index;
-wire mshr_in2_pending;
-wire [`MA_OWNER_BITS_WIDTH-1:0] mshr_in2_inv_counter;
-wire mshr_in2_hit;
-wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_hit_index;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_cam_data;
-wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_pending_data;
-
-multichip_adapter_mshr mshr_in2 (
-    .clk(clk),
-    .rst_n(rst_n),
-    .pipe_wr_sel(mshr_in2_p3_write_en),
-
-    .wr_state_en1(mshr_in2_p2_write_en),
-    .wr_data_en1(mshr_in2_p2_write_en),
-    .state_in1(`MA_MSHR_STATE_WAIT),
-    .data_in1(mshr_in2_p2_write_data),
-    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .inv_counter_rd_index_in1(`MA_MSHR_INDEX_WIDTH'b0),
-    .wr_index_in1(mshr_in2_p2_write_index),
-    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_in2_p2_empty_slots),
-    .empty_index(mshr_in2_p2_empty_index),
-
-    .wr_state_en2(mshr_in2_p3_write_en),
-    .wr_data_en2(mshr_in2_p3_write_en),
-    .inc_counter_en2(1'b0),
-    .state_in2(`MA_MSHR_STATE_INVAL),
-    .data_in2(mshr_in2_p3_write_data),
-    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
-    .rd_index_in2(mshr_in2_p3_read_index),
-    .wr_index_in2(mshr_in2_p3_write_index),
-    .rd_state_out(mshr_in2_p3_rd_state),
-    .rd_data_out(mshr_in2_p3_rd_data),
-
-    .cam_en1(1'b0),
-    .hit(mshr_in2_hit),
-    .hit_index(mshr_in2_hit_index),
-    .cam_data_out(mshr_in2_cam_data),
-    .pending_data_out(mshr_in2_pending_data),
-    .inv_counter_out(mshr_in2_inv_counter),
-    .pending(mshr_in2_pending),
-    .pending_index(mshr_in2_pending_index),
-    .pending_ready1(1'b1)
-);
 
 
 wire dir_rd_en1;
@@ -323,7 +90,7 @@ wire [`MA_WAY_WIDTH-1:0] dir_rd_way1;
 wire [`MA_TAG_WIDTH-1:0] dir_rd_tag1;
 wire [`MA_STATE_WIDTH-1:0] dir_rd_state1;
 wire dir_rd_shared1;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set1;
+wire [`MA_SHARER_SET_WIDTH-1:0] dir_rd_sharer_set1;
 wire [`MA_WAY_WIDTH:0] dir_num_empty_ways1;
 wire [`MA_WAY_WIDTH-1:0] dir_empty_way1;
 wire dir_wr_en1;
@@ -331,7 +98,7 @@ wire [`MA_SET_WIDTH-1:0] dir_wr_set1;
 wire [`MA_WAY_WIDTH-1:0] dir_wr_way1;
 wire [`MA_TAG_WIDTH-1:0] dir_wr_tag1;
 wire [`MA_STATE_WIDTH-1:0] dir_wr_state1;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set1;
+wire [`MA_SHARER_SET_WIDTH-1:0] dir_wr_sharer_set1;
 wire dir_rd_en2;
 wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr2;
 wire dir_rd_hit2;
@@ -340,7 +107,7 @@ wire [`MA_WAY_WIDTH-1:0] dir_rd_way2;
 wire [`MA_TAG_WIDTH-1:0] dir_rd_tag2;
 wire [`MA_STATE_WIDTH-1:0] dir_rd_state2;
 wire dir_rd_shared2;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_rd_sharer_set2;
+wire [`MA_SHARER_SET_WIDTH-1:0] dir_rd_sharer_set2;
 wire [`MA_WAY_WIDTH:0] dir_num_empty_ways2;
 wire [`MA_WAY_WIDTH-1:0] dir_empty_way2;
 wire dir_wr_en2;
@@ -348,7 +115,7 @@ wire [`MA_SET_WIDTH-1:0] dir_wr_set2;
 wire [`MA_WAY_WIDTH-1:0] dir_wr_way2;
 wire [`MA_TAG_WIDTH-1:0] dir_wr_tag2;
 wire [`MA_STATE_WIDTH-1:0] dir_wr_state2;
-wire [`MA_OWNER_BITS_WIDTH-1:0] dir_wr_sharer_set2;
+wire [`MA_SHARER_SET_WIDTH-1:0] dir_wr_sharer_set2;
 
 
 multichip_adapter_dir dir(
@@ -398,11 +165,145 @@ multichip_adapter_dir dir(
 
 
 
+////////////////////////////////////////////////////
+// first triplet
+////////////////////////////////////////////////////
+
+wire mshr_out1_p1_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p1_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out1_p1_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_empty_index;
+
+wire mshr_out1_p2_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p2_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_out1_p2_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p2_rd_data;
+
+// wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_pending_index;
+// wire mshr_out1_pending;
+wire [`MA_SHARER_BITS_WIDTH:0] mshr_out1_inv_counter;
+wire mshr_out1_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_cam_data;
+// wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_pending_data;
+
+multichip_adapter_mshr mshr_out1 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_out1_p2_write_en),
+
+    .wr_state_en1(mshr_out1_p1_write_en),
+    .wr_data_en1(mshr_out1_p1_write_en),
+    .wr_counter_en1(1'b0),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_out1_p1_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in1({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .wr_index_in1(mshr_out1_p1_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_out1_p1_empty_slots),
+    .empty_index(mshr_out1_p1_empty_index),
+
+    .wr_state_en2(mshr_out1_p2_write_en),
+    .wr_data_en2(mshr_out1_p2_write_en),
+    .wr_counter_en2(1'b0),
+    .dec_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_out1_p2_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in2({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .rd_index_in2(mshr_out1_p2_read_index),
+    .wr_index_in2(mshr_out1_p2_write_index),
+    .inv_counter_rd_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+    .rd_state_out(mshr_out1_p2_rd_state),
+    .rd_data_out(mshr_out1_p2_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_out1_hit),
+    .hit_index(mshr_out1_hit_index),
+    .cam_data_out(mshr_out1_cam_data),
+    // .pending_data_out(mshr_out1_pending_data),
+    // .pending(mshr_out1_pending),
+    // .pending_index(mshr_out1_pending_index),
+    // .pending_ready1(1'b1), 
+    .inv_counter_out(mshr_out1_inv_counter)
+);
+
+wire mshr_in2_p2_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p2_write_data;
+wire [`MA_SHARER_BITS_WIDTH:0] mshr_in2_p2_write_counter;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in2_p2_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_empty_index;
+
+wire mshr_in2_p3_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_in2_p3_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p3_rd_data;
+wire mshr_in2_p3_counter_dec_en;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_in2_p3_write_state;
+
+// wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_pending_index;
+// wire mshr_in2_pending;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p3_inv_index;
+wire [`MA_SHARER_BITS_WIDTH:0] mshr_in2_p3_inv_counter;
+wire mshr_in2_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_cam_data;
+// wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_pending_data;
+
+multichip_adapter_mshr mshr_in2 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_in2_p3_write_en),
+
+    .wr_state_en1(mshr_in2_p2_write_en),
+    .wr_data_en1(mshr_in2_p2_write_en),
+    .wr_counter_en1(mshr_in2_p2_write_en),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_in2_p2_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in1(mshr_in2_p2_write_counter),
+    .wr_index_in1(mshr_in2_p2_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_in2_p2_empty_slots),
+    .empty_index(mshr_in2_p2_empty_index),
+
+    .wr_state_en2(mshr_in2_p3_write_en),
+    .wr_data_en2(mshr_in2_p3_write_en),
+    .wr_counter_en2(mshr_in2_p3_write_en),
+    .dec_counter_en2(mshr_in2_p3_counter_dec_en),
+    .state_in2(mshr_in2_p3_write_state),
+    .data_in2(mshr_in2_p3_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in2({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .rd_index_in2(mshr_in2_p3_read_index),
+    .wr_index_in2(mshr_in2_p3_write_index),
+    .inv_counter_rd_index_in2(mshr_in2_p3_inv_index),
+    .rd_state_out(mshr_in2_p3_rd_state),
+    .rd_data_out(mshr_in2_p3_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_in2_hit),
+    .hit_index(mshr_in2_hit_index),
+    .cam_data_out(mshr_in2_cam_data),
+    // .pending_data_out(mshr_in2_pending_data),
+    // .pending(mshr_in2_pending),
+    // .pending_index(mshr_in2_pending_index),
+    // .pending_ready1(1'b1),
+    .inv_counter_out(mshr_in2_p3_inv_counter)
+);
 
 
 multichip_adapter_outpipe1 outpipe1 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
     
     .noc_val(noc1_val_in),
     .noc_data(noc1_data_in),
@@ -444,6 +345,7 @@ multichip_adapter_outpipe1 outpipe1 (
 multichip_adapter_inpipe2 inpipe2 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
 
     .noc_val(noc2_val_out),
     .noc_data(noc2_data_out),
@@ -457,7 +359,8 @@ multichip_adapter_inpipe2 inpipe2 (
     .mshr_in_empty_slots(mshr_in2_p2_empty_slots),
     .mshr_in_write_en(mshr_in2_p2_write_en),
     .mshr_in_write_index(mshr_in2_p2_write_index),
-    .mshr_in_write_data(mshr_in2_p2_write_data), 
+    .mshr_in_write_data(mshr_in2_p2_write_data),
+    .mshr_in_write_counter(mshr_in2_p2_write_counter),
     .stall_mshr_in_from_p3(mshr_in2_p3_write_en),
 
     .mshr_out_write_en(mshr_out1_p2_write_en),
@@ -502,9 +405,143 @@ multichip_adapter_outpipe3 outpipe3 (
     .mshr_write_en(mshr_in2_p3_write_en),
     .mshr_write_index(mshr_in2_p3_write_index),
     .mshr_write_data(mshr_in2_p3_write_data),
+    .mshr_write_state(mshr_in2_p3_write_state),
     .mshr_read_index(mshr_in2_p3_read_index),
     .mshr_read_data(mshr_in2_p3_rd_data),
-    .mshr_read_state(mshr_in2_p3_rd_state)
+    .mshr_read_state(mshr_in2_p3_rd_state),
+    .mshr_read_dec_counter_en(mshr_in2_p3_counter_dec_en),
+    .mshr_read_inv_counter_index(mshr_in2_p3_inv_index),
+    .mshr_read_inv_counter(mshr_in2_p3_inv_counter)
+);
+
+/////////////////////////////////
+// second triplet
+/////////////////////////////////
+
+wire mshr_out2_p2_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out2_p2_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_empty_index;
+
+wire mshr_out2_p3_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p3_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_out2_p3_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p3_rd_data;
+
+// wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_pending_index;
+// wire mshr_out2_pending;
+wire [`MA_SHARER_BITS_WIDTH:0] mshr_out2_inv_counter;
+wire mshr_out2_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_cam_data;
+// wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_pending_data;
+
+multichip_adapter_mshr mshr_out2 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_out2_p3_write_en),
+
+    .wr_state_en1(mshr_out2_p2_write_en),
+    .wr_data_en1(mshr_out2_p2_write_en),
+    .wr_counter_en1(1'b0),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_out2_p2_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in1({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .wr_index_in1(mshr_out2_p2_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_index(mshr_out2_p2_empty_index),
+    .empty_slots(mshr_out2_p2_empty_slots),
+
+    .wr_state_en2(mshr_out2_p3_write_en),
+    .wr_data_en2(mshr_out2_p3_write_en),
+    .wr_counter_en2(1'b0),
+    .dec_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_out2_p3_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in2({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .rd_index_in2(mshr_out2_p3_read_index),
+    .wr_index_in2(mshr_out2_p3_write_index),
+    .inv_counter_rd_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+    .rd_state_out(mshr_out2_p3_rd_state),
+    .rd_data_out(mshr_out2_p3_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_out2_hit),
+    .hit_index(mshr_out2_hit_index),
+    .cam_data_out(mshr_out2_cam_data),
+    // .pending_data_out(mshr_out2_pending_data),
+    // .pending(mshr_out2_pending),
+    // .pending_index(mshr_out2_pending_index),
+    // .pending_ready1(1'b1),
+    .inv_counter_out(mshr_out2_inv_counter)
+);
+
+wire mshr_in1_p1_write_en;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_write_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p1_write_data;
+wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in1_p1_empty_slots;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_empty_index;
+
+wire mshr_in1_p2_write_en;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_write_data;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_read_index;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p2_write_index;
+wire [`MA_MSHR_STATE_BITS-1:0] mshr_in1_p2_rd_state;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p2_rd_data;
+
+// wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_pending_index;
+// wire mshr_in1_pending;
+wire [`MA_SHARER_BITS_WIDTH:0] mshr_in1_inv_counter;
+wire mshr_in1_hit;
+wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_hit_index;
+wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_cam_data;
+// wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_pending_data;
+
+multichip_adapter_mshr mshr_in1 (
+    .clk(clk),
+    .rst_n(rst_n),
+    .pipe_wr_sel(mshr_in1_p2_write_en),
+
+    .wr_state_en1(mshr_in1_p1_write_en),
+    .wr_data_en1(mshr_in1_p1_write_en),
+    .wr_counter_en1(1'b0),
+    .state_in1(`MA_MSHR_STATE_WAIT),
+    .data_in1(mshr_in1_p1_write_data),
+    .data_mask_in1({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in1({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .wr_index_in1(mshr_in1_p1_write_index),
+    .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
+    .empty_slots(mshr_in1_p1_empty_slots),
+    .empty_index(mshr_in1_p1_empty_index),
+
+    .wr_state_en2(mshr_in1_p2_write_en),
+    .wr_data_en2(mshr_in1_p2_write_en),
+    .wr_counter_en2(1'b0),
+    .dec_counter_en2(1'b0),
+    .state_in2(`MA_MSHR_STATE_INVAL),
+    .data_in2(mshr_in1_p2_write_data),
+    .data_mask_in2({`MA_MSHR_ARRAY_WIDTH{1'b1}}),
+    .wr_counter_in2({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
+    .rd_index_in2(mshr_in1_p2_read_index),
+    .wr_index_in2(mshr_in1_p2_write_index),
+    .inv_counter_rd_index_in2(`MA_MSHR_INDEX_WIDTH'b0),
+    .rd_state_out(mshr_in1_p2_rd_state),
+    .rd_data_out(mshr_in1_p2_rd_data),
+
+    .cam_en1(1'b0),
+    .hit(mshr_in1_hit),
+    .hit_index(mshr_in1_hit_index),
+    .cam_data_out(mshr_in1_cam_data),
+    // .pending_data_out(mshr_in1_pending_data),
+    // .pending(mshr_in1_pending),
+    // .pending_index(mshr_in1_pending_index),
+    // .pending_ready1(1'b1),
+    .inv_counter_out(mshr_in1_inv_counter)
 );
 
 multichip_adapter_inpipe1 inpipe1 (

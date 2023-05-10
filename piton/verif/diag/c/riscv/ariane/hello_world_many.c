@@ -27,10 +27,12 @@ int main(int argc, char** argv) {
   while(argv[0][0] != amo_cnt);
 
   // assemble number and print
-  printf("Hello world, this is hart %d of %d harts!\n", argv[0][0], argv[0][1]);
+  printf("Hello world,this is hart %d of %d harts!\n", argv[0][0], argv[0][1]);
 
   // increment atomic counter
   ATOMIC_OP(amo_cnt, 1, add, w);
+
+  while(argv[0][1] != amo_cnt);
 
   return 0;
 }
