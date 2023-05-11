@@ -95,7 +95,7 @@ wire its_time = (interval_low < interval_high) ? ((interval_low <= clock) & (clo
 
 wire ren = its_time & ready_out;
 assign ready_in = ~fifo_full;
-assign data_out = fifo_data_out;
+assign data_out = ~fifo_empty ? fifo_data_out : {DATA_WIDTH{1'b0}};
 assign valid_out = ~fifo_empty & its_time & bw_ok;
 
 

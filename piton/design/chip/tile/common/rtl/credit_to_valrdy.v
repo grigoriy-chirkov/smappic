@@ -61,8 +61,10 @@ module credit_to_valrdy (
    wire	 thanksIn;
 
    wire valid_out_temp;
+   wire [`DATA_WIDTH-1:0] data_out_temp;
 
    assign valid_out = valid_out_temp;
+   assign data_out = valid_out_temp ? data_out_temp : `DATA_WIDTH'b0;
 
    network_input_blk_multi_out #(.LOG2_NUMBER_FIFO_ELEMENTS(2)) data(
       .clk(clk),
