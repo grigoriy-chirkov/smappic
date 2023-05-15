@@ -101,72 +101,43 @@ wire val_S2_next = val_S1 & ~stall_S1;
 wire [`CEP_DATA_WIDTH-1:0]  data_S1 = cep_data;
 wire [`CEP_DATA_WIDTH-1:0] data_S2_next = data_S1;
 
-wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S1 = data_S1[`MSG_ADDR];
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1 = data_S1[`MSG_TYPE];
+wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid_S1 = data_S1[`MSG_MSHRID];
+
 wire inv_msg_S1 = (msg_type_S1 == `MSG_TYPE_STORE_FWD) |
                   (msg_type_S1 == `MSG_TYPE_INV_FWD  ) ;
-wire do_rd_tag_S1 = inv_msg_S1;
-assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
-assign dir_rd_addr = msg_addr_S1[`MA_ADDR_WIDTH-1:0];
+wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
+                 (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
+wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
+wire ack_msg_S1 = (msg_type_S1 == `MSG_TYPE_NODATA_ACK) | 
+                  (msg_type_S1 == `MSG_TYPE_DATA_ACK);
 
-assign val_S1 = cep_val;
-assign cep_rdy = ~stall_S1;
-assign stall_S1 = stall_S2 & val_S1;
-
-// Stage 1-> 2
-
-reg [`CEP_DATA_WIDTH-1:0] data_S2;
-always @(posedge clk) begin
-    if (~rst_n) begin
-        val_S2 <= 1'b0;
-        data_S2 <= `CEP_DATA_WIDTH'b0;
-    end
-    else if (~stall_S2) begin
-        val_S2 <= val_S2_next;
-        data_S2 <= data_S2_next;
-    end
-end
-
-
-// Stage 2
-
-wire val_S3_next = val_S2 & ~stall_S2;
-wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid_S2 = data_S2[`MSG_MSHRID];
-wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
-wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S2 = data_S2[`MSG_ADDR];
-wire inv_msg_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWD) |
-                  (msg_type_S2 == `MSG_TYPE_INV_FWD  ) ;
-wire do_read_mshr_S2 = (msg_type_S2 != `MSG_TYPE_LOAD_FWD)    & 
-                       (msg_type_S2 != `MSG_TYPE_STORE_FWD)   &
-                       (msg_type_S2 != `MSG_TYPE_INV_FWD)     &
-                       (msg_type_S2 != `MSG_TYPE_LOAD_MEM)    &
-                       (msg_type_S2 != `MSG_TYPE_STORE_MEM)   &
-                       (msg_type_S2 != `MSG_TYPE_NC_LOAD_MEM) &
-                       (msg_type_S2 != `MSG_TYPE_NC_STORE_MEM);
-assign mshr_out_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2;
-assign mshr_out_write_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+wire do_read_mshr_S1 = ack_msg_S1;
+assign mshr_out_write_en = val_S1 & ~stall_S1 & do_read_mshr_S1;
+assign mshr_out_write_index = msg_mshrid_S1[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_out_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
-assign mshr_out_read_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
-wire [`MSG_MSHRID_WIDTH-1:0] src_mshrid_S2;
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
-wire [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
-wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S2;
-wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S2;
+assign mshr_out_read_index = msg_mshrid_S1[`MA_MSHR_INDEX_WIDTH-1:0];
+wire [`MSG_MSHRID_WIDTH-1:0] src_mshrid_S1;
+wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1;
+wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1;
+wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1;
+wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1;
+wire [`PHY_ADDR_WIDTH-1:0] mshr_addr_S1;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_out_read_data),
 
-    .addr(),
+    .addr(mshr_addr_S1),
     .way(),
-    .mshrid(src_mshrid_S2),
+    .mshrid(src_mshrid_S1),
     .cache_type(),
     .data_size(),
     .msg_type(),
     .msg_l2_miss(),
-    .src_chipid(src_chipid_S2),
-    .src_x(src_x_S2),
-    .src_y(src_y_S2),
-    .src_fbits(src_fbits_S2),
+    .src_chipid(src_chipid_S1),
+    .src_x(src_x_S1),
+    .src_y(src_y_S1),
+    .src_fbits(src_fbits_S1),
     .sdid(),
     .lsid(),
     .miss_lsid(),
@@ -178,11 +149,70 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .data2(), 
     .data3()
 );
+wire [`PHY_ADDR_WIDTH-1:0] msg_addr_S1 = ack_msg_S1 ? mshr_addr_S1 : data_S1[`MSG_ADDR];
 
-wire do_write_mshr_S2 = (msg_type_S2 != `MSG_TYPE_NODATA_ACK) & 
-                        (msg_type_S2 != `MSG_TYPE_DATA_ACK)   ;
+
+wire do_rd_tag_S1 = ~nc_msg_S1 & ~int_msg_S1;
+assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
+assign dir_rd_addr = msg_addr_S1[`MA_ADDR_WIDTH-1:0];
+
+assign val_S1 = cep_val;
+assign cep_rdy = ~stall_S1;
+assign stall_S1 = stall_S2 & val_S1;
+
+// Stage 1-> 2
+
+reg [`CEP_DATA_WIDTH-1:0] data_S2;
+reg [`MSG_MSHRID_WIDTH-1:0] src_mshrid_S2;
+reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
+reg [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
+reg [`MSG_SRC_Y_WIDTH-1:0] src_y_S2;
+reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S2;
+reg [`PHY_ADDR_WIDTH-1:0] msg_addr_S2;
+reg do_read_mshr_S2;
+always @(posedge clk) begin
+    if (~rst_n) begin
+        val_S2 <= 1'b0;
+        data_S2 <= `CEP_DATA_WIDTH'b0;
+        src_mshrid_S2 <= `MA_MSHR_INDEX_WIDTH'b0;
+        src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
+        src_x_S2 <= `MSG_SRC_X_WIDTH'b0;
+        src_y_S2 <= `MSG_SRC_Y_WIDTH'b0;
+        src_fbits_S2 <= `MSG_SRC_FBITS_WIDTH'b0;
+        msg_addr_S2 <= `PHY_ADDR_WIDTH'b0;
+        do_read_mshr_S2 <= 1'b0;
+    end
+    else if (~stall_S2) begin
+        val_S2 <= val_S2_next;
+        data_S2 <= data_S2_next;
+        src_mshrid_S2 <= src_mshrid_S1;
+        src_chipid_S2 <= src_chipid_S1;
+        src_x_S2 <= src_x_S1;
+        src_y_S2 <= src_y_S1;
+        src_fbits_S2 <= src_fbits_S1;
+        msg_addr_S2 <= msg_addr_S1;
+        do_read_mshr_S2 <= do_read_mshr_S1;
+    end
+end
+
+
+// Stage 2
+
+wire val_S3_next = val_S2 & ~stall_S2;
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
+wire inv_msg_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWD) |
+                  (msg_type_S2 == `MSG_TYPE_INV_FWD  ) ;
+wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ ) | 
+                 (msg_type_S2 == `MSG_TYPE_NC_STORE_REQ) ;
+wire int_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
+wire ack_msg_S2 = (msg_type_S2 == `MSG_TYPE_NODATA_ACK) | 
+                  (msg_type_S2 == `MSG_TYPE_DATA_ACK);
+
+
+wire do_write_mshr_S2 = ~ack_msg_S2;
 assign mshr_in_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_in_write_index = mshr_in_empty_index;
+
 multichip_adapter_bitsum_64 bitsum(
     .data_in(dir_rd_sharer_set),
     .bitsum_out(mshr_in_write_counter)
@@ -233,22 +263,30 @@ always @(*) begin
     end
 end
 
-wire do_write_tag_S2 = inv_msg_S2;
+wire do_write_tag_S2 = ack_msg_S2 | inv_msg_S2;
 assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
 assign dir_wr_set = dir_rd_set;
-assign dir_wr_way = dir_rd_way;
-assign dir_wr_tag = msg_addr_S2[`MA_ADDR_TAG];
+assign dir_wr_way = dir_rd_hit ? dir_rd_way : dir_empty_way;
+assign dir_wr_tag = dir_rd_tag;
 
-wire [`NOC_X_WIDTH-1:0] x_dst_S2 = data_S2[`MSG_DST_X];
-wire [`NOC_Y_WIDTH-1:0] y_dst_S2 = data_S2[`MSG_DST_Y];
-wire [`HOME_ID_WIDTH-1:0] flat_id_S2;
+wire [`NOC_X_WIDTH-1:0] x_dst_S2 = data_S3_next[`MSG_DST_X];
+wire [`NOC_Y_WIDTH-1:0] y_dst_S2 = data_S3_next[`MSG_DST_Y];
+wire [`HOME_ID_WIDTH-1:0] flat_id_dst_S2;
 xy_to_flat_id xy_to_flat_id(
     .x_coord(x_dst_S2),
     .y_coord(y_dst_S2),
-    .flat_id(flat_id_S2)
+    .flat_id(flat_id_dst_S2)
 );
-assign dir_wr_sharer_set = `MA_SHARER_SET_WIDTH'b0;//~(`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) & dir_rd_sharer_set;
-assign dir_wr_state = |dir_wr_sharer_set;
+
+reg [`MA_SHARER_SET_WIDTH-1:0] new_sharer_set_S2;
+always @(*) begin
+    new_sharer_set_S2 = (`MA_SHARER_SET_WIDTH'b1 << flat_id_dst_S2);
+    if (dir_rd_hit) 
+        new_sharer_set_S2 = new_sharer_set_S2 | dir_rd_sharer_set;
+end
+
+assign dir_wr_sharer_set = inv_msg_S2 ? `MA_SHARER_SET_WIDTH'b0 : new_sharer_set_S2;
+assign dir_wr_state = inv_msg_S2 ? `MA_STATE_INVALID : `MA_STATE_VALID;
 
 wire stall_mshr_in_full_S2 = (mshr_in_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
 wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_in_full_S2 | stall_mshr_in_from_p3);
@@ -373,16 +411,19 @@ assign stall_S3 = ~pkg_rdy & val_S3;
 // some mshr sanity checks 
 
 reg mshr_err;
-reg dir_err;
+reg dir_miss_err;
+reg dir_full_err;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         mshr_err <= 1'b0;
-        dir_err <= 1'b0;
+        dir_miss_err <= 1'b0;
+        dir_full_err <= 1'b0;
     end
     else begin
         mshr_err <= mshr_err | (mshr_out_write_en & (mshr_out_read_state == `MA_MSHR_STATE_INVAL));
-        dir_err <= dir_err | (dir_wr_en & (dir_rd_state == `MA_STATE_INVALID));
+        dir_miss_err <= dir_miss_err | (inv_msg_S2 & dir_wr_en & (dir_rd_state == `MA_STATE_INVALID));
+        dir_full_err <= dir_full_err | (dir_wr_en & ~dir_rd_hit & (dir_num_empty_ways == {`MA_WAY_WIDTH+1{1'b0}}));
     end
 end
 

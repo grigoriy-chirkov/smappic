@@ -117,10 +117,10 @@ wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
 wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
                  (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
 wire do_rd_tag_S1 = ~nc_msg_S1 & ~int_msg_S1;
-assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
-assign dir_rd_addr = msg_addr_S1[`MA_ADDR_WIDTH-1:0];
+assign dir_rd_en = 1'b0;
+assign dir_rd_addr = `MA_ADDR_WIDTH'b0;
 
-assign stall_S1 = (stall_S2 | dir_rd_stall_from_p2) & val_S1;
+assign stall_S1 = stall_S2 & val_S1;
 
 
 // Stage 1 -> 2
@@ -192,11 +192,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
 );
 
 wire do_write_tag_S2 = ~nc_msg_S2 & ~int_msg_S2;
-assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
-assign dir_wr_set = dir_rd_set;
-assign dir_wr_way = dir_rd_hit ? dir_rd_way : dir_empty_way;
-assign dir_wr_tag = msg_addr_S2[`MA_ADDR_TAG];
-assign dir_wr_state = `MA_STATE_VALID;
+assign dir_wr_en = 1'b0;
+assign dir_wr_set = `MA_SET_WIDTH'b0;
+assign dir_wr_way = `MA_WAY_WIDTH'b0;
+assign dir_wr_tag = `MA_TAG_WIDTH'b0;
+assign dir_wr_state = `MA_STATE_INVALID;
 
 wire [`NOC_X_WIDTH-1:0] x_src_S2 = data_S2[`MSG_SRC_X];
 wire [`NOC_Y_WIDTH-1:0] y_src_S2 = data_S2[`MSG_SRC_Y];
@@ -206,11 +206,11 @@ xy_to_flat_id xy_to_flat_id(
     .y_coord(y_src_S2),
     .flat_id(flat_id_S2)
 );
-assign dir_wr_sharer_set = dir_rd_hit ? (`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) | dir_rd_sharer_set : (`MA_SHARER_SET_WIDTH'b1 << flat_id_S2);
+assign dir_wr_sharer_set = `MA_SHARER_SET_WIDTH'b0;
 
 wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
 wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);
-assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | dir_wr_stall_from_p2);
+assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 
 // Stage 2 -> 3
 
@@ -233,16 +233,5 @@ assign cep_val = val_S3;
 assign cep_data = data_S3;
 assign cep_chipid = {1'b0, data_S3[`MSG_DST_ONCHIPID]};
 
-// sanity checks
-
-reg dir_full_err;
-always @(posedge clk) begin
-    if (~rst_n) begin
-        dir_full_err <= 1'b0;
-    end
-    else begin
-        dir_full_err <= dir_full_err | (dir_wr_en & ~dir_rd_hit & (dir_num_empty_ways == {`MA_WAY_WIDTH+1{1'b0}}));
-    end
-end
 
 endmodule
