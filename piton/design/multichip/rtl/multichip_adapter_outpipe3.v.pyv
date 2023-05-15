@@ -44,13 +44,13 @@ module multichip_adapter_outpipe3 (
 
     // CEP interace
     output wire                                   cep_val,
-    output wire [`CEP_DATA_WIDTH-1:0]             cep_data,
+    output reg  [`CEP_DATA_WIDTH-1:0]             cep_data,
     output wire [`CEP_CHIPID_WIDTH-1:0]           cep_chipid,
     input  wire                                   cep_rdy,
 
     output wire                                   mshr_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
-    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data,
+    output reg  [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data,
     output wire [`MA_MSHR_STATE_BITS-1:0]         mshr_write_state,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_read_index,
     input  wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_read_data,
@@ -70,6 +70,8 @@ wire stall_S3;
 wire val_S1;
 reg val_S2;
 reg val_S3;
+
+wire recycle_S3;
 
 // Stage 1
 
@@ -108,7 +110,7 @@ always @(posedge clk) begin
     end 
 end
 
-assign stall_S2 = stall_S3 & val_S2;
+assign stall_S2 = (stall_S3 | recycle_S3) & val_S2;
 
 // Stage 2
 
@@ -118,15 +120,49 @@ wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid_S2 = data_S2[`MSG_MSHRID];
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
 wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK  ) | 
                      (msg_type_S2 == `MSG_TYPE_STORE_FWDACK) ;
+wire is_last_subline_S2 = data_S2[`MSG_LAST_SUBLINE];
+wire is_long_inv_ack_S2 = (data_S2[`MSG_LENGTH] > `MSG_LENGTH_WIDTH'd0);
+wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2 = data_S2[`MSG_SUBLINE_ID];
 wire do_read_mshr = 1'b1;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
 assign mshr_write_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
-assign suppress_next_stage_S2 = (is_inv_ack_S2 & mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1});
-assign mshr_write_data =  suppress_next_stage_S2 ? mshr_read_data : `MA_MSHR_ARRAY_WIDTH'b0;
+assign suppress_next_stage_S2 = (is_inv_ack_S2 & (~is_last_subline_S2 | mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1}));
 assign mshr_write_state = suppress_next_stage_S2 ? mshr_read_state : `MA_MSHR_STATE_INVAL;
-assign mshr_read_dec_counter_en = val_S2 & ~stall_S2 & is_inv_ack_S2;
+assign mshr_read_dec_counter_en = val_S2 & ~stall_S2 & is_inv_ack_S2 & is_last_subline_S2;
 assign mshr_read_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_read_inv_counter_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+
+reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] subline_data_S2 [3:0];
+reg [3:0] subline_vals_S2;
+
+always @(*) begin
+    subline_vals_S2 = mshr_read_data[`MA_MSHR_DATA_VALS];
+    subline_data_S2[3] = mshr_read_data[`MA_MSHR_DATA3];
+    subline_data_S2[2] = mshr_read_data[`MA_MSHR_DATA2];
+    subline_data_S2[1] = mshr_read_data[`MA_MSHR_DATA1];
+    subline_data_S2[0] = mshr_read_data[`MA_MSHR_DATA0];
+    if (is_long_inv_ack_S2) begin
+        subline_vals_S2 = subline_vals_S2 | (4'b1 << subline_id_S2);
+        subline_data_S2[subline_id_S2] = data_S2[64+`MA_MSHR_DATA_CHUNK_WIDTH-1:64];
+    end
+end
+
+always @(*) begin
+    if (~suppress_next_stage_S2) begin
+        mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
+    end
+    else begin
+        mshr_write_data = mshr_read_data;
+        mshr_write_data[`MA_MSHR_DATA_VALS] = subline_vals_S2;
+        mshr_write_data[`MA_MSHR_DATA3] = subline_data_S2[3];
+        mshr_write_data[`MA_MSHR_DATA2] = subline_data_S2[2];
+        mshr_write_data[`MA_MSHR_DATA1] = subline_data_S2[1];
+        mshr_write_data[`MA_MSHR_DATA0] = subline_data_S2[0];
+    end
+end
+
+
+
 wire [`MSG_MSHRID_WIDTH-1:0] src_mshrid_S2;
 wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 wire [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
@@ -152,7 +188,11 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .miss_lsid(),
     .smc_miss(),
     .recycled(),
-    .inv_fwd_pending()
+    .inv_fwd_pending(),
+    .data0(),
+    .data1(),
+    .data2(),
+    .data3()
 );
 
 reg [`CEP_DATA_WIDTH-1:0] data_S3_next;
@@ -170,13 +210,16 @@ end
 assign stall_S2 = stall_S3 & val_S2;
 
 reg mshr_err;
+reg long_inv_ack;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         mshr_err <= 1'b0;
+        long_inv_ack <= 1'b0;
     end
     else begin
         mshr_err <= mshr_err | (mshr_write_en & (mshr_read_state == `MA_MSHR_STATE_INVAL));
+        long_inv_ack <= long_inv_ack | (is_inv_ack_S2 & data_S2[`MSG_LENGTH] > `MSG_LENGTH_WIDTH'd0);
     end
 end
 
@@ -189,16 +232,76 @@ always @(posedge clk) begin
         val_S3 <= 1'b0;
         data_S3 <= `PKG_DATA_WIDTH'b0;
     end
-    else if (~stall_S3) begin
+    else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
         data_S3 <= data_S3_next;
     end 
 end
 
-assign stall_S3 = ~cep_rdy & val_S3;
+reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] subline_data_S3 [3:0];
+reg [3:0] subline_vals_S3;
+
+
+wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
+wire [3:0] subline_mask_S3;
+wire subline_vals_nz;
+always @(posedge clk) begin
+    if (~rst_n) begin
+        subline_vals_S3 <= 4'b0;
+        subline_data_S3[3] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[2] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[1] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[0] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+    end
+    else if (~stall_S3 & ~recycle_S3) begin
+        subline_vals_S3 <= subline_vals_S2;
+        subline_data_S3[3] <= subline_data_S2[3];
+        subline_data_S3[2] <= subline_data_S2[2];
+        subline_data_S3[1] <= subline_data_S2[1];
+        subline_data_S3[0] <= subline_data_S2[0];
+    end
+    else if (~stall_S3) begin
+        subline_vals_S3 <= subline_vals_S3 & subline_mask_S3;
+    end
+end
+
+
+multichip_adapter_prio_encoder_2 prio_encoder(
+    .data_in(subline_vals_S3),
+    .data_out(subline_id_S3),
+    .data_out_mask(subline_mask_S3),
+    .nonzero_out(subline_vals_nz)
+);
+
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S3 = data_S3[`MSG_TYPE];
+wire is_inv_ack_S3 = (msg_type_S3 == `MSG_TYPE_INV_FWDACK  ) | 
+                     (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) ;
+wire is_last_subline_S3 = ((subline_vals_S3 & subline_mask_S3) == 4'b0);
+
+always @(*) begin
+    cep_data = data_S3;
+    if (is_inv_ack_S3) begin
+        if (~subline_vals_nz) begin
+            cep_data[`MSG_SUBLINE_ID] = `MSG_SUBLINE_ID_WIDTH'b0;
+            cep_data[`MSG_LENGTH] = `MSG_LENGTH_WIDTH'd0;
+            cep_data[`MSG_LAST_SUBLINE] = 1'b1;
+        end
+        else begin
+            cep_data[`MSG_SUBLINE_ID] = subline_id_S3;
+            cep_data[`MSG_LENGTH] = `MSG_LENGTH_WIDTH'd2;
+            cep_data[`MSG_LAST_SUBLINE] = is_last_subline_S3;
+            cep_data[`MA_MSHR_DATA_CHUNK_WIDTH+64-1:64] = subline_data_S3[subline_id_S3];
+        end
+    end
+end
+
 
 assign cep_val = val_S3;
-assign cep_data = data_S3;
+// assign cep_data = data_S3;
 assign cep_chipid = {1'b0, data_S3[`MSG_DST_ONCHIPID]};
+
+assign stall_S3 = ~cep_rdy & val_S3;
+assign recycle_S3 = val_S3 & ~is_last_subline_S3;
+
 
 endmodule
