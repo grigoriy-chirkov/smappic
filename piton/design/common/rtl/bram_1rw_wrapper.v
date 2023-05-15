@@ -55,7 +55,7 @@ reg   [DATA_WIDTH-1:0    ]      bram_data_in_r;
 
 wire                            bram_wen;
 wire                            bram_ren;
-reg  [DATA_WIDTH-1:0    ]      bram_data_out;
+reg   [DATA_WIDTH-1:0    ]      bram_data_out;
 wire  [DATA_WIDTH-1:0    ]      bram_data_in;
 wire  [DATA_WIDTH-1:0    ]      up_to_date_data;
 wire                            rw_conflict;
@@ -64,8 +64,8 @@ reg                             rw_conflict_r;
 
 
 reg   [ADDR_WIDTH-1:0    ]      WRITE_ADDRESS_REG_muxed;
-reg                            bram_write_en_muxed;
-reg  [DATA_WIDTH-1:0    ]      bram_data_in_muxed;
+reg                             bram_write_en_muxed;
+reg   [DATA_WIDTH-1:0    ]      bram_data_in_muxed;
 
 assign write_en   = CE & (RDWEN == 1'b0);
 assign read_en    = CE & (RDWEN == 1'b1);

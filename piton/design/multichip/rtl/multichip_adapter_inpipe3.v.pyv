@@ -92,11 +92,14 @@ end
 wire val_S3_next = val_S2 & ~stall_S2;
 wire [`MSG_MSHRID_WIDTH-1:0] msg_mshrid_S2 = data_S2[`MSG_MSHRID];
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S2 = data_S2[`MSG_TYPE];
+wire is_last_subline_S2 = data_S2[`MSG_LAST_SUBLINE];
+wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK) | 
+                     (msg_type_S2 == `MSG_TYPE_STORE_FWDACK);
 wire do_read_mshr_S2 = 1'b1;
 // wire do_read_mshr = (msg_type != `MSG_TYPE_LOAD_FWDACK)  & 
 //                     (msg_type != `MSG_TYPE_STORE_FWDACK) &
 //                     (msg_type != `MSG_TYPE_INV_FWDACK)   ;
-assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2;
+assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2 & ~(is_inv_ack_S2 & ~is_last_subline_S2);
 assign mshr_write_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
 assign mshr_read_index = msg_mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
@@ -126,7 +129,11 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .miss_lsid(),
     .smc_miss(),
     .recycled(),
-    .inv_fwd_pending()
+    .inv_fwd_pending(),
+    .data0(),
+    .data1(),
+    .data2(),
+    .data3()
 );
 
 reg [`CEP_DATA_WIDTH-1:0] data_S3_next;

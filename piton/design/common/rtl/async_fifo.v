@@ -36,46 +36,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-module async_fifo 
-#(
-	parameter DSIZE = 64,
-	parameter ASIZE = 5,
-	parameter MEMSIZE = 16 // should be 2 ^ (ASIZE-1)
-)
-(
-	rdata, 
-	rempty,
-	rclk,
-	ren,
-	wdata,
-	wfull,
-	wclk,
-	wval,
-	wreset,
-	rreset
-	);
-
-//Inputs and Outputs
-output  [DSIZE-1:0] 	rdata;
-output			rempty;
-output 			wfull;
-input	[DSIZE-1:0]	wdata;
-input			wval;
-input			ren;
-input			rclk;
-input			wclk;
-input 			wreset;
-input			rreset;
-
+module async_fifo #(
+    parameter DSIZE = 64,
+    parameter ASIZE = 5,
+    parameter MEMSIZE = 16 // should be 2 ^ (ASIZE-1)
+) (
+    output wire [DSIZE-1:0]   rdata, 
+    output wire               rempty,
+    input  wire               rclk,
+    input  wire               ren,
+    input  wire [DSIZE-1:0]   wdata,
+    output wire               wfull,
+    input  wire               wclk,
+    input  wire               wval,
+    input  wire               wreset,
+    input  wire               rreset
+);
 //Internal Registers
-reg	[ASIZE-1:0]	g_wptr;
-reg	[ASIZE-1:0]	g_rptr;
+reg    [ASIZE-1:0]    g_wptr;
+reg    [ASIZE-1:0]    g_rptr;
 
-reg	[ASIZE-1:0]	g_rsync1, g_rsync2;
-reg	[ASIZE-1:0]	g_wsync1, g_wsync2;
+reg    [ASIZE-1:0]    g_rsync1, g_rsync2;
+reg    [ASIZE-1:0]    g_wsync1, g_wsync2;
 
 //Memory
-reg	[DSIZE-1:0] 	fifo[MEMSIZE-1:0];
+reg    [DSIZE-1:0]     fifo[MEMSIZE-1:0];
 
 wire [ASIZE-1:0] b_wptr;
 wire [ASIZE-1:0] b_wptr_next;
@@ -102,12 +87,12 @@ assign g_rptr_next[ASIZE-1:0] = {1'b0, b_rptr_next[ASIZE-1:1]} ^ b_rptr_next[ASI
 
 //full and empty signals
 assign wfull =  (g_wptr[ASIZE-1]   != g_rsync2[ASIZE-1]  ) && 
-		(g_wptr[ASIZE-2]   != g_rsync2[ASIZE-2]  ) &&
-		(g_wptr[ASIZE-3:0] == g_rsync2[ASIZE-3:0]) ||
-		(wreset || rreset);
+                (g_wptr[ASIZE-2]   != g_rsync2[ASIZE-2]  ) &&
+                (g_wptr[ASIZE-3:0] == g_rsync2[ASIZE-3:0]) ||
+                (wreset || rreset);
 
 assign rempty =  (g_wsync2[ASIZE-1:0] == g_rptr[ASIZE-1:0]) ||
-	         (wreset || rreset);
+                 (wreset || rreset);
 
 //output values
 assign rdata = fifo[b_rptr[ASIZE-2:0]];
@@ -118,30 +103,30 @@ SEQUENTIAL LOGIC
 
 //transfer register values
 always @(posedge rclk) begin
-	if (rreset) begin
-		g_rptr <= 0;
-	end
-	else if (ren && !rempty) begin
-		g_rptr <= g_rptr_next;
-	end
+    if (rreset) begin
+        g_rptr <= 0;
+    end
+    else if (ren && !rempty) begin
+        g_rptr <= g_rptr_next;
+    end
 
-	g_wsync1 <= g_wptr;
-	g_wsync2 <= g_wsync1;
+    g_wsync1 <= g_wptr;
+    g_wsync2 <= g_wsync1;
 end
 
 always @(posedge wclk) begin
-	if (wreset) begin
-		g_wptr <= 0;
-	end
-	else if (wval && !wfull) begin
-		fifo[b_wptr[ASIZE-2:0]] <= wdata;
-		g_wptr <= g_wptr_next;
-	end
+    if (wreset) begin
+        g_wptr <= 0;
+    end
+    else if (wval && !wfull) begin
+        fifo[b_wptr[ASIZE-2:0]] <= wdata;
+        g_wptr <= g_wptr_next;
+    end
 
-	g_rsync1 <= g_rptr;
-	g_rsync2 <= g_rsync1;
+    g_rsync1 <= g_rptr;
+    g_rsync2 <= g_rsync1;
 
-	
+    
 end
 
 endmodule

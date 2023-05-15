@@ -93,6 +93,7 @@ wire stall_S3;
 wire val_S1;
 reg val_S2;
 reg val_S3;
+wire recycle_S3;
 
 // Stage 1
 
@@ -171,7 +172,11 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .miss_lsid(),
     .smc_miss(),
     .recycled(),
-    .inv_fwd_pending()
+    .inv_fwd_pending(),
+    .data0(),
+    .data1(), 
+    .data2(), 
+    .data3()
 );
 
 wire do_write_mshr_S2 = (msg_type_S2 != `MSG_TYPE_NODATA_ACK) & 
@@ -202,7 +207,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .miss_lsid(`MSG_LSID_WIDTH'd0),
     .smc_miss(1'b0),
     .recycled(1'b0),
-    .inv_fwd_pending(1'b0)
+    .inv_fwd_pending(1'b0),
+    .data0(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data1(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data2(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
 reg [`PKG_DATA_WIDTH-1:0] data_S3_next;
@@ -238,7 +247,7 @@ xy_to_flat_id xy_to_flat_id(
     .y_coord(y_dst_S2),
     .flat_id(flat_id_S2)
 );
-assign dir_wr_sharer_set = ~(`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) & dir_rd_sharer_set;
+assign dir_wr_sharer_set = `MA_SHARER_SET_WIDTH'b0;//~(`MA_SHARER_SET_WIDTH'b1 << flat_id_S2) & dir_rd_sharer_set;
 assign dir_wr_state = |dir_wr_sharer_set;
 
 wire stall_mshr_in_full_S2 = (mshr_in_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
@@ -250,7 +259,6 @@ assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 // Stage 2-> 3
 
 reg [`CEP_DATA_WIDTH-1:0] data_S3;
-wire recycle_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin

@@ -276,7 +276,7 @@ multichip_adapter_mshr mshr_in2 (
 
     .wr_state_en2(mshr_in2_p3_write_en),
     .wr_data_en2(mshr_in2_p3_write_en),
-    .wr_counter_en2(mshr_in2_p3_write_en),
+    .wr_counter_en2(1'b0),
     .dec_counter_en2(mshr_in2_p3_counter_dec_en),
     .state_in2(mshr_in2_p3_write_state),
     .data_in2(mshr_in2_p3_write_data),

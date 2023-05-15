@@ -127,7 +127,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .miss_lsid(`MSG_LSID_WIDTH'd0),
     .smc_miss(1'b0),
     .recycled(1'b0),
-    .inv_fwd_pending(1'b0)
+    .inv_fwd_pending(1'b0),
+    .data0(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data1(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data2(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
 

@@ -31,10 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 module multichip_adapter_mshr_decoder(
 
-    input wire [`L2_MSHR_ARRAY_WIDTH-1:0] data,
+    input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data,
 
-    output reg [`L2_MSHR_ADDR_OUT_WIDTH-1:0] addr,
-    output reg [`L2_WAYS_WIDTH-1:0] way,
+    output reg [`MA_MSHR_ADDR_OUT_WIDTH-1:0] addr,
+    output reg [`MA_WAY_WIDTH-1:0] way,
     output reg [`MSG_MSHRID_WIDTH-1:0] mshrid,
     output reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     output reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
@@ -49,30 +49,37 @@ module multichip_adapter_mshr_decoder(
     output reg [`MSG_LSID_WIDTH-1:0] miss_lsid,
     output reg smc_miss,
     output reg recycled,
-    output reg inv_fwd_pending
-
+    output reg inv_fwd_pending,
+    output reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data0,
+    output reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data1,
+    output reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data2,
+    output reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data3
 );
 
 
 always @ *
 begin
-    addr = data[`L2_MSHR_ADDR];
-    way = data[`L2_MSHR_WAY];
-    mshrid = data[`L2_MSHR_MSHRID];
-    cache_type = data[`L2_MSHR_CACHE_TYPE];
-    data_size = data[`L2_MSHR_DATA_SIZE];
-    msg_type = data[`L2_MSHR_MSG_TYPE];
-    msg_l2_miss = data[`L2_MSHR_L2_MISS];
-    src_chipid = data[`L2_MSHR_SRC_CHIPID];
-    src_x = data[`L2_MSHR_SRC_X];
-    src_y = data[`L2_MSHR_SRC_Y];
-    src_fbits = data[`L2_MSHR_SRC_FBITS];
-    sdid = data[`L2_MSHR_SDID];
-    lsid = data[`L2_MSHR_LSID];
-    miss_lsid = data[`L2_MSHR_MISS_LSID];
-    smc_miss = data[`L2_MSHR_SMC_MISS];
-    recycled = data[`L2_MSHR_RECYCLED];
-    inv_fwd_pending = data[`L2_MSHR_INV_FWD_PENDING];
+    addr = data[`MA_MSHR_ADDR];
+    way = data[`MA_MSHR_WAY];
+    mshrid = data[`MA_MSHR_MSHRID];
+    cache_type = data[`MA_MSHR_CACHE_TYPE];
+    data_size = data[`MA_MSHR_DATA_SIZE];
+    msg_type = data[`MA_MSHR_MSG_TYPE];
+    msg_l2_miss = data[`MA_MSHR_L2_MISS];
+    src_chipid = data[`MA_MSHR_SRC_CHIPID];
+    src_x = data[`MA_MSHR_SRC_X];
+    src_y = data[`MA_MSHR_SRC_Y];
+    src_fbits = data[`MA_MSHR_SRC_FBITS];
+    sdid = data[`MA_MSHR_SDID];
+    lsid = data[`MA_MSHR_LSID];
+    miss_lsid = data[`MA_MSHR_MISS_LSID];
+    smc_miss = data[`MA_MSHR_SMC_MISS];
+    recycled = data[`MA_MSHR_RECYCLED];
+    inv_fwd_pending = data[`MA_MSHR_INV_FWD_PENDING];
+    data0 = data[`MA_MSHR_DATA0];
+    data1 = data[`MA_MSHR_DATA1];
+    data2 = data[`MA_MSHR_DATA2];
+    data3 = data[`MA_MSHR_DATA3];
 end
 
 endmodule

@@ -28,52 +28,74 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `include "multichip_adapter.vh"
 `include "define.tmp.h"
 
-<%
-MA_SHARER_SET_WIDTH  = 64
-from math import log2, ceil
-def clog2(x):
-    return ceil(log2(x))
-%>
+module multichip_adapter_tags(
 
-<%
-def gen_bitsum(num_bits):
-    print(f'''
-module multichip_adapter_bitsum_{num_bits}(
-    input  wire [{num_bits-1}:0] data_in,
-    output reg [{clog2(num_bits)}:0] bitsum_out
+    input wire clk,
+    input wire rst_n,
+    input wire clk_en1,
+    input wire clk_en2,
+    input wire rdw_en1,
+    input wire rdw_en2,
+    input wire pdout_en,
+    input wire deepsleep,
+    input wire pipe_sel,
+
+    input wire [`MA_TAG_INDEX_WIDTH-1:0] addr1,
+    input wire [`MA_TAG_ARRAY_WIDTH-1:0] data_in1,
+    input wire [`MA_TAG_ARRAY_WIDTH-1:0] data_mask_in1,
+
+
+    input wire [`MA_TAG_INDEX_WIDTH-1:0] addr2,
+    input wire [`MA_TAG_ARRAY_WIDTH-1:0] data_in2,
+    input wire [`MA_TAG_ARRAY_WIDTH-1:0] data_mask_in2,
+
+    output wire [`MA_TAG_ARRAY_WIDTH-1:0] data_out,
+    output wire [`MA_TAG_ARRAY_WIDTH-1:0] pdata_out
+
 );
-''')
-    if num_bits == 1:
-        print('''
-    always @(*) begin
-        bitsum_out = data_in;
+
+reg clk_en;
+reg rdw_en;
+reg [`MA_TAG_INDEX_WIDTH-1:0] addr;
+reg [`MA_TAG_ARRAY_WIDTH-1:0] data_in;
+reg [`MA_TAG_ARRAY_WIDTH-1:0] data_mask_in;
+
+always @ *
+begin
+    if (pipe_sel)
+    begin
+        clk_en = clk_en2;
+        rdw_en = rdw_en2;
+        addr = addr2;
+        data_in = data_in2;
+        data_mask_in = data_mask_in2;
     end
-endmodule
-''')
-    elif num_bits == 2:
-        print('''
-    always @(*) begin
-        bitsum_out = {1'b0, data_in[0]} + {1'b0, data_in[1]};
+    else
+    begin
+        clk_en = clk_en1;
+        rdw_en = rdw_en1;
+        addr = addr1;
+        data_in = data_in1;
+        data_mask_in = data_mask_in1;
     end
+end
+
+multichip_adapter_tags_sram sram(
+
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .clk_en         (clk_en),
+    .rdw_en         (rdw_en),
+    .pdout_en       (pdout_en),
+    .deepsleep      (deepsleep),
+    .addr           (addr),
+    .data_in        (data_in),
+    .data_mask_in   (data_mask_in),
+    .data_out       (data_out),
+    .pdata_out      (pdata_out)
+);
+
+
+
 endmodule
-''')
-    else:
-        print(f'''
-    wire [{clog2(num_bits)-1}:0] bitsum_low;
-    wire [{clog2(num_bits)-1}:0] bitsum_high;
-    multichip_adapter_bitsum_{num_bits//2} bitsum_low_(.data_in(data_in[{num_bits//2-1}:0]), .bitsum_out(bitsum_low));
-    multichip_adapter_bitsum_{num_bits//2} bitsum_high_(.data_in(data_in[{num_bits//2*2-1}:{num_bits//2}]), .bitsum_out(bitsum_high));
-    always @(*) begin
-        bitsum_out = {{1'b0, bitsum_low}} + {{1'b0, bitsum_high}};
-        {"bitsum_out = bitsum_out + {{%d{1'b0}}, data_in[%d]};" % (clog2(num_bits)-1, num_bits-1) if num_bits%2 == 1 else ""}
-    end
-endmodule
-''')
-
-for i in range(MA_SHARER_SET_WIDTH):
-    gen_bitsum(i+1)
-
-%>
-
-
 

@@ -49,7 +49,11 @@ module multichip_adapter_mshr_encoder(
     input wire [`MSG_LSID_WIDTH-1:0] miss_lsid,
     input wire smc_miss,
     input wire recycled,
-    input wire inv_fwd_pending
+    input wire inv_fwd_pending,
+    input wire [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data0,
+    input wire [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data1,
+    input wire [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data2,
+    input wire [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] data3
 );
 
 
@@ -73,6 +77,10 @@ begin
     data[`MA_MSHR_SMC_MISS] = smc_miss;
     data[`MA_MSHR_RECYCLED] = recycled;
     data[`MA_MSHR_INV_FWD_PENDING] = inv_fwd_pending;
+    data[`MA_MSHR_DATA0] = data0;
+    data[`MA_MSHR_DATA1] = data1;
+    data[`MA_MSHR_DATA2] = data2;
+    data[`MA_MSHR_DATA3] = data3;
 end
 
 endmodule

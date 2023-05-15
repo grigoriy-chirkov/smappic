@@ -184,7 +184,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .miss_lsid(`MSG_LSID_WIDTH'd0),
     .smc_miss(1'b0),
     .recycled(1'b0),
-    .inv_fwd_pending(1'b0)
+    .inv_fwd_pending(1'b0),
+    .data0(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data1(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data2(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
+    .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
 wire do_write_tag_S2 = ~nc_msg_S2 & ~int_msg_S2;
@@ -228,5 +232,17 @@ assign stall_S3 = ~cep_rdy & val_S3;
 assign cep_val = val_S3;
 assign cep_data = data_S3;
 assign cep_chipid = {1'b0, data_S3[`MSG_DST_ONCHIPID]};
+
+// sanity checks
+
+reg dir_full_err;
+always @(posedge clk) begin
+    if (~rst_n) begin
+        dir_full_err <= 1'b0;
+    end
+    else begin
+        dir_full_err <= dir_full_err | (dir_wr_en & ~dir_rd_hit & (dir_num_empty_ways == {`MA_WAY_WIDTH+1{1'b0}}));
+    end
+end
 
 endmodule
