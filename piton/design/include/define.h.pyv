@@ -280,6 +280,7 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 
 // These should be defined in l2.vh, not the global defines
 `define MSG_MESI_BITS               2
+`define MSG_MESI_WIDTH              `MSG_MESI_BITS
 `define MSG_MESI_I                  2'b00
 `define MSG_MESI_S                  2'b01
 `define MSG_MESI_E                  2'b10

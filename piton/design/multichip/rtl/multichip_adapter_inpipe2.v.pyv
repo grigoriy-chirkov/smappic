@@ -174,7 +174,7 @@ always @(posedge clk) begin
     if (~rst_n) begin
         val_S2 <= 1'b0;
         data_S2 <= `CEP_DATA_WIDTH'b0;
-        src_mshrid_S2 <= `MA_MSHR_INDEX_WIDTH'b0;
+        src_mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
         src_x_S2 <= `MSG_SRC_X_WIDTH'b0;
         src_y_S2 <= `MSG_SRC_Y_WIDTH'b0;

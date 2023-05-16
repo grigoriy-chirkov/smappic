@@ -34,5 +34,44 @@
 `define PKG_DATA_WIDTH  `CEP_DATA_WIDTH
 `define CEP_CHIPID_WIDTH 14
 
+`define CEP_LAST_SUBLINE_WIDTH   1
+`define CEP_SUBLINE_ID_WIDTH     2
+`define CEP_MESI_WIDTH           2
+`define CEP_MSHRID_WIDTH         8   
+`define CEP_MSG_TYPE_WIDTH       8
+`define CEP_LENGTH_WIDTH         8
+`define CEP_DST_FBITS_WIDTH      4
+`define CEP_DST_X_WIDTH          8
+`define CEP_DST_Y_WIDTH          8
+`define CEP_DST_CHIPID_WIDTH    14
+`define CEP_DATA_SIZE_WIDTH      3
+`define CEP_CACHE_TYPE_WIDTH     1
+`define CEP_SUBLINE_VECTOR_WIDTH 4
+`define CEP_ADDR_WIDTH          48
+`define CEP_SRC_FBITS_WIDTH      4
+`define CEP_SRC_X_WIDTH          8
+`define CEP_SRC_Y_WIDTH          8
+`define CEP_SRC_CHIPID_WIDTH    14
+`define CEP_WORD_WIDTH          64
+
+`define CEP_LAST_SUBLINE         0
+`define CEP_SUBLINE_ID          2:1
+`define CEP_IS_REQ               3
+`define CEP_MESI                5:4
+`define CEP_MSHRID             13:6
+`define CEP_MSG_TYPE           21:14
+`define CEP_LENGTH             29:22
+`define CEP_DST_FBITS          33:30
+`define CEP_DST_Y              41:34
+`define CEP_DST_X              49:42
+`define CEP_DST_CHIPID         63:50
+`define CEP_DATA_SIZE          74:72
+`define CEP_CACHE_TYPE          75
+`define CEP_SUBLINE_VECTOR     79:76
+`define CEP_ADDR              119:80
+`define CEP_SRC_FBITS         161:158
+`define CEP_SRC_Y             169:162
+`define CEP_SRC_X             177:170
+`define CEP_SRC_CHIPID        191:178
 
 `endif
