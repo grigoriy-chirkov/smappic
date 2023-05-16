@@ -176,7 +176,7 @@ print("`define L2_DATA_ARRAY_HEIGHT_LOG2     %d" % (math.log(L2_NUM_SETS*L2_WAYS
 
 
 `define L2_DIR_INDEX_WIDTH      `L2_TAG_INDEX_WIDTH+`L2_WAYS_WIDTH
-`define L2_DIR_SHARER_BITS      16
+`define L2_DIR_SHARER_BITS      64
 `define L2_DIR_ARRAY_WIDTH      `L2_DIR_SHARER_BITS
 <%
 print("`define L2_DIR_ARRAY_HEIGHT     %d" % (L2_NUM_SETS*L2_WAYS))
