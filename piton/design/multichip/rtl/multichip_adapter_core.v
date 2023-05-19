@@ -93,12 +93,6 @@ wire dir_rd_shared1;
 wire [`MA_SHARER_SET_WIDTH-1:0] dir_rd_sharer_set1;
 wire [`MA_WAY_WIDTH:0] dir_num_empty_ways1;
 wire [`MA_WAY_WIDTH-1:0] dir_empty_way1;
-wire dir_wr_en1;
-wire [`MA_SET_WIDTH-1:0] dir_wr_set1;
-wire [`MA_WAY_WIDTH-1:0] dir_wr_way1;
-wire [`MA_TAG_WIDTH-1:0] dir_wr_tag1;
-wire [`MA_STATE_WIDTH-1:0] dir_wr_state1;
-wire [`MA_SHARER_SET_WIDTH-1:0] dir_wr_sharer_set1;
 wire dir_rd_en2;
 wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr2;
 wire dir_rd_hit2;
@@ -136,12 +130,12 @@ multichip_adapter_dir dir(
     .num_empty_ways1(dir_num_empty_ways1),
     .empty_way1(dir_empty_way1),
 
-    .wr_en1(dir_wr_en1),
-    .wr_set1(dir_wr_set1),
-    .wr_way1(dir_wr_way1),
-    .wr_tag1(dir_wr_tag1),
-    .wr_state1(dir_wr_state1),
-    .wr_sharer_set1(dir_wr_sharer_set1),
+    .wr_en1(1'b0),
+    .wr_set1(`MA_SET_WIDTH'b0),
+    .wr_way1(`MA_WAY_WIDTH'b0),
+    .wr_tag1(`MA_TAG_WIDTH'b0),
+    .wr_state1(`MA_STATE_INVALID),
+    .wr_sharer_set1(`MA_SHARER_SET_WIDTH'b0),
 
     .rd_en2(dir_rd_en2),
     .rd_addr2(dir_rd_addr2),
@@ -332,14 +326,7 @@ multichip_adapter_outpipe1 outpipe1 (
     .dir_rd_sharer_set(dir_rd_sharer_set1),
     .dir_num_empty_ways(dir_num_empty_ways1),
     .dir_empty_way(dir_empty_way1),
-    .dir_rd_stall_from_p2(dir_rd_en2),
-    .dir_wr_en(dir_wr_en1),
-    .dir_wr_set(dir_wr_set1),
-    .dir_wr_way(dir_wr_way1),
-    .dir_wr_tag(dir_wr_tag1),
-    .dir_wr_state(dir_wr_state1),
-    .dir_wr_sharer_set(dir_wr_sharer_set1),
-    .dir_wr_stall_from_p2(dir_wr_en2)
+    .dir_rd_stall_from_p2(dir_rd_en2)
 );
 
 multichip_adapter_inpipe2 inpipe2 (
@@ -392,6 +379,7 @@ multichip_adapter_inpipe2 inpipe2 (
 multichip_adapter_outpipe3 outpipe3 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
     
     .noc_val(noc3_val_in),
     .noc_data(noc3_data_in),
@@ -547,6 +535,7 @@ multichip_adapter_mshr mshr_in1 (
 multichip_adapter_inpipe1 inpipe1 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
 
     .noc_val(noc1_val_out),
     .noc_data(noc1_data_out),
@@ -568,6 +557,7 @@ multichip_adapter_inpipe1 inpipe1 (
 multichip_adapter_outpipe2 outpipe2 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
     
     .noc_val(noc2_val_in),
     .noc_data(noc2_data_in),
@@ -597,6 +587,7 @@ multichip_adapter_outpipe2 outpipe2 (
 multichip_adapter_inpipe3 inpipe3 (
     .clk(clk), 
     .rst_n(rst_n),
+    .mychipid(mychipid),
 
     .noc_val(noc3_val_out),
     .noc_data(noc3_data_out),

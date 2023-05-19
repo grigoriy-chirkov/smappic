@@ -39,19 +39,12 @@ module cep_encoder(
     input wire [`CEP_MSHRID_WIDTH-1:0] mshrid,
     input wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type,
     input wire [`CEP_LENGTH_WIDTH-1:0] length,
-    input wire [`CEP_DST_FBITS_WIDTH-1:0] dst_fbits,
-    input wire [`CEP_DST_X_WIDTH-1:0] dst_x,
-    input wire [`CEP_DST_Y_WIDTH-1:0] dst_y,
-    input wire [`CEP_DST_CHIPID_WIDTH-1:0] dst_chipid,
 
     input wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type,
-    input wire [`CEP_SUBLINE_VECTOR_WIDTH-1:0] msg_subline_vector,
+    input wire [`CEP_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
     input wire [`CEP_ADDR_WIDTH-1:0] addr,
 
-    input wire [`CEP_SRC_FBITS_WIDTH-1:0] src_fbits,
-    input wire [`CEP_SRC_X_WIDTH-1:0] src_x,
-    input wire [`CEP_SRC_Y_WIDTH-1:0] src_y,
     input wire [`CEP_SRC_CHIPID_WIDTH-1:0] src_chipid,
 
     input wire [7*`CEP_WORD_WIDTH-1:0] data
@@ -69,21 +62,14 @@ begin
     cep_pkg[`CEP_MSHRID] = mshrid;
     cep_pkg[`CEP_MSG_TYPE] = msg_type;
     cep_pkg[`CEP_LENGTH] = length;
-    cep_pkg[`CEP_DST_FBITS] = dst_fbits;
-    cep_pkg[`CEP_DST_X] = dst_x;
-    cep_pkg[`CEP_DST_Y] = dst_y;
-    cep_pkg[`CEP_DST_CHIPID] = dst_chipid;
     cep_pkg[`CEP_IS_REQ] = is_request;
 
     if (is_request) begin
         cep_pkg[`CEP_DATA_SIZE] = data_size;
         cep_pkg[`CEP_CACHE_TYPE] = cache_type;
-        cep_pkg[`CEP_SUBLINE_VECTOR] = msg_subline_vector;
+        cep_pkg[`CEP_SUBLINE_VECTOR] = subline_vector;
         cep_pkg[`CEP_ADDR] = addr;
 
-        cep_pkg[`CEP_SRC_FBITS] = src_fbits;
-        cep_pkg[`CEP_SRC_X] = src_x;
-        cep_pkg[`CEP_SRC_Y] = src_y;
         cep_pkg[`CEP_SRC_CHIPID] = src_chipid;
 
         cep_pkg[4*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH] = data[1*`CEP_WORD_WIDTH-1:0*`CEP_WORD_WIDTH];

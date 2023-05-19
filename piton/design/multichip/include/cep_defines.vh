@@ -47,7 +47,7 @@
 `define CEP_DATA_SIZE_WIDTH      3
 `define CEP_CACHE_TYPE_WIDTH     1
 `define CEP_SUBLINE_VECTOR_WIDTH 4
-`define CEP_ADDR_WIDTH          48
+`define CEP_ADDR_WIDTH          40
 `define CEP_SRC_FBITS_WIDTH      4
 `define CEP_SRC_X_WIDTH          8
 `define CEP_SRC_Y_WIDTH          8
