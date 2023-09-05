@@ -49,8 +49,8 @@ PITON_SYS_FREQ = int(os.environ.get('CONFIG_SYS_FREQ', '100000000'))
 #     print("ERROR: num_chips must be a multiple of num_fpgas")
 #     exit(1)
 
-PITON_NUMA_NODE_MEM_SIZE = int(os.environ.get('PITON_NUMA_NODE_MEM_SIZE', '0'))
-PITON_NUMA_NODE_MEM_START = int(os.environ.get('PITON_NUMA_NODE_MEM_START', '0'))
+PITON_NUMA_NODE_MEM_SIZE = int(os.environ.get('PITON_NUMA_NODE_MEM_SIZE', '1073741824')) # 1GB
+PITON_NUMA_NODE_MEM_START = int(os.environ.get('PITON_NUMA_NODE_MEM_START', '2147483648')) # 2GB
 PITON_NETWORK_CONFIG = (os.environ.get("PITON_NETWORK_CONFIG", "2dmesh_config"))
 
 if PITON_X_TILES == -1:

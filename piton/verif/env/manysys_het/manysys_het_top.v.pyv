@@ -730,8 +730,7 @@ system system1(
      );
 
     //L2 MONITORS
-    `ifdef FAKE_L2
-    `else
+    `ifndef FAKE_L2
     l2_mon l2_mon(
         .clk (`CHIP_INT_CLK)
     );

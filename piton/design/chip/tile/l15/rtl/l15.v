@@ -110,6 +110,11 @@ module l15 (
     input [31:0]                            config_system_tile_count,
     input [`HOME_ALLOC_METHOD_WIDTH-1:0]    config_home_alloc_method, 
     input [`L15_HMT_BASE_ADDR_WIDTH-1:0]    config_hmt_base,
+    input [`PHY_ADDR_WIDTH-1:0]             my_addr_range_start,
+    input [`PHY_ADDR_WIDTH-1:0]             my_addr_range_end,
+    input [`PHY_ADDR_WIDTH-1:0]             main_mem_start,
+    input [`PHY_ADDR_WIDTH-1:0]             main_mem_end,
+    input                                   i_am_node0,
 
     output                                  noc1_out_val,
     output [`NOC_DATA_WIDTH-1:0]            noc1_out_data,
@@ -196,6 +201,7 @@ l15_csm l15_csm(
     .csm_en(config_csm_en),
     .system_tile_count(config_system_tile_count[`HOME_ID_WIDTH-1:0]),
     .home_alloc_method(config_home_alloc_method),
+    .mychipid(chipid),
     
     // interface with pipeline
     .l15_csm_req_address_s2(l15_csm_req_address_s2),

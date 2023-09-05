@@ -154,6 +154,7 @@ _start:
 .option pop
 
   la  tp, _end + 63
+  # li  tp, 0xa0000000 + 63
   and tp, tp, -64
 
   # get core id

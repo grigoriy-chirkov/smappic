@@ -28,15 +28,11 @@
 `include "cep_defines.vh"
 `include "define.tmp.h"
 
-<%
-from pyhplib import *
-%>
 
-
-module multichip_adapter_outpipe2 (
+module multichip_adapter_outpipe3 (
     input clk,
     input rst_n,
-    input [`CEP_CHIPID_WIDTH-1:0]                 mychipid,
+    input wire [`CEP_CHIPID_WIDTH-1:0]                 mychipid,
     
     // Noc interface
     input  wire                                   noc_val,
@@ -45,23 +41,20 @@ module multichip_adapter_outpipe2 (
 
     // CEP interace
     output wire                                   cep_val,
-    output wire [`CEP_DATA_WIDTH-1:0]             cep_data,
+    output reg  [`CEP_DATA_WIDTH-1:0]             cep_data,
     output wire [`CEP_CHIPID_WIDTH-1:0]           cep_chipid,
     input  wire                                   cep_rdy,
 
-    input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_empty_index,
-    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_out_empty_slots,
-    output wire                                   mshr_out_write_en,
-    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_write_index,
-    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_out_write_data, 
-    input  wire                                   stall_mshr_out_from_p3,
-
-    output wire                                   mshr_in_write_en,
-    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_write_index,
-    output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_in_write_data,
-    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_read_index,
-    input  wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_in_read_data,
-    input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_in_read_state
+    output wire                                   mshr_write_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
+    output reg  [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data,
+    output wire [`MA_MSHR_STATE_BITS-1:0]         mshr_write_state,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_read_index,
+    input  wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_read_data,
+    input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_read_state,
+    output wire                                   mshr_read_dec_counter_en,
+    output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_read_inv_counter_index,
+    input wire  [`MA_SHARER_BITS_WIDTH:0]         mshr_read_inv_counter
 );
 
 
@@ -74,6 +67,8 @@ wire stall_S3;
 wire val_S1;
 reg val_S2;
 reg val_S3;
+
+wire recycle_S3;
 
 // Stage 1
 
@@ -103,20 +98,18 @@ wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1 = pkg_S1[`MSG_SRC_FBITS];
 wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1 = pkg_S1[`MSG_MSHRID];
 wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1 = pkg_S1[`MSG_DATA_SIZE];
 wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1 = pkg_S1[`MSG_CACHE_TYPE];
-wire [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S1 = pkg_S1[`MSG_SUBLINE_VECTOR];
 wire [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S1 = pkg_S1[`MSG_LAST_SUBLINE];
 wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S1 = pkg_S1[`MSG_SUBLINE_ID];
 wire [`MSG_MESI_WIDTH-1:0] mesi_S1 = pkg_S1[`MSG_MESI];
 wire [`MSG_LENGTH_WIDTH-1:0] length_S1 = pkg_S1[`MSG_LENGTH];
-wire is_req_S1 = (msg_type_S1 == `MSG_TYPE_LOAD_FWD)    |
-                 (msg_type_S1 == `MSG_TYPE_STORE_FWD)   |
-                 (msg_type_S1 == `MSG_TYPE_INV_FWD)     |
-                 (msg_type_S1 == `MSG_TYPE_LOAD_MEM)    |
-                 (msg_type_S1 == `MSG_TYPE_STORE_MEM)   |
-                 (msg_type_S1 == `MSG_TYPE_NC_LOAD_MEM) |
-                 (msg_type_S1 == `MSG_TYPE_NC_STORE_MEM);
-wire is_resp_S1 = (msg_type_S1 == `MSG_TYPE_NODATA_ACK) |
-                  (msg_type_S1 == `MSG_TYPE_DATA_ACK)   ;
+wire is_resp_S1 = (msg_type_S1 == `MSG_TYPE_LOAD_FWDACK)     |
+                 (msg_type_S1 == `MSG_TYPE_STORE_FWDACK)    |
+                 (msg_type_S1 == `MSG_TYPE_INV_FWDACK)      |
+                 (msg_type_S1 == `MSG_TYPE_LOAD_MEM_ACK)    |
+                 (msg_type_S1 == `MSG_TYPE_STORE_MEM_ACK)   |
+                 (msg_type_S1 == `MSG_TYPE_NC_LOAD_MEM_ACK) |
+                 (msg_type_S1 == `MSG_TYPE_NC_STORE_MEM_ACK);
+wire is_req_S1 = 1'b0;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = is_req_S1 ? {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[8*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH]} : pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH];
 
 assign stall_S1 = stall_S2 & val_S1;
@@ -133,7 +126,6 @@ reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
-reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S2;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
@@ -155,7 +147,6 @@ always @(posedge clk) begin
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
-        subline_vector_S2 <= `MSG_SUBLINE_VECTOR_WIDTH'b0;
         last_subline_S2 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
@@ -176,7 +167,6 @@ always @(posedge clk) begin
         mshrid_S2 <= mshrid_S1;
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
-        subline_vector_S2 <= subline_vector_S1;
         last_subline_S2 <= last_subline_S1;
         subline_id_S2 <= subline_id_S1;
         mesi_S2 <= mesi_S1;
@@ -187,21 +177,61 @@ always @(posedge clk) begin
     end 
 end
 
+assign stall_S2 = (stall_S3 | recycle_S3) & val_S2;
+
 // Stage 2
 
-wire val_S3_next = val_S2 & ~stall_S2;
+wire suppress_next_stage_S2;
+wire val_S3_next = val_S2 & ~stall_S2 & ~suppress_next_stage_S2;
+wire fwd_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK  ) | 
+                  (msg_type_S2 == `MSG_TYPE_STORE_FWDACK) |
+                  (msg_type_S2 == `MSG_TYPE_LOAD_FWDACK ) ;
+wire long_fwd_ack_S2 = (length_S2 > `MSG_LENGTH_WIDTH'd0);
+wire do_read_mshr = 1'b1;
+assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
+assign mshr_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+assign suppress_next_stage_S2 = (fwd_ack_S2 & (~last_subline_S2 | mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1}));
+assign mshr_write_state = suppress_next_stage_S2 ? mshr_read_state : `MA_MSHR_STATE_INVAL;
+assign mshr_read_dec_counter_en = val_S2 & ~stall_S2 & fwd_ack_S2 & last_subline_S2;
+assign mshr_read_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+assign mshr_read_inv_counter_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 
-wire do_read_mshr_S2 = is_resp_S2;
-assign mshr_in_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2;
-assign mshr_in_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
-assign mshr_in_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
-assign mshr_in_read_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
+reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] subline_data_S2 [3:0];
+reg [3:0] subline_vals_S2;
+
+always @(*) begin
+    subline_vals_S2 = mshr_read_data[`MA_MSHR_DATA_VALS];
+    subline_data_S2[3] = mshr_read_data[`MA_MSHR_DATA3];
+    subline_data_S2[2] = mshr_read_data[`MA_MSHR_DATA2];
+    subline_data_S2[1] = mshr_read_data[`MA_MSHR_DATA1];
+    subline_data_S2[0] = mshr_read_data[`MA_MSHR_DATA0];
+    if (long_fwd_ack_S2) begin
+        subline_vals_S2 = subline_vals_S2 | (4'b1 << subline_id_S2);
+        subline_data_S2[subline_id_S2] = msg_data_S2[`MA_MSHR_DATA_CHUNK_WIDTH-1:0];
+    end
+end
+
+always @(*) begin
+    if (~suppress_next_stage_S2) begin
+        mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
+    end
+    else begin
+        mshr_write_data = mshr_read_data;
+        mshr_write_data[`MA_MSHR_DATA_VALS] = subline_vals_S2;
+        mshr_write_data[`MA_MSHR_DATA3] = subline_data_S2[3];
+        mshr_write_data[`MA_MSHR_DATA2] = subline_data_S2[2];
+        mshr_write_data[`MA_MSHR_DATA1] = subline_data_S2[1];
+        mshr_write_data[`MA_MSHR_DATA0] = subline_data_S2[0];
+    end
+end
+
+
 
 wire [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S2;
 wire [`MSG_SRC_CHIPID_WIDTH-1:0] resp_chipid_S2;
 
 multichip_adapter_mshr_decoder mshr_decoder(
-    .data(mshr_in_read_data),
+    .data(mshr_read_data),
 
     .addr(),
     .way(),
@@ -226,40 +256,8 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .data3()
 );
 
+assign stall_S2 = stall_S3 & val_S2;
 
-wire do_write_mshr_S2 = is_req_S2;
-assign mshr_out_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
-assign mshr_out_write_index = mshr_out_empty_index;
-
-multichip_adapter_mshr_encoder mshr_encoder(
-    .data(mshr_out_write_data),
-
-    .addr(addr_S2),
-    .way(`MA_WAY_WIDTH'd0),
-    .mshrid(mshrid_S2),
-    .cache_type(cache_type_S2),
-    .data_size(data_size_S2),
-    .msg_type(msg_type_S2),
-    .msg_l2_miss(1'b0),
-    .src_chipid(src_chipid_S2),
-    .src_x(src_x_S2),
-    .src_y(src_y_S2),
-    .src_fbits(src_fbits_S2),
-    .sdid(`MSG_SDID_WIDTH'b0),
-    .lsid(`MSG_LSID_WIDTH'b0),
-    .miss_lsid(`MSG_LSID_WIDTH'd0),
-    .smc_miss(1'b0),
-    .recycled(1'b0),
-    .inv_fwd_pending(1'b0),
-    .data0(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
-    .data1(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
-    .data2(`MA_MSHR_DATA_CHUNK_WIDTH'b0),
-    .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
-);
-
-wire stall_mshr_out_full_S2 = (mshr_out_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_out_full_S2 | stall_mshr_out_from_p3);
-assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 
 // Stage 2 -> 3
 
@@ -267,10 +265,8 @@ assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`PHY_ADDR_WIDTH-1:0] addr_S3;
-reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
-reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S3;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S3;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
@@ -287,10 +283,8 @@ always @(posedge clk) begin
         pkg_S3 <= `CEP_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `PHY_ADDR_WIDTH'b0;
-        mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
-        subline_vector_S3 <= `MSG_SUBLINE_VECTOR_WIDTH'b0;
         last_subline_S3 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S3 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
@@ -301,15 +295,13 @@ always @(posedge clk) begin
         is_req_S3 <= 1'b0;
         is_resp_S3 <= 1'b0;
     end
-    else if (~stall_S3) begin
+    else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
         pkg_S3 <= pkg_S2;
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
-        mshrid_S3 <= {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_out_empty_index};
         data_size_S3 <= data_size_S2;
         cache_type_S3 <= cache_type_S2;
-        subline_vector_S3 <= subline_vector_S2;
         last_subline_S3 <= last_subline_S2;
         subline_id_S3 <= subline_id_S2;
         mesi_S3 <= mesi_S2;
@@ -322,54 +314,98 @@ always @(posedge clk) begin
     end
 end
 
+reg [`MA_MSHR_DATA_CHUNK_WIDTH-1:0] subline_data_S3 [3:0];
+reg [3:0] subline_vals_S3;
+
+
+wire [`MSG_SUBLINE_ID_WIDTH-1:0] new_subline_id_S3;
+wire [3:0] subline_mask_S3;
+wire subline_vals_nz;
+always @(posedge clk) begin
+    if (~rst_n) begin
+        subline_vals_S3 <= 4'b0;
+        subline_data_S3[3] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[2] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[1] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+        subline_data_S3[0] <= `MA_MSHR_DATA_CHUNK_WIDTH'b0;
+    end
+    else if (~stall_S3 & ~recycle_S3 & fwd_ack_S2) begin
+        subline_vals_S3 <= subline_vals_S2;
+        subline_data_S3[3] <= subline_data_S2[3];
+        subline_data_S3[2] <= subline_data_S2[2];
+        subline_data_S3[1] <= subline_data_S2[1];
+        subline_data_S3[0] <= subline_data_S2[0];
+    end
+    else if (~stall_S3) begin
+        subline_vals_S3 <= subline_vals_S3 & subline_mask_S3;
+    end
+end
+
 // Stage 3
+
+multichip_adapter_prio_encoder_2 prio_encoder(
+    .data_in(subline_vals_S3),
+    .data_out(new_subline_id_S3),
+    .data_out_mask(subline_mask_S3),
+    .nonzero_out(subline_vals_nz)
+);
+
+wire fwd_ack_S3 = (msg_type_S3 == `MSG_TYPE_INV_FWDACK  ) | 
+                  (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) |
+                  (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK ) ;
+wire new_last_subline_S3 = ((subline_vals_S3 & subline_mask_S3) == 4'b0);
+wire [`CEP_SUBLINE_ID_WIDTH-1:0] send_subline_id_S3 = subline_vals_nz & fwd_ack_S3 ? new_subline_id_S3 : subline_id_S3;
+wire [`CEP_LAST_SUBLINE_WIDTH-1:0] send_last_subline_S3 = subline_vals_nz & fwd_ack_S3 ? new_last_subline_S3 : last_subline_S3;
+
 
 wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(is_req_S3),
-    .last_subline(last_subline_S3),
-    .subline_id(subline_id_S3),
+    .is_request(1'b0),
+    .last_subline(send_last_subline_S3),
+    .subline_id(send_subline_id_S3),
     .mesi(mesi_S3),
-    .mshrid(is_req_S3 ? mshrid_S3 : resp_mshrid_S3),
+    .mshrid(resp_mshrid_S3),
     .msg_type(msg_type_S3),
-    .length(length_S3),
+    .length(fwd_ack_S3 ? subline_vals_nz*`MSG_LENGTH_WIDTH'd2 : length_S3),
 
     .data_size(data_size_S3),
     .cache_type(cache_type_S3),
-    .subline_vector(subline_vector_S3),
     .addr(addr_S3),
 
     .src_chipid(mychipid),
 
-    .data(msg_data_S3)
+    .data({{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]})
 );
 
-assign stall_S3 = ~cep_rdy & val_S3;
-
 assign cep_val = val_S3;
-assign cep_data = 1'b0 ? pkg_S3 : cep_pkg_S3;
-// TODO: fix this hack
-assign cep_chipid = is_req_S3 ? {{`MSG_DST_CHIPID_WIDTH-1{1'b0}}, ~mychipid[0]} : {1'b0, resp_chipid_S3[`MSG_DST_CHIPID_WIDTH-2:0]};
+assign cep_chipid = resp_chipid_S3[`CEP_CHIPID_WIDTH-1:0];
+assign cep_data = cep_pkg_S3;
+
+assign stall_S3 = ~cep_rdy & val_S3;
+assign recycle_S3 = val_S3 & ~new_last_subline_S3;
+
+
 
 
 // sanity checks 
 
-
 reg mshr_err;
+reg nonresp_err;
 reg chipid_err;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         mshr_err <= 1'b0;
+        nonresp_err <= 1'b0;
         chipid_err <= 1'b0;
     end
     else begin
-        mshr_err <= mshr_err | (mshr_in_write_en & (mshr_in_read_state == `MA_MSHR_STATE_INVAL));
+        mshr_err <= mshr_err | (mshr_write_en & (mshr_read_state == `MA_MSHR_STATE_INVAL));
+        nonresp_err <= nonresp_err | val_S1 & (is_req_S1 | ~is_resp_S1);
         chipid_err <= chipid_err | (cep_val & (cep_chipid == mychipid));
     end
 end
-
 
 endmodule

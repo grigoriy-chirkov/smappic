@@ -29,11 +29,6 @@
 `include "axi_defines.vh"
 `include "define.tmp.h"
 
-<%
-from pyhplib import *
-MA_SHARER_SET_WIDTH = 64
-%>
-
 module multichip_adapter_inpipe2 (
     input clk,
     input rst_n,
@@ -100,25 +95,22 @@ wire recycle_S3;
 wire val_S2_next = val_S1 & ~stall_S1;
 
 wire is_req_S1;
-wire [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline_S1;
-wire [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
 wire [`CEP_LENGTH_WIDTH-1:0] length_S1;
 wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size_S1;
 wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
-wire [`CEP_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
-wire [`CEP_SRC_CHIPID_WIDTH-1:0] src_chipid_S1;
+wire [`CEP_CHIPID_WIDTH-1:0] src_chipid_S1;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
 
 cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_request(is_req_S1),
-    .last_subline(last_subline_S1),
-    .subline_id(subline_id_S1),
+    .last_subline(),
+    .subline_id(),
     .mesi(mesi_S1),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
@@ -126,7 +118,6 @@ cep_decoder cep_decoder(
 
     .data_size(data_size_S1),
     .cache_type(cache_type_S1),
-    .subline_vector(subline_vector_S1),
     .addr(addr_S1),
 
     .src_chipid(src_chipid_S1),
@@ -196,9 +187,6 @@ reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
-reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S2;
-reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
-reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
@@ -219,9 +207,6 @@ always @(posedge clk) begin
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
-        subline_vector_S2 <= `MSG_SUBLINE_VECTOR_WIDTH'b0;
-        last_subline_S2 <= `MSG_LAST_SUBLINE_WIDTH'b0;
-        subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
@@ -237,13 +222,10 @@ always @(posedge clk) begin
         pkg_S2 <= pkg_S1;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
-        src_chipid_S2 <= src_chipid_S1;
+        src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
         mshrid_S2 <= mshrid_S1;
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
-        subline_vector_S2 <= subline_vector_S1;
-        last_subline_S2 <= last_subline_S1;
-        subline_id_S2 <= subline_id_S1;
         mesi_S2 <= mesi_S1;
         length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
@@ -337,9 +319,6 @@ reg [`PHY_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
-reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector_S3;
-reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S3;
-reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
@@ -359,9 +338,6 @@ always @(posedge clk) begin
         mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
-        subline_vector_S3 <= `MSG_SUBLINE_VECTOR_WIDTH'b0;
-        last_subline_S3 <= `MSG_LAST_SUBLINE_WIDTH'b0;
-        subline_id_S3 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
         length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
@@ -380,9 +356,6 @@ always @(posedge clk) begin
         mshrid_S3 <= {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
         data_size_S3 <= data_size_S2;
         cache_type_S3 <= cache_type_S2;
-        subline_vector_S3 <= subline_vector_S2;
-        last_subline_S3 <= last_subline_S2;
-        subline_id_S3 <= subline_id_S2;
         mesi_S3 <= mesi_S2;
         length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
@@ -415,12 +388,8 @@ end
 
 wire fwd_routine_S3 = |fwd_set_S3;
 wire [`MA_SHARER_BITS_WIDTH-1:0] fwd_target_id_S3;
-<%
-import math
-def clog2(x):
-    return math.ceil(math.log2(x))
-print(f'multichip_adapter_prio_encoder_{clog2(MA_SHARER_SET_WIDTH)} prio_encoder')
-%>
+
+multichip_adapter_prio_encoder_6 prio_encoder
 (
     .data_in        (fwd_set_S3),
     .data_out       (fwd_target_id_S3),
@@ -444,7 +413,6 @@ wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3 = is_resp_S3 ? resp_x_S3 :
 wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3 = is_resp_S3 ? resp_y_S3 :
                                         fwd_routine_S3 ? fwd_target_y_S3 :
                                         `MSG_DST_Y_WIDTH'b0;
-wire [`MSG_DST_CHIPID_WIDTH-1:0] dst_chipid_S3 = mychipid;
 wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_resp_S3 ? resp_fbits_S3 :
                                                fwd_routine_S3 ? `NOC_FBITS_L1 :
                                                `NOC_FBITS_MEM;
@@ -454,8 +422,8 @@ multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(is_req_S3),
 
-    .last_subline(last_subline_S3),
-    .subline_id(subline_id_S3),
+    .last_subline(1'b0),
+    .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
     .mesi(mesi_S3),
     .mshrid(dst_mshrid_S3),
     .msg_type(msg_type_S3),
@@ -463,17 +431,17 @@ multichip_adapter_noc_encoder noc_encoder(
     .dst_fbits(dst_fbits_S3),
     .dst_x(dst_x_S3),
     .dst_y(dst_y_S3),
-    .dst_chipid(dst_chipid_S3),
+    .dst_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
 
     .data_size(data_size_S3),
     .cache_type(cache_type_S3),
-    .subline_vector(subline_vector_S3),
+    .subline_vector({`MSG_SUBLINE_VECTOR_WIDTH{1'b1}}),
     .addr(addr_S3),
 
     .src_fbits(`NOC_FBITS_L2),
     .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
     .src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
-    .src_chipid(mychipid),
+    .src_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
     
     .data(msg_data_S3)
 );

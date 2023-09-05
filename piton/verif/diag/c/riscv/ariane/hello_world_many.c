@@ -19,20 +19,21 @@
 #include "util.h"
 
 int main(int argc, char** argv) {
-
   // synchronization variable
-  volatile static uint32_t amo_cnt = 0;
+  volatile static uint32_t* amo_cnt = 0xb0000000;
+  if (argv[0][0] == 0)
+    *amo_cnt = 0;
 
   // synchronize with other cores and wait until it is this core's turn
-  while(argv[0][0] != amo_cnt);
+  while(argv[0][0] != *amo_cnt);
 
   // assemble number and print
   printf("%d/%d\n", argv[0][0], argv[0][1]);
 
   // increment atomic counter
-  ATOMIC_OP(amo_cnt, 1, add, w);
+  ATOMIC_OP(*amo_cnt, 1, add, w);
 
-  while(argv[0][1] != amo_cnt);
+  while(argv[0][1] != *amo_cnt);
 
   return 0;
 }

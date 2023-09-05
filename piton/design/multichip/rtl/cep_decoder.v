@@ -41,10 +41,8 @@ module cep_decoder(
 
     output reg [`CEP_DATA_SIZE_WIDTH-1:0] data_size,
     output reg [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type,
-    output reg [`CEP_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
     output reg [`CEP_ADDR_WIDTH-1:0] addr,
-
-    output reg [`CEP_SRC_CHIPID_WIDTH-1:0] src_chipid,
+    output reg [`CEP_CHIPID_WIDTH-1:0] src_chipid,
 
     output reg [7*`CEP_WORD_WIDTH-1:0] data
 );
@@ -63,9 +61,7 @@ begin
 
     data_size = cep_pkg[`CEP_DATA_SIZE];
     cache_type = cep_pkg[`CEP_CACHE_TYPE];
-    subline_vector = cep_pkg[`CEP_SUBLINE_VECTOR];
     addr = cep_pkg[`CEP_ADDR];
-
     src_chipid = cep_pkg[`CEP_SRC_CHIPID];
 
     data = {7*`CEP_WORD_WIDTH{1'b0}};

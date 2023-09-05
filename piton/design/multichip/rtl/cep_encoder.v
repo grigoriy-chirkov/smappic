@@ -42,10 +42,8 @@ module cep_encoder(
 
     input wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type,
-    input wire [`CEP_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
     input wire [`CEP_ADDR_WIDTH-1:0] addr,
-
-    input wire [`CEP_SRC_CHIPID_WIDTH-1:0] src_chipid,
+    input wire [`CEP_CHIPID_WIDTH-1:0] src_chipid,
 
     input wire [7*`CEP_WORD_WIDTH-1:0] data
 );
@@ -67,9 +65,7 @@ begin
     if (is_request) begin
         cep_pkg[`CEP_DATA_SIZE] = data_size;
         cep_pkg[`CEP_CACHE_TYPE] = cache_type;
-        cep_pkg[`CEP_SUBLINE_VECTOR] = subline_vector;
         cep_pkg[`CEP_ADDR] = addr;
-
         cep_pkg[`CEP_SRC_CHIPID] = src_chipid;
 
         cep_pkg[4*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH] = data[1*`CEP_WORD_WIDTH-1:0*`CEP_WORD_WIDTH];

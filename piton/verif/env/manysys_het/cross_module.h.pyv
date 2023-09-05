@@ -32,11 +32,16 @@
     MAX_TILE = 64;
 
     PITON_NUM_TILES = int(os.environ.get('PTON_NUM_TILES', '-1'))
+    PITON_NUM_CHIPS = int(os.environ.get('PTON_NUM_CHIPS', '-1'))
     #print "//num_tiles:", num_tiles
 
     if PITON_NUM_TILES == -1:
         # print "//num_tile not defined!"
         PITON_NUM_TILES = MAX_TILE
+
+    if PITON_NUM_CHIPS == -1:
+        # print "//num_chips not defined!"
+        PITON_NUM_CHIPS = 2
 %>
 
 `define MONITOR_SIGNAL                 155
@@ -72,18 +77,19 @@
     `define TOP_MOD     cmp_top
     `define SIM_TOP     cmp_top
     `define TOP_MOD_INST `TOP_MOD.system
+    `define TOP_MOD_INST1 `TOP_MOD.system1
 // TODO: Alexey: use PITON_PROTO define ?
 //`define TOP_MOD      fpga_top.cmp_top
 `endif
 
 //`define SIM_TOP fpga_top.cmp_top
 
-    // `define TOP_SHELL    cmp_top_shell
 `define CHIP         `TOP_MOD_INST.chip
+`define CHIP1        `TOP_MOD_INST1.chip
 `define CHIP_INT_CLK `CHIP.clk_muxed
 `define TOP_DESIGN   `TOP_MOD.chip
 `define FAKE_IOB     `TOP_MOD.system.chipset.chipset_impl.ciop_fake_iob
-// `define TOP_MEMORY   `TOP_MOD.cmp
+`define FAKE_IOB1    `TOP_MOD.system1.chipset.chipset_impl.ciop_fake_iob
 
 `define JTAG_CTAP    `CHIP.jtag_port.ctap
 `define MONITOR_PATH `TOP_MOD.monitor
@@ -97,8 +103,13 @@
 
 <%
 for i in range(PITON_NUM_TILES):
-    printstring = """
-    `define TILE%d            `CHIP.tile%d
+    for j in range(PITON_NUM_CHIPS):
+        if (j == 0):
+            print("    `define TILE%d            `CHIP.tile%d" % (i, i))
+        else:
+            print("    `define TILE%d_%d            `CHIP%d.tile%d" % (i, j, j, i))
+
+        printstring = """
     `define ARIANE_CORE%d     `TILE%d.g_ariane_core.core.ariane
     `define SPARC_CORE%d      `TILE%d.g_sparc_core.core
     `define PICO_CORE%d       `TILE%d.g_picorv32_core.core
@@ -200,10 +211,12 @@ for i in range(PITON_NUM_TILES):
 `else
     `define PITON_CORE%d_PC_W%d     `TOP_MOD.monitor.pc_cmp.spc%d_phy_pc_w
 `endif
-
     """
-    printstring = printstring.replace("%d", str(i))
-    print(printstring)
+        if (j == 0):
+            printstring = printstring.replace("%d", str(i))
+        else:
+            printstring = printstring.replace("%d", str(i)+"_"+str(j))
+        print(printstring)
 %>
 
 `define ITAG0           `TOP_MOD.monitor.l_cache_mon0

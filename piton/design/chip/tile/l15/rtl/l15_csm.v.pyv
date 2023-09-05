@@ -44,6 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <%
    L15_CSM_NUM_TICKETS = 8
+   from pyhplib import *
 %>
 
 `ifdef DEFAULT_NETTYPE_NONE
@@ -58,6 +59,7 @@ module l15_csm(
    input wire [`HOME_ID_WIDTH-1:0] system_tile_count,
    input wire [`HOME_ALLOC_METHOD_WIDTH-1:0] home_alloc_method, 
    input wire [`L15_HMT_BASE_ADDR_WIDTH-1:0] l15_hmt_base_reg,
+   input wire [`CHIP_ID_WIDTH-1:0] mychipid,
 
    // interface to noc1buffer
    input wire [`L15_CSM_NUM_TICKETS_LOG2-1:0] l15_csm_read_ticket,
@@ -445,6 +447,31 @@ wire [`L15_HMC_DATA_OUT_WIDTH-1:0] data_out_s3;
 wire [`L15_HMC_VALID_WIDTH-1:0] valid_out_s3;
 wire [`L15_HMC_TAG_WIDTH-1:0] tag_out_s3;
 
+reg local_access_s3;
+reg [`PHY_ADDR_WIDTH-1:0] my_addr_range_start;
+reg [`PHY_ADDR_WIDTH-1:0] my_addr_range_end;
+reg [`PHY_ADDR_WIDTH-1:0] main_mem_start;
+reg [`PHY_ADDR_WIDTH-1:0] main_mem_end;
+reg i_am_node0;
+always @(*) begin
+<%
+print(f"""
+    my_addr_range_start = `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_START:x} + mychipid * `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_SIZE:x};
+    my_addr_range_end = my_addr_range_start + `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_SIZE:x};
+    main_mem_start = `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_START:x};
+    main_mem_end = main_mem_start + `PHY_ADDR_WIDTH'h{PITON_NUM_CHIPS_SM*PITON_NUMA_NODE_MEM_SIZE:x};
+    i_am_node0 = (mychipid == `CHIP_ID_WIDTH'd0);
+
+    local_access_s3 = 1'b0;
+    if ((l15_csm_req_address_s3 >= my_addr_range_start) & (l15_csm_req_address_s3 < my_addr_range_end))
+        local_access_s3 = 1'b1;
+    if (i_am_node0 & ((l15_csm_req_address_s3 < main_mem_start) | (l15_csm_req_address_s3 >= main_mem_end)))
+        local_access_s3 = 1'b1;
+""")
+%>
+end
+wire interchip_access_s3 = ~local_access_s3;
+
 wire [`NOC_X_WIDTH-1:0] lhid_s3_x;
 wire [`NOC_Y_WIDTH-1:0] lhid_s3_y;
 wire [`NOC_CHIPID_WIDTH-1:0] lhid_s3_chipid;
@@ -534,14 +561,14 @@ begin
         begin
             csm_l15_res_data_s3 = 0;
 `ifdef PITON_RVIC
-            // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : lhid_s3_chipid;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'b0 : lhid_s3_chipid;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : lhid_s3_y;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : lhid_s3_x;
+            // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'd0 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
 `else 
-            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = lhid_s3_chipid;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = lhid_s3_y;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = lhid_s3_x;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : lhid_s3_chipid;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
 `endif
         end
     end
@@ -706,6 +733,32 @@ wire [`NOC_X_WIDTH-1:0] lhid_s3_x;
 wire [`NOC_Y_WIDTH-1:0] lhid_s3_y;
 wire [`NOC_CHIPID_WIDTH-1:0] lhid_s3_chipid;
 
+
+reg local_access_s3;
+reg [`PHY_ADDR_WIDTH-1:0] my_addr_range_start;
+reg [`PHY_ADDR_WIDTH-1:0] my_addr_range_end;
+reg [`PHY_ADDR_WIDTH-1:0] main_mem_start;
+reg [`PHY_ADDR_WIDTH-1:0] main_mem_end;
+reg i_am_node0;
+always @(*) begin
+<%
+print(f"""
+    my_addr_range_start = `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_START:x} + mychipid * `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_SIZE:x};
+    my_addr_range_end = my_addr_range_start + `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_SIZE:x};
+    main_mem_start = `PHY_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_START:x};
+    main_mem_end = main_mem_start + `PHY_ADDR_WIDTH'h{PITON_NUM_CHIPS_SM*PITON_NUMA_NODE_MEM_SIZE:x};
+    i_am_node0 = (mychipid == `CHIP_ID_WIDTH'd0);
+
+    local_access_s3 = 1'b0;
+    if ((l15_csm_req_address_s3 >= my_addr_range_start) & (l15_csm_req_address_s3 < my_addr_range_end))
+        local_access_s3 = 1'b1;
+    if (i_am_node0 & ((l15_csm_req_address_s3 < main_mem_start) | (l15_csm_req_address_s3 >= main_mem_end)))
+        local_access_s3 = 1'b1;
+""")
+%>
+end
+wire interchip_access_s3 = ~local_access_s3;
+
 // read port for ghid
 assign csm_l15_read_res_data = 0;
 assign csm_l15_read_res_val = 0;
@@ -727,14 +780,14 @@ always @ *
 begin
     csm_l15_res_data_s3 = 0;
 `ifdef PITON_RVIC
-    // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : lhid_s3_chipid;
-    csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'b0 : lhid_s3_chipid;
-    csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : lhid_s3_y;
-    csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : lhid_s3_x;
+        // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'd0 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
 `else 
-    csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = lhid_s3_chipid;
-    csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = lhid_s3_y;
-    csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = lhid_s3_x;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : lhid_s3_chipid;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
 `endif
 end
 

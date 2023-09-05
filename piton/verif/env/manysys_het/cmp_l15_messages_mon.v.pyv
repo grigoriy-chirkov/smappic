@@ -149,92 +149,6 @@ begin
 end
 endtask
 
-// task decode_dcache_op;
-// input [`L15_DCACHE_OP_WIDTH-1:0] op;
-// begin
-//     case (op)
-//         `L15_DCACHE_READ_TAGCHECK_WAY_IF_M:
-//             $display("L15_DCACHE_READ_TAGCHECK_WAY_IF_M");
-//         `L15_DCACHE_READ_TAGCHECK_WAY_IF_MES:
-//             $display("L15_DCACHE_READ_TAGCHECK_WAY_IF_MES");
-//         `L15_DCACHE_READ_LRU_WAY_IF_M:
-//             $display("L15_DCACHE_READ_LRU_WAY_IF_M");
-//         `L15_DCACHE_WRITE_TAGCHECK_WAY_IF_ME_FROM_MSHR:
-//             $display("L15_DCACHE_WRITE_TAGCHECK_WAY_IF_ME_FROM_MSHR");
-//         `L15_DCACHE_WRITE_LRU_WAY_FROM_NOC2:
-//             $display("L15_DCACHE_WRITE_LRU_WAY_FROM_NOC2");
-//         `L15_DCACHE_WRITE_LRU_WAY_FROM_NOC2_AND_MSHR:
-//             $display("L15_DCACHE_WRITE_LRU_WAY_FROM_NOC2_AND_MSHR");
-//         `L15_DCACHE_WRITE_MSHR_WAY_FROM_MSHR:
-//             $display("L15_DCACHE_WRITE_MSHR_WAY_FROM_MSHR");
-//         default:
-//             $display("");
-//     endcase
-// end
-// endtask
-
-// task decode_s3mesi_op;
-// input [`L15_S3_MESI_OP_WIDTH-1:0] op;
-// begin
-//     case (op)
-//         `L15_S3_MESI_INVALIDATE_TAGCHECK_WAY_IF_MES:
-//             $display("L15_S3_MESI_INVALIDATE_TAGCHECK_WAY_IF_MES");
-//         `L15_S3_MESI_WRITE_TAGCHECK_WAY_S_IF_ME:
-//             $display("L15_S3_MESI_WRITE_TAGCHECK_WAY_S_IF_ME");
-//         `L15_S3_MESI_WRITE_TAGCHECK_WAY_M_IF_E:
-//             $display("L15_S3_MESI_WRITE_TAGCHECK_WAY_M_IF_E");
-//         `L15_S3_MESI_WRITE_LRU_WAY_ACK_STATE:
-//             $display("L15_S3_MESI_WRITE_LRU_WAY_ACK_STATE");
-//         default:
-//             $display("");
-//     endcase
-// end
-// endtask
-
-// task decode_wmc_read_op;
-// input [`L15_WMC_OP_WIDTH-1:0] op;
-// begin
-//     case (op)
-//         `L15_WMC_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY");
-//         `L15_WMC_READ_TAGCHECK_WAY_IF_MES:
-//             $display("L15_WMC_READ_TAGCHECK_WAY_IF_MES");
-//         `L15_WMC_READ_MSHR_WAY:
-//             $display("L15_WMC_READ_MSHR_WAY");
-//         `L15_WMC_READ_LRU_WAY_IF_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_READ_LRU_WAY_IF_MES_AND_DEMAP_ENTRY");
-//         `L15_WMC_WRITE_LRU_WAY_L1_REPL_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_WRITE_LRU_WAY_L1_REPL_AND_DEMAP_ENTRY");
-//         `L15_WMC_WRITE_TAGCHECK_WAY_L1_REPL_IF_TAGCHECK_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_WRITE_TAGCHECK_WAY_L1_REPL_IF_TAGCHECK_MES_AND_DEMAP_ENTRY");
-//         default:
-//             $display("");
-//     endcase
-// end
-// endtask
-
-// task decode_wmc_write_op;
-// input [`L15_WMC_OP_WIDTH-1:0] op;
-// begin
-//     case (op)
-//         `L15_WMC_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_READ_TAGCHECK_WAY_IF_MES_AND_DEMAP_ENTRY");
-//         `L15_WMC_READ_TAGCHECK_WAY_IF_MES:
-//             $display("L15_WMC_READ_TAGCHECK_WAY_IF_MES");
-//         `L15_WMC_READ_MSHR_WAY:
-//             $display("L15_WMC_READ_MSHR_WAY");
-//         `L15_WMC_READ_LRU_WAY_IF_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_READ_LRU_WAY_IF_MES_AND_DEMAP_ENTRY");
-//         `L15_WMC_WRITE_LRU_WAY_L1_REPL_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_WRITE_LRU_WAY_L1_REPL_AND_DEMAP_ENTRY");
-//         `L15_WMC_WRITE_TAGCHECK_WAY_L1_REPL_IF_TAGCHECK_MES_AND_DEMAP_ENTRY:
-//             $display("L15_WMC_WRITE_TAGCHECK_WAY_L1_REPL_IF_TAGCHECK_MES_AND_DEMAP_ENTRY");
-//         default:
-//             $display("");
-//     endcase
-// end
-// endtask
-
 task decode_s3mshr_op;
 input [`L15_S3_MESI_OP_WIDTH-1:0] op;
 begin
@@ -295,7 +209,6 @@ begin
                 `L15_AMO_OP_CAS2:
                     $write("PCX_REQTYPE_AMO - L15_AMO_OP_CAS2");
             endcase
-
         `PCX_REQTYPE_INTERRUPT:
             $write("PCX_REQTYPE_INTERRUPT");
         `PCX_REQTYPE_FP1:
@@ -360,6 +273,7 @@ begin
     // monitoring outgoing noc1/noc3 messages
     if (`L15_TOP0.noc1encoder.sending)
     begin
+        $display("------------------------------------------");
         $display($time);
         $display("TILE0 noc1 flit raw: 0x%x", `L15_TOP0.noc1encoder.flit);
         $display("   srcX: %d, srcY: %d", `L15_TOP0.noc1encoder.msg_src_xpos, `L15_TOP0.noc1encoder.msg_src_ypos);
@@ -372,6 +286,7 @@ begin
             `endif
                 `MONITOR_PATH.fail("l15_mon: TILE0 noc1 sends X data");
         end
+        $display("------------------------------------------");
 
     end
 
@@ -381,6 +296,7 @@ begin
     if (`L15_PIPE0.pcxdecoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val
         && `L15_PIPE0.fetch_state_s1 == `L15_FETCH_STATE_NORMAL)
     begin
+        $display("------------------------------------------");
         $write("%0d TILE0 L1.5 th%d: Received PCX ", $time, `L15_PIPE0.pcxdecoder_l15_threadid); decode_pcx_op(`L15_PIPE0.pcxdecoder_l15_rqtype, `L15_PIPE0.pcxdecoder_l15_amo_op);
         $display("   Addr 0x%x, nc %d, size %d, invalall %d, pf %d, bs %d, bsi %d, l1way %d",
                                 `L15_PIPE0.pcxdecoder_l15_address, `L15_PIPE0.pcxdecoder_l15_nc, `L15_PIPE0.pcxdecoder_l15_size, `L15_PIPE0.pcxdecoder_l15_invalidate_cacheline,
@@ -424,10 +340,12 @@ begin
             $display("    Thread ID: %d", pcx_interrupt_threadid);
             $display("    Vector: %d", pcx_interrupt_vector);
         end
+        $display("------------------------------------------");
     end
 
     if (`L15_PIPE0.noc2decoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1)
     begin
+        $display("------------------------------------------");
         noc2 = 0;
         case(`L15_PIPE0.noc2decoder_l15_reqtype)
         `MSG_TYPE_RESERVED:
@@ -467,10 +385,12 @@ begin
         $display("   Data2: 0x%x", `L15_PIPE0.noc2decoder_l15_data_1);
         $display("   Data3: 0x%x", `L15_PIPE0.noc2decoder_l15_data_2);
         $display("   Data4: 0x%x", `L15_PIPE0.noc2decoder_l15_data_3);
+        $display("------------------------------------------");
     end
 
     if (`L15_PIPE0.l15_cpxencoder_val && !`L15_PIPE0.stall_s3)
     begin
+        $display("------------------------------------------");
         cpx = 0;
         case(`L15_PIPE0.l15_cpxencoder_returntype)
             `LOAD_RET:
@@ -520,10 +440,12 @@ begin
         $display("   Data1: 0x%x", `L15_PIPE0.l15_cpxencoder_data_1);
         $display("   Data2: 0x%x", `L15_PIPE0.l15_cpxencoder_data_2);
         $display("   Data3: 0x%x", `L15_PIPE0.l15_cpxencoder_data_3);
+        $display("------------------------------------------");
     end
 
     if (`L15_TOP0.noc1encoder.noc1encoder_noc1out_val && `L15_TOP0.noc1encoder.noc1encoder_noc1buffer_req_ack)
     begin
+        $display("------------------------------------------");
         noc1 = 0;
         case(`L15_TOP0.noc1encoder.req_type)
         `L15_NOC1_REQTYPE_WRITEBACK_GUARD:
@@ -573,10 +495,12 @@ begin
         $display("   Data0: 0x%x", `L15_TOP0.noc1encoder.noc1buffer_noc1encoder_req_data_0);
         $display("   Data1: 0x%x", `L15_TOP0.noc1encoder.noc1buffer_noc1encoder_req_data_1);
         $display("   Destination X: %d Y: %d", `L15_TOP0.noc1encoder.msg_dest_l2_xpos, `L15_TOP0.noc1encoder.msg_dest_l2_ypos);
+        $display("------------------------------------------");
     end
 
     if (`L15_TOP0.noc3encoder.noc3encoder_noc3out_val && `L15_TOP0.noc3encoder.noc3encoder_l15_req_ack)
     begin
+        $display("------------------------------------------");
         noc3 = 0;
         case(`L15_TOP0.noc3encoder.l15_noc3encoder_req_type)
         `L15_NOC3_REQTYPE_WRITEBACK:
@@ -611,11 +535,13 @@ begin
         $display("   destX: %d, destY: %d", `L15_TOP0.noc3encoder.dest_l2_xpos, `L15_TOP0.noc3encoder.dest_l2_ypos);
         $display("   Data0: 0x%x", `L15_TOP0.noc3encoder.l15_noc3encoder_req_data_0);
         $display("   Data1: 0x%x", `L15_TOP0.noc3encoder.l15_noc3encoder_req_data_1);
+        $display("------------------------------------------");
     end
 
     do_print_stage_TILE0 = ((`L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1) || (`L15_PIPE0.val_s2 && !`L15_PIPE0.stall_s2) || (`L15_PIPE0.val_s3 && !`L15_PIPE0.stall_s3));
     if (do_print_stage_TILE0)
     begin
+        $display("------------------------------------------");
         // $display("");
         $display("");
         $display($time, " L15 TILE0:");
@@ -661,46 +587,6 @@ begin
             $write(" X ");
         $display("");
 
-        // $write("PCX pipe info: "); decode_pcx_op(`L15_PIPE0.pcxdecoder_l15_rqtype, L15_PIPE0.pcxdecoder_l15_amo_op);
-        // if (`L15_PIPE0.noc1_req_val_s3 && `L15_PIPE0.noc1encoder_req_staled_s3)
-        //     $display(" (staled)");
-        // else if (!`L15_PIPE0.noc1_req_val_s3)
-        //     $display(" (invalid)");
-        // else if (`L15_PIPE0.noc1_req_val_s3 && !`L15_PIPE0.noc1encoder_req_staled_s3)
-        // begin
-        //     $display(" (fresh)");
-        // end
-
-        // $write("NoC1 pipe info: ");
-        // if (`L15_PIPE0.noc1_req_val_s3 && `L15_PIPE0.noc1encoder_req_staled_s3)
-        //     $display("staled");
-        // else if (!`L15_PIPE0.noc1_req_val_s3)
-        //     $display("invalid");
-        // else if (`L15_PIPE0.noc1_req_val_s3 && !`L15_PIPE0.noc1encoder_req_staled_s3)
-        // begin
-        //     $display("fresh");
-        // end
-
-        // $write("NoC3 pipe info: ");
-        // if (`L15_PIPE0.noc3_req_val_s3 && `L15_PIPE0.noc3encoder_req_staled_s3)
-        //     $display("staled");
-        // else if (!`L15_PIPE0.noc3_req_val_s3)
-        //     $display("invalid");
-        // else if (`L15_PIPE0.noc3_req_val_s3 && !`L15_PIPE0.noc3encoder_req_staled_s3)
-        // begin
-        //     $display("fresh");
-        // end
-
-        // $write("CPX pipe info: ");
-        // if (`L15_PIPE0.cpx_req_val_s3 && `L15_PIPE0.cpxencoder_req_staled_s3)
-        //     $display("staled");
-        // else if (!`L15_PIPE0.cpx_req_val_s3)
-        //     $display("invalid");
-        // else if (`L15_PIPE0.cpx_req_val_s3 && !`L15_PIPE0.cpxencoder_req_staled_s3)
-        // begin
-        //     $display("fresh");
-        // end
-
             // Stage 1 debug information
         if (`L15_PIPE0.stall_s1 === 1'bx)
             $display("S1 stall is XXXXXXX");
@@ -709,34 +595,6 @@ begin
             $write("Stage 1 status: ");
             $write("   Operation: "); decode_predecode_reqtype(`L15_PIPE0.predecode_reqtype_s1);
             $display("   TILE0 S1 Address: 0x%x", `L15_PIPE0.predecode_address_s1);
-            // if (`L15_PIPE0.decoder_dtag_operation_s1 == `L15_DTAG_OP_READ)
-            // begin
-            //     $display("   DTAG OP: L15_DTAG_OP_READ");
-            //     $display("      Index: 0x%x", `L15_PIPE0.dtag_index);
-            // end
-            // if (`L15_PIPE0.l15_dtag_rw_s1 == `L15_DTAG_RW_WRITE)
-            // begin
-            //     $display("   DTAG OP: L15_DTAG_OP_WRITE");
-            //     $display("      Data:  0x%x", `L15_PIPE0.dtag_write_tag_s1);
-            //     $display("      Way:  0x%x", `L15_PIPE0.dtag_write_way_s1);
-            //     // $display("      Mask: 0x%x", `L15_PIPE0.dtag_write_mask);
-            // end
-            // if (`L15_PIPE0.s1_mshr_write_val_s1)
-            // begin
-            //     $display("   DTAG OP: ");
-            //     if (`L15_PIPE0.s1_mshr_write_type_s1 == `L15_MSHR_WRITE_TYPE_ALLOCATION)
-            //     begin
-            //         $write ("L15_MSHR_WRITE_TYPE_ALLOCATION");
-            //         $display ("      MSRID: %d", `L15_PIPE0.s1_mshr_write_mshrid_s1);
-            //     end
-            //     else if (`L15_PIPE0.s1_mshr_write_type_s1 == `L15_S1_MSHR_OP_UPDATE_WRITECACHE)
-            //     begin
-            //         $write ("L15_S1_MSHR_OP_UPDATE_WRITECACHE");
-            //         $display ("      MSRID:     %d", `L15_PIPE0.s1_mshr_write_mshrid_s1);
-            //         $display ("      DATA:      0x%x", `L15_PIPE0.s1_mshr_write_data);
-            //         $display ("      DATAMASK:  0x%x", `L15_PIPE0.s1_mshr_write_byte_mask);
-            //     end
-            // end
         end
         // Stage 2 debug information
         if (`L15_PIPE0.stall_s2 === 1'bx)
@@ -760,15 +618,6 @@ begin
                 end
             end
 
-            // $display("   Source chipid: %d", `L15_PIPE0.noc2_src_homeid_s2[`PACKET_HOME_ID_CHIP_MASK]);
-            // $display("   Source X: %d", `L15_PIPE0.noc2_src_homeid_s2[`PACKET_HOME_ID_X_MASK]);
-            // $display("   Source Y: %d", `L15_PIPE0.noc2_src_homeid_s2[`PACKET_HOME_ID_Y_MASK]);
-            // `ifdef L15_EXTRA_DEBUG
-            // $display("   LRU state: %d", `L15_PIPE0.lru_state_s2);
-            // $display("   LRU way: %d", `L15_PIPE0.lru_way_s2);
-            // $display("   Tagcheck state: %d", `L15_PIPE0.tagcheck_state_s2);
-            // $display("   Tagcheck way: %d", `L15_PIPE0.tagcheck_way_s2);
-
             if (`L15_PIPE0.decoder_dtag_operation_s2 == `L15_DTAG_OP_READ)
             begin
                 $display("   DTAG way0 state: 0x%x", `L15_PIPE0.mesi_state_way0_s2);
@@ -787,30 +636,8 @@ begin
                 $display("   MESI write data: 0x%x", `L15_PIPE0.mesi_write_state_s2);
             end
 
-            // if (`L15_PIPE0.lruarray_write_op_s2 == `L15_LRU_EVICTION)
-            // begin
-            //     $display("   LRU EVICTION INDEX: %d, WAY: %d", `L15_PIPE0.cache_index_s2,
-            //         `L15_PIPE0.lru_way_s2[1:0]);
-            // end
-            // `endif
-
-            // if (`L15_PIPE0.s2_mesi_operation_s2 == `L15_S2_MESI_READ)
-            // begin
-            //     $display("   MESI OP: L15_S2_MESI_READ");
-            //     $display ("      Index:     %d", `L15_PIPE0.s2_mesi_index_s2);
-            // end
-            // if (`L15_PIPE0.s2_mshr_val_s2)
-            // begin
-            //     $display("   MSHR OP: L15_S2_MSHR_OP_READ_WRITE_CACHE");
-            //     $display ("      MSHR: %d", `L15_PIPE0.s2_mshr_read_mshrid);
-            // end
             if (`L15_PIPE0.dcache_val_s2)
             begin
-                // $write("   DCACHE OP: "); decode_dcache_op(`L15_PIPE0.dcache_operation_s2);
-                // $display ("      RW:     %d", `L15_PIPE0.dcache_rw);
-                // $display ("      Index:      0x%x", `L15_PIPE0.dcache_index);
-                // $display ("      Data:  0x%x", `L15_PIPE0.dcache_write_data);
-                // $display ("      Data mask:  0x%x", `L15_PIPE0.dcache_write_mask);
                 if (`L15_PIPE0.l15_dcache_rw_s2 == 1'b0)
                 begin
                     `ifndef NO_RTL_CSM
@@ -853,59 +680,9 @@ begin
 
             if (`L15_PIPE0.cpx_data_source_s3 == `L15_CPX_SOURCE_CSM)
                 $display("      CSM read data: 0x%x", `L15_PIPE0.csm_l15_res_data_s3);
-            // `ifdef L15_EXTRA_DEBUG
-            // $display("   LRU state: %d", `L15_PIPE0.lru_state_s3);
-            // $display("   LRU way: %d", `L15_PIPE0.lru_way_s3);
-            // $display("   Tagcheck state: %d", `L15_PIPE0.tagcheck_state_s3);
-            // $display("   Tagcheck way: %d", `L15_PIPE0.tagcheck_way_s3);
-            // `endif
-
-            // if (`L15_PIPE0.s3_mesi_val_s3)
-            // begin
-            //     $write("   MESI OP: "); decode_s3mesi_op(`L15_PIPE0.s3_mesi_operation_s3);
-            //     $display ("      Index:      0x%x", `L15_PIPE0.mesi_write_index);
-            //     $display ("      Data:  0x%x", `L15_PIPE0.mesi_write_data);
-            //     $display ("      Data mask:  0x%x", `L15_PIPE0.mesi_write_mask);
-            // end
-            // if (`L15_PIPE0.wmc_val_s3)
-            // begin
-            //     $write("   WMC OP: "); decode_wmc_op(`L15_PIPE0.wmc_operation_s3);
-            //     if (`L15_PIPE0.wmc_rw_s3 == `L15_WMC_OP_READ)
-            //     begin
-            //         $display ("      wmc_index_s3:      0x%x", `L15_PIPE0.wmc_index_s3);
-            //         $display ("      wmc_invalidate_val_s3:      0x%x", `L15_PIPE0.wmc_invalidate_val_s3);
-            //         $display ("      wmc_invalidate_way_s3:      0x%x", `L15_PIPE0.wmc_invalidate_way_s3);
-            //     end
-            //     else if (`L15_PIPE0.wmc_rw_s3 == `L15_WMC_OP_WRITE)
-            //     begin
-            //         $display ("      wmc_index_s3:      0x%x", `L15_PIPE0.wmc_index_s3);
-            //         $display ("      wmc_update_way_s3:      0x%x", `L15_PIPE0.wmc_update_way_s3);
-            //         $display ("      wmc_update_data_s3:      0x%x", `L15_PIPE0.wmc_update_data_s3);
-            //         $display ("      wmc_invalidate_val_s3:      0x%x", `L15_PIPE0.wmc_invalidate_val_s3);
-            //         $display ("      wmc_invalidate_way_s3:      0x%x", `L15_PIPE0.wmc_invalidate_way_s3);
-            //     end
-            //     $display ("      cpx_inval_way_s3:      0x%x", `L15_PIPE0.cpx_inval_way_s3);
-            //     $display ("      wmc_read_way0_data_s3:      0x%x", `L15_PIPE0.wmc_read_way0_data_s3);
-            //     $display ("      wmc_read_way1_data_s3:      0x%x", `L15_PIPE0.wmc_read_way1_data_s3);
-            //     $display ("      wmc_read_way2_data_s3:      0x%x", `L15_PIPE0.wmc_read_way2_data_s3);
-            //     $display ("      wmc_read_way3_data_s3:      0x%x", `L15_PIPE0.wmc_read_way3_data_s3);
-            // end
-            // if (`L15_PIPE0.s3_mshr_val_s3)
-            // begin
-            //     $write("   MSHR OP: "); decode_s3mshr_op(`L15_PIPE0.s3_mshr_operation_s3);
-            //     $display ("      MSHR:      %d", `L15_PIPE0.s3_mshr_write_mshrid);
-            //     $display ("      U.State:      0x%x", `L15_PIPE0.s3_mshr_write_update_state);
-            //     $display ("      U.Way:  0x%x", `L15_PIPE0.s3_mshr_write_update_way);
-            //     $display ("      St.mshr rand hit:   %d", `L15_PIPE0.LRU_st1_mshr_s3 || `L15_PIPE0.LRU_st2_mshr_s3);
-            //     $display ("      St.mshr tag hit:   %d", `L15_PIPE0.tagcheck_st1_mshr_s3 || `L15_PIPE0.tagcheck_st2_mshr_s3);
-            // end
             if (wmt_read_val_s3_TILE0)
             begin
                 $display("   TILE0 WMT read index: %x", `L15_PIPE0.cache_index_l1d_s3[`L1D_SET_IDX_MASK]);
-                // $display("   WMT way0: %x 0x%x", `L15_PIPE0.wmt_data_s3[0][`L15_WMT_VALID_MASK], `L15_PIPE0.wmt_data_s3[0][`L15_WMT_DATA_MASK]);
-                // $display("   WMT way1: %x 0x%x", `L15_PIPE0.wmt_data_s3[1][`L15_WMT_VALID_MASK], `L15_PIPE0.wmt_data_s3[1][`L15_WMT_DATA_MASK]);
-                // $display("   WMT way2: %x 0x%x", `L15_PIPE0.wmt_data_s3[2][`L15_WMT_VALID_MASK], `L15_PIPE0.wmt_data_s3[2][`L15_WMT_DATA_MASK]);
-                // $display("   WMT way3: %x 0x%x", `L15_PIPE0.wmt_data_s3[3][`L15_WMT_VALID_MASK], `L15_PIPE0.wmt_data_s3[3][`L15_WMT_DATA_MASK]);
                 for (i = 0; i < `L1D_WAY_COUNT; i = i + 1)
                 begin
                     $display("   WMT way%d: %x 0x%x", i, `L15_PIPE0.wmt_data_s3[i][`L15_WMT_VALID_MASK], `L15_PIPE0.wmt_data_s3[i][`L15_WMT_DATA_MASK]);
@@ -914,50 +691,55 @@ begin
             if (`L15_PIPE0.l15_wmt_write_val_s3)
             begin
                 $display("   TILE0 WMT write index: %x", `L15_PIPE0.cache_index_l1d_s3[`L1D_SET_IDX_MASK]);
-                // $display("   WMT write mask: %x", `L15_PIPE0.l15_wmt_write_mask_s3);
-                // $display("   WMT write data: %x", `L15_PIPE0.l15_wmt_write_data_s3);
-                // $display("   WMT way0 m%x d0x%x", `L15_PIPE0.l15_wmt_write_mask_s3[`L15_WMT_ENTRY_0_MASK], `L15_PIPE0.wmt_write_data_s3[`L15_WMT_ENTRY_0_MASK]);
-                // $display("   WMT way1 m%x d0x%x", `L15_PIPE0.l15_wmt_write_mask_s3[`L15_WMT_ENTRY_1_MASK], `L15_PIPE0.wmt_write_data_s3[`L15_WMT_ENTRY_1_MASK]);
-                // $display("   WMT way2 m%x d0x%x", `L15_PIPE0.l15_wmt_write_mask_s3[`L15_WMT_ENTRY_2_MASK], `L15_PIPE0.wmt_write_data_s3[`L15_WMT_ENTRY_2_MASK]);
-                // $display("   WMT way3 m%x d0x%x", `L15_PIPE0.l15_wmt_write_mask_s3[`L15_WMT_ENTRY_3_MASK], `L15_PIPE0.wmt_write_data_s3[`L15_WMT_ENTRY_3_MASK]);
             end
         end
         $display ("L15_MON_END");
         $display ("");
+        $display("------------------------------------------");
     end
 
 //CSM monitor
     if(`L15_TOP0.l15_csm.l15_csm_req_val_s2)
     begin
+        $display("------------------------------------------");
         $display($time, ": TILE0 L15_CSM REQ MON:");
         $display("L15 CSM req addr: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_address_s2);
         $display("L15 CSM req ticket: %d", `L15_TOP0.l15_csm.l15_csm_req_ticket_s2);
         $display("L15 CSM req type: %d", `L15_TOP0.l15_csm.l15_csm_req_type_s2);
         $display("L15 CSM req data: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_data_s2);
         $display("L15 CSM req pcx data: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_pcx_data_s2);
+        $display("------------------------------------------");
     end
     if(`L15_TOP0.l15_csm.csm_l15_res_val_s3)
     begin
+        $display("------------------------------------------");
         $display($time, ": TILE0 L15_CSM RES MON:");
         $display("L15 CSM res data: 0x%x", `L15_TOP0.l15_csm.csm_l15_res_data_s3);
+        $display("------------------------------------------");
     end
     if(`L15_TOP0.l15_csm.csm_l15_read_res_val)
     begin
+        $display("------------------------------------------");
         $display($time, ": TILE0 L15_CSM READ TICKET MON:");
         $display("L15 CSM read ticket: %d", `L15_TOP0.l15_csm.l15_csm_read_ticket);
         $display("L15 CSM read data: 0x%x", `L15_TOP0.l15_csm.csm_l15_read_res_data);
+        $display("------------------------------------------");
     end
     if(`L15_TOP0.l15_csm.csm_noc1encoder_req_val)
     begin
+        $display("------------------------------------------");
         $display($time, ": TILE0 L15_CSM NOC1 REQ MON:");
         $display("L15 CSM noc1 req addr: 0x%x", `L15_TOP0.l15_csm.csm_noc1encoder_req_address);
         $display("L15 CSM noc1 req type: %d", `L15_TOP0.l15_csm.csm_noc1encoder_req_type);
         $display("L15 CSM noc1 req mshrid: %d", `L15_TOP0.l15_csm.csm_noc1encoder_req_mshrid);
+        $display("------------------------------------------");
     end
     if(`L15_TOP0.l15_csm.noc1encoder_csm_req_ack)
     begin
+        $display("------------------------------------------");
         $display($time, ": TILE0 L15_CSM NOC1 REQ ACK MON:");
         $display("L15 CSM noc1 req ack: %b", `L15_TOP0.l15_csm.noc1encoder_csm_req_ack);
+        $display("------------------------------------------");
     end
 
     if(`L15_TOP0.l15_csm.write_val_s2 && (~`L15_TOP0.l15_csm.ghid_val_s2))
@@ -1003,23 +785,7 @@ begin
             // end
         end
     end
-    // if (`L15_PIPE0.l15_noc1buffer_req_val && !`L15_PIPE0.stall_s3)
-    // begin
-    //     if (`L15_PIPE0.l15_noc1buffer_req_type != `L15_NOC1_REQTYPE_WRITEBACK_GUARD
-    //         && `L15_PIPE0.l15_noc1buffer_req_type != `L15_NOC1_REQTYPE_INTERRUPT_FWD)
-    //     begin
-    //         if (`L15_TOP0.mshr.val_array[`L15_PIPE0.l15_noc1buffer_req_mshrid] != 1'b1
-    //             || `L15_PIPE0.l15_noc1buffer_req_mshrid > 9)
-    //         begin
-    //             $display("L1.5 MON: Sending NoC1 message with invalid MSHRID (%d)", `L15_PIPE0.l15_noc1buffer_req_mshrid);
-    //             $display("%d : Simulation -> FAIL(%0s)", $time, "L1.5 MON: Sending NoC1 message with invalid MSHRID");
-    //             `ifndef VERILATOR
-    //             repeat(5)@(posedge clk)
-    //             `endif
-        //             `MONITOR_PATH.fail("L1.5 MON: Sending NoC1 message with invalid MSHRID");
-    //         end
-    //     end
-    // end
+
 
 // monitor PCX buffer full compare to t1 internal buffer mon
 `ifdef RTL_SPARC0
@@ -1059,31 +825,15 @@ begin
     end
 `endif
 
-// monitor FP transactions because it is not supported yet
-//     if (`L15_PIPE0.pcxdecoder_l15_val && !`L15_PIPE0.pcx_message_staled_s1 && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val)
-//     begin
-//         if (`L15_PIPE0.pcxdecoder_l15_rqtype == `PCX_REQTYPE_FP1)
-//         begin
-//             $display("%d : Simulation -> FAIL(%0s)", $time, "FP requests received but not implemented");
-//             `ifndef VERILATOR
-//             repeat(5)@(posedge clk)
-//             `endif
-    //             `MONITOR_PATH.fail("FP requests received but not implemented");
-//         end
-//     end
-
 // monitor INT_VEC_DIS requests
     if (`L15_PIPE0.pcxdecoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val)
     begin
         if (`L15_PIPE0.pcxdecoder_l15_rqtype == `PCX_REQTYPE_STORE
             && `L15_PIPE0.pcxdecoder_l15_address == 40'h9800000800)
         begin
+            $display("------------------------------------------");
             $display("%d : PCX write to INT_VEC_DIS", $time);
-            // $display("%d : Simulation -> FAIL(%0s)", $time, "Write to INT_VEC_DIS");
-            // `ifndef VERILATOR
-            // repeat(5)@(posedge clk)
-            // `endif
-                // `MONITOR_PATH.fail("Write to INT_VEC_DIS");
+            $display("------------------------------------------");
         end
     end
 
@@ -1138,15 +888,6 @@ begin
         `endif
             `MONITOR_PATH.fail("TILE0 NOC1 reserve credit overflow");
     end
-    // check reserve logics
-    // if (`L15_PIPE0.creditman_noc1_reserve_s3)
-    // begin
-    //     $display("%d : Simulation -> FAIL(%0s)", $time, "TILE0 NOC1 reserve credit underflow");
-    //     `ifndef VERILATOR
-    //     repeat(5)@(posedge clk)
-    //     `endif
-        //     `MONITOR_PATH.fail("TILE0 NOC1 reserve credit underflow");
-    // end
 
 // Monitor for "RESERVED" messages
     if (`L15_PIPE0.noc2decoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1)
@@ -1207,34 +948,6 @@ begin
             end
         end
     end
-
-// // monitor FP transactions because it is not supported yet
-//     if (`L15_TOP0.noc1encoder.sending)
-//     begin
-//         $display("noc1 flit raw: 0x%x", `L15_TOP0.noc1encoder.flit);
-//     end
-//     if (`L15_PIPE0.pcxdecoder_l15_val && !`L15_PIPE0.pcx_message_staled_s1 && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val)
-//     begin
-//         $display("%d : Simulation -> FAIL(%0s)", $time, "FP requests received but not implemented");
-//         `ifndef VERILATOR
-//         repeat(5)@(posedge clk)
-//         `endif
-    //         `MONITOR_PATH.fail("FP requests received but not implemented");
-//     end
-
-
-// Monitor FP transactions
-//    if (`TILE0.fpu_arb_wrap.pcx_fpio_data_px2[123]
-//            && `TILE0.fpu_arb_wrap.pcx_fpio_data_px2[122:119] == 4'b0101)
-//    begin
-//        $display("TILE0 FPU th%d: Received FP%d",
-//                    `TILE0.fpu_arb_wrap.pcx_fpio_data_px2[113:112],
-//                    `TILE0.fpu_arb_wrap.pcx_fpio_data_px2[118]);
-//    end
-//    if (`TILE0.fpu_arb_wrap.fpu_arb_data_rdy
-//            && !`TILE0.fpu_arb_wrap.l15_fp_rdy)
-//        $display("TILE0 FPU th%d: Sent FP data",
-//                    `TILE0.fpu_arb_wrap.fpu_arb_data[135:134]);
 
 // monitor L1.5 way replacement error
     if (`L15_PIPE0.l15_dcache_val_s2
@@ -1308,21 +1021,24 @@ end
 '''
 
 for i in range (PITON_NUM_TILES):
-    text2 = text;
-    text2 = text2.replace("L15_PIPE0", "L15_PIPE" + repr(i));
-    text2 = text2.replace("RTL_SPARC0", "RTL_SPARC" + repr(i));
-    text2 = text2.replace("TILE0", "TILE" + repr(i));
-    text2 = text2.replace("TOP0", "TOP" + repr(i));
-    text2 = text2.replace("CORE0", "CORE" + repr(i));
-    text2 = text2.replace("TRANSDUCER0", "TRANSDUCER" + repr(i));
-    print(text2)
+    for j in range(PITON_NUM_CHIPS):
+        text2 = text;
+        if j == 0:
+            text2 = text2.replace("L15_PIPE0", "L15_PIPE" + repr(i));
+            text2 = text2.replace("RTL_SPARC0", "RTL_SPARC" + repr(i));
+            text2 = text2.replace("TILE0", "TILE" + repr(i));
+            text2 = text2.replace("TOP0", "TOP" + repr(i));
+            text2 = text2.replace("CORE0", "CORE" + repr(i));
+            text2 = text2.replace("TRANSDUCER0", "TRANSDUCER" + repr(i));
+        else:
+            text2 = text2.replace("L15_PIPE0", "L15_PIPE" + repr(i) + "_" + repr(j));
+            text2 = text2.replace("RTL_SPARC0", "RTL_SPARC" + repr(i) + "_" + repr(j));
+            text2 = text2.replace("TILE0", "TILE" + repr(i) + "_" + repr(j));
+            text2 = text2.replace("TOP0", "TOP" + repr(i) + "_" + repr(j));
+            text2 = text2.replace("CORE0", "CORE" + repr(i) + "_" + repr(j));
+            text2 = text2.replace("TRANSDUCER0", "TRANSDUCER" + repr(i) + "_" + repr(j));
+        print(text2)
 %>
 
-// // add temporary monitor for jtag
-// always @ (negedge `JTAG.io_clk)
-// begin
-//     // write out the states of the JTAG state machine
-
-//     //
 
 endmodule
