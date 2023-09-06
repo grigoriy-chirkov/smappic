@@ -106,7 +106,7 @@ wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1 = pkg_S1[`MSG_DATA_SIZE];
 wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1 = pkg_S1[`MSG_CACHE_TYPE];
 wire [`MSG_MESI_WIDTH-1:0] mesi_S1 = pkg_S1[`MSG_MESI];
 wire [`MSG_LENGTH_WIDTH-1:0] length_S1 = pkg_S1[`MSG_LENGTH];
-wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = pkg_S1[`PKG_DATA_WIDTH-1:3*`CEP_WORD_WIDTH];
+wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[`PKG_DATA_WIDTH-1:3*`CEP_WORD_WIDTH]};
 
 wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
 wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |

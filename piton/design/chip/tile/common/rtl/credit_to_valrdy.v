@@ -65,6 +65,8 @@ module credit_to_valrdy (
 
    assign valid_out = valid_out_temp;
    assign data_out = valid_out_temp ? data_out_temp : `DATA_WIDTH'b0;
+   wire [`DATA_WIDTH-1:0] data_val;
+   wire [`DATA_WIDTH-1:0] data_val1;
 
    network_input_blk_multi_out #(.LOG2_NUMBER_FIFO_ELEMENTS(2)) data(
       .clk(clk),
@@ -75,10 +77,12 @@ module credit_to_valrdy (
       .thanks_in(valid_out & ready_out),
 
       .yummy_out(yummy_in),
-      .data_val(data_out),
-      .data_val1(/*not used*/),
+      .data_val(data_val),
+      .data_val1(data_val1),
       .data_avail(valid_out_temp));
 
+   // stupid fix for verilator
+   assign data_out_temp = (data_val == `DATA_WIDTH'b0) ? data_val1 : data_val;
 endmodule
 
 

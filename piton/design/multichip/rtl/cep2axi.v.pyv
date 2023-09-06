@@ -324,7 +324,7 @@ wire wr_dispatch = cep_val_synced & cep_rdy_synced;
 
 
 // const fields
-assign m_axi_awid = 6'b100000;
+assign m_axi_awid = {{`AXI4_ID_WIDTH-6{1'b0}}, 6'b100000};
 assign m_axi_bready   = 1'b1;
 assign m_axi_awlen    = `AXI4_LEN_WIDTH'b0;
 assign m_axi_awsize   = `AXI4_SIZE_WIDTH'b110;

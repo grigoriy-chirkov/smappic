@@ -232,7 +232,7 @@ for i in range(PITON_NUM_CHIPS):
 end
 
 
-assign m_axi_arid = 6'b100000;
+assign m_axi_arid = {{`AXI4_ID_WIDTH-6{1'b0}}, 6'b100000};
 assign m_axi_araddr = ar_addr;
 assign m_axi_arvalid = need_credits[ar_chipid] & rd_wr_diff_positive[ar_chipid];
 assign m_axi_rready = 1'b1;
