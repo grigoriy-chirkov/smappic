@@ -6,6 +6,7 @@
 
   .section .text.init
   .option norvc
+  .option arch, +zicsr
   .globl _prog_start
 _prog_start:
   csrr a0, mhartid

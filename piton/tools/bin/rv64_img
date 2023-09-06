@@ -28,7 +28,15 @@
 #riscv64-unknown-elf-objcopy --reverse-bytes 4 -I elf32-littleriscv -O binary diag.exe diag.o
 ${RV64_TARGET_TRIPLE}-objcopy -I elf64-littleriscv -O binary diag.exe diag.o
 # pad with zero to 128byte boundary
-du diag.o -b | awk '{print(128 - ($1 % 128));}' | xargs -t -ISIZE truncate diag.o -s +SIZE
+
+if [[ `uname` == "Darwin" ]]; then
+    # Mac OSX
+    stat -f %z diag.o | awk '{print(128 - ($1 % 128));}' | xargs -t -ISIZE truncate -s +SIZE diag.o 
+else
+    # Linux
+    stat --format %s diag.o | awk '{print(128 - ($1 % 128));}' | xargs -t -ISIZE truncate diag.o -s +SIZE
+fi
+
 printf "\n@0000000080000000\t// Section '.RED_SEC', segment 'text'\n" >mem.image
 #od -tx -v -An -w32 diag.o >>mem.image
 xxd -g 8 -c 32 diag.o | awk '{printf("%s %s %s %s\n", $2, $3, $4, $5);}' >> mem.image
