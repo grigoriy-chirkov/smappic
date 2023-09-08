@@ -34,13 +34,16 @@ HOME_ID_WIDTH = 6
 %>
 
 module multichip_adapter_home_encoder(
-    input wire [`PHY_ADDR_WIDTH-1:0] addr_in,
+    input wire [`MSG_ADDR_WIDTH-1:0] addr_in,
+    input wire is_int,
     //num_homes = 0 means have the maximum number of homes
     input wire [`HOME_ID_WIDTH-1:0] num_homes,
-    output reg [`HOME_ID_WIDTH-1:0] home_id_out, 
     output wire [`NOC_X_WIDTH-1:0] home_x_out,
     output wire [`NOC_Y_WIDTH-1:0] home_y_out
 );
+
+wire [`NOC_X_WIDTH-1:0] int_x = addr_in[`NOC_X_WIDTH+1:2];
+wire [`NOC_Y_WIDTH-1:0] int_y = addr_in[`NOC_Y_WIDTH+`NOC_X_WIDTH+1:`NOC_X_WIDTH+2];
 
 wire [`HOME_ID_WIDTH-1:0] home_bits = addr_in[`HOME_ID_ADDR_POS_LOW] ^ addr_in[`HOME_ID_ADDR_POS_MIDDLE];
 
@@ -97,22 +100,30 @@ begin
     home_mod = home_bits & home_mask;
 end
 
+reg [`HOME_ID_WIDTH-1:0] home_id;
+
 always @ *
 begin
     if (home_mod < num_homes)
     begin
-        home_id_out = home_mod;
+        home_id = home_mod;
     end
     else
     begin
-        home_id_out = home_mod & home_low_mask;
+        home_id = home_mod & home_low_mask;
     end
 end
 
+wire [`NOC_X_WIDTH-1:0] mem_x;
+wire [`NOC_Y_WIDTH-1:0] mem_y;
+
 flat_id_to_xy xycoords(
-    .flat_id(home_id_out),
-    .x_coord(home_x_out),
-    .y_coord(home_y_out)
+    .flat_id(home_id),
+    .x_coord(mem_x),
+    .y_coord(mem_y)
 );
+
+assign home_x_out = is_int ? int_x : mem_x;
+assign home_y_out = is_int ? int_y : mem_y;
 
 endmodule

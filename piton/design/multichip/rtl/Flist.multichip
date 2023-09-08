@@ -25,7 +25,6 @@ multichip_adapter_dir_decoder.v
 multichip_adapter_dir_encoder.v
 multichip_adapter_bitsum.v
 multichip_adapter_prio_encoder.v
-multichip_adapter_inv_msg_encoder.v
 cep_encoder.v
 cep_decoder.v
 multichip_adapter_noc_encoder.v

@@ -48,7 +48,7 @@ module multichip_adapter_noc_encoder(
     input wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     input wire [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
-    input wire [`PHY_ADDR_WIDTH-1:0] addr,
+    input wire [`MSG_ADDR_WIDTH-1:0] addr,
 
     input wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits,
     input wire [`MSG_SRC_X_WIDTH-1:0] src_x,
@@ -79,7 +79,7 @@ begin
         pkg[`MSG_DATA_SIZE] = data_size;
         pkg[`MSG_CACHE_TYPE] = cache_type;
         pkg[`MSG_SUBLINE_VECTOR] = subline_vector;
-        pkg[`MSG_ADDR] = addr;
+        pkg[`MSG_ADDR_FULL] = addr;
 
         pkg[`MSG_SRC_FBITS] = src_fbits;
         pkg[`MSG_SRC_X] = src_x;
@@ -100,6 +100,9 @@ begin
         pkg[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH] = data[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH];
         pkg[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH] = data[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH];
         pkg[8*`NOC_DATA_WIDTH-1:7*`NOC_DATA_WIDTH] = data[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH];
+    end
+    if (msg_type == `MSG_TYPE_INTERRUPT_FWD) begin
+      pkg[64] = 1'b1; // dirty hack
     end
 end
 

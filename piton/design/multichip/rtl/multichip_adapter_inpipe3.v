@@ -111,7 +111,7 @@ assign stall_S1 = stall_S2 & val_S1;
 
 reg [`CEP_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
-reg [`PHY_ADDR_WIDTH-1:0] addr_S2;
+reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
@@ -129,7 +129,7 @@ always @(posedge clk) begin
         val_S2 <= 1'b0;
         pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
-        addr_S2 <= `PHY_ADDR_WIDTH'b0;
+        addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
@@ -211,7 +211,7 @@ assign stall_S2 = stall_S3 & val_S2;
 
 reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
-reg [`PHY_ADDR_WIDTH-1:0] addr_S3;
+reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S3;
@@ -231,7 +231,7 @@ always @(posedge clk) begin
         val_S3 <= 1'b0;
         pkg_S3 <= `PKG_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
-        addr_S3 <= `PHY_ADDR_WIDTH'b0;
+        addr_S3 <= `MSG_ADDR_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
         last_subline_S3 <= `MSG_LAST_SUBLINE_WIDTH'b0;

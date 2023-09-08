@@ -51,7 +51,7 @@ module pmesh_rvic #(
     input [`NOC_DATA_WIDTH-1:0]         src_rvic_vr_noc1_dat,
     output                              src_rvic_vr_noc1_rdy,
 
-    // output to noc2 (load/store PLIC response)
+    // output to noc2 (load/store PLIC response, generated interrupt pkts)
     output                              rvic_dst_vr_noc2_val,
     output [`NOC_DATA_WIDTH-1:0]        rvic_dst_vr_noc2_dat,
     input                               rvic_dst_vr_noc2_rdy,
@@ -62,7 +62,7 @@ module pmesh_rvic #(
     input [`NOC_DATA_WIDTH-1:0]         src_clint_noc1_dat,
     output                              src_clint_noc1_rdy,
 
-    // output to noc2 (load/store CLINT response)
+    // output to noc2 (load/store CLINT response, generated interrupt pkts)
     output                              clint_dst_noc2_val,
     output [`NOC_DATA_WIDTH-1:0]        clint_dst_noc2_dat,
     input                               clint_dst_noc2_rdy,

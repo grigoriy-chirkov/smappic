@@ -131,7 +131,7 @@ assign cep_rdy = ~stall_S1;
 
 wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
                  (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
-wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
+wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT);
 wire is_resp_S1 = ~is_req_S1;
 
 wire do_read_mshr_S1 = is_resp_S1;
@@ -144,7 +144,7 @@ wire [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S1;
 wire [`MSG_SRC_X_WIDTH-1:0] resp_x_S1;
 wire [`MSG_SRC_Y_WIDTH-1:0] resp_y_S1;
 wire [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S1;
-wire [`PHY_ADDR_WIDTH-1:0] resp_addr_S1;
+wire [`MSG_ADDR_WIDTH-1:0] resp_addr_S1;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_out_read_data),
@@ -182,7 +182,7 @@ assign stall_S1 = stall_S2 & val_S1;
 
 reg [`CEP_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
-reg [`PHY_ADDR_WIDTH-1:0] addr_S2;
+reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
@@ -202,7 +202,7 @@ always @(posedge clk) begin
         val_S2 <= 1'b0;
         pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
-        addr_S2 <= `PHY_ADDR_WIDTH'b0;
+        addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
@@ -315,7 +315,7 @@ assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 
 reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
-reg [`PHY_ADDR_WIDTH-1:0] addr_S3;
+reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
@@ -334,7 +334,7 @@ always @(posedge clk) begin
         val_S3 <= 1'b0;
         pkg_S3 <= `PKG_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
-        addr_S3 <= `PHY_ADDR_WIDTH'b0;
+        addr_S3 <= `MSG_ADDR_WIDTH'b0;
         mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;

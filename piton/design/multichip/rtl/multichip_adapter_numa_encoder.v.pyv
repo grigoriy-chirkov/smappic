@@ -36,7 +36,7 @@ from pyhplib import *
 module multichip_adapter_numa_encoder(
     // input wire clk,
     // input wire rst_n,
-    input wire [`PHY_ADDR_WIDTH-1:0] addr_in,
+    input wire [`MSG_ADDR_WIDTH-1:0] addr_in,
     output reg [`CEP_CHIPID_WIDTH-1:0] chipid_out
 );
 
@@ -46,7 +46,7 @@ always @(*) begin
 
 <%
 for i in range(PITON_NUM_CHIPS_SM):
-    print("    else if (addr_in < `PHY_ADDR_WIDTH'h%x)" % (PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1)))
+    print("    else if (addr_in < `MSG_ADDR_WIDTH'h%x)" % (PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1)))
     print("        chipid_out = `CEP_CHIPID_WIDTH'd%d;" % i)
     print("")
 %>

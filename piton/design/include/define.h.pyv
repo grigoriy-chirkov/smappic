@@ -122,6 +122,7 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 `define MSG_CACHE_TYPE          75
 `define MSG_SUBLINE_VECTOR      79:76
 `define MSG_ADDR                119:80
+`define MSG_ADDR_FULL           127:80
 
 `define MSG_LSID                147:142
 `define MSG_SDID                157:148
