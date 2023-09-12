@@ -56,8 +56,8 @@
 `define CEP_LENGTH             31:24
 `define CEP_DATA_SIZE          34:32
 `define CEP_CACHE_TYPE          35
-`define CEP_SRC_CHIPID         39:35
-`define CEP_ADDR               87:40
+`define CEP_SRC_CHIPID         40:36
+`define CEP_ADDR               88:41
 `define CEP_INT_ID            127:64
 
 `define CEP_WORD_WIDTH          64
