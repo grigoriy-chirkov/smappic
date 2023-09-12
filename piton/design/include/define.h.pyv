@@ -123,6 +123,7 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 `define MSG_SUBLINE_VECTOR      79:76
 `define MSG_ADDR                119:80
 `define MSG_ADDR_FULL           127:80
+`define MSG_INT_ID              127:64
 
 `define MSG_LSID                147:142
 `define MSG_SDID                157:148
@@ -290,6 +291,7 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 `define MSG_SUBLINE_VECTOR_WIDTH    4
 `define MSG_SUBLINE_ID_WIDTH        2
 `define MSG_LAST_SUBLINE_WIDTH      1
+`define MSG_INT_ID_WIDTH            64
 
 
 //Physical address

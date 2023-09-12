@@ -33,6 +33,8 @@ module multichip_adapter_noc_encoder(
     output reg [`PKG_DATA_WIDTH-1:0] pkg,
 
     input wire is_request,
+    input wire is_response, 
+    input wire is_int,
 
     input wire [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline,
     input wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id,
@@ -55,7 +57,8 @@ module multichip_adapter_noc_encoder(
     input wire [`MSG_SRC_Y_WIDTH-1:0] src_y,
     input wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid,
 
-    input wire [7*`NOC_DATA_WIDTH-1:0] data
+    input wire [7*`NOC_DATA_WIDTH-1:0] data,
+    input wire [`MSG_INT_ID_WIDTH-1:0] int_id
 );
 
 
@@ -92,7 +95,14 @@ begin
         pkg[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH] = data[4*`NOC_DATA_WIDTH-1:3*`NOC_DATA_WIDTH];
         pkg[8*`NOC_DATA_WIDTH-1:7*`NOC_DATA_WIDTH] = data[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH];
     end
-    else begin
+    else if (is_int) begin
+        pkg[`MSG_INT_ID] = int_id;
+        pkg[4*`NOC_DATA_WIDTH-1:3*`NOC_DATA_WIDTH] = int_id;
+        pkg[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH] = int_id;
+        pkg[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH] = int_id;
+        pkg[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH] = int_id;
+    end
+    else if (is_response) begin
         pkg[2*`NOC_DATA_WIDTH-1:1*`NOC_DATA_WIDTH] = data[1*`NOC_DATA_WIDTH-1:0*`NOC_DATA_WIDTH];
         pkg[3*`NOC_DATA_WIDTH-1:2*`NOC_DATA_WIDTH] = data[2*`NOC_DATA_WIDTH-1:1*`NOC_DATA_WIDTH];
         pkg[4*`NOC_DATA_WIDTH-1:3*`NOC_DATA_WIDTH] = data[3*`NOC_DATA_WIDTH-1:2*`NOC_DATA_WIDTH];
@@ -100,9 +110,6 @@ begin
         pkg[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH] = data[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH];
         pkg[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH] = data[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH];
         pkg[8*`NOC_DATA_WIDTH-1:7*`NOC_DATA_WIDTH] = data[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH];
-    end
-    if (msg_type == `MSG_TYPE_INTERRUPT_FWD) begin
-      pkg[64] = 1'b1; // dirty hack
     end
 end
 

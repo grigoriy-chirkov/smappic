@@ -109,13 +109,16 @@ wire is_req_S1 = (msg_type_S1 == `MSG_TYPE_LOAD_FWD)    |
                  (msg_type_S1 == `MSG_TYPE_NC_STORE_MEM);
 wire is_resp_S1 = (msg_type_S1 == `MSG_TYPE_NODATA_ACK) |
                   (msg_type_S1 == `MSG_TYPE_DATA_ACK)   ;
-wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = is_req_S1 ? {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[8*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH]} : pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH];
+wire is_int_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT);
+wire [`MSG_INT_ID_WIDTH-1:0] int_id_S1 = pkg_S1[`MSG_INT_ID];
+wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = is_req_S1  ? {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[8*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH]} : 
+                                           is_resp_S1 ? pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH] : 
+                                           {7{int_id_S1}};
 
 assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1 -> 2
 
-reg [`PKG_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
@@ -130,11 +133,12 @@ reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_req_S2;
 reg is_resp_S2;
+reg is_int_S2;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S2 <= 1'b0;
-        pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_x_S2 <= `MSG_SRC_X_WIDTH'b0;
@@ -147,12 +151,13 @@ always @(posedge clk) begin
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
+        int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S2 <= 1'b0;
         is_resp_S2 <= 1'b0;
+        is_int_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
-        pkg_S2 <= pkg_S1;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
         src_x_S2 <= src_x_S1;
@@ -165,8 +170,10 @@ always @(posedge clk) begin
         mesi_S2 <= mesi_S1;
         length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
+        int_id_S2 <= int_id_S1;
         is_req_S2 <= is_req_S1;
         is_resp_S2 <= is_resp_S1;
+        is_int_S2 <= is_int_S1;
     end 
 end
 
@@ -247,7 +254,6 @@ assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 // Stage 2 -> 3
 
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
@@ -258,13 +264,14 @@ reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`MSG_DST_CHIPID_WIDTH-1:0] resp_chipid_S3;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 reg is_req_S3;
 reg is_resp_S3;
+reg is_int_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S3 <= 1'b0;
-        pkg_S3 <= `CEP_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `MSG_ADDR_WIDTH'b0;
         mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
@@ -275,12 +282,13 @@ always @(posedge clk) begin
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_chipid_S3 <= `MSG_DST_CHIPID_WIDTH'b0;
+        int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S3 <= 1'b0;
         is_resp_S3 <= 1'b0;
+        is_int_S3 <= 1'b0;
     end
     else if (~stall_S3) begin
         val_S3 <= val_S3_next;
-        pkg_S3 <= pkg_S2;
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
         mshrid_S3 <= {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_out_empty_index};
@@ -291,8 +299,10 @@ always @(posedge clk) begin
         msg_data_S3 <= msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_chipid_S3 <= resp_chipid_S2;
+        int_id_S3 <= int_id_S2;
         is_req_S3 <= is_req_S2;
         is_resp_S3 <= is_resp_S2;
+        is_int_S3 <= is_int_S2;
     end
 end
 
@@ -303,6 +313,8 @@ cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
     .is_request(is_req_S3),
+    .is_response(is_resp_S3),
+    .is_int(is_int_S3),
     .last_subline(1'b0),
     .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
     .mesi(mesi_S3),
@@ -316,13 +328,14 @@ cep_encoder cep_encoder(
 
     .src_chipid(mychipid),
 
-    .data(msg_data_S3)
+    .data(msg_data_S3),
+    .int_id(int_id_S3)
 );
 
 assign stall_S3 = ~cep_rdy & val_S3;
 
 assign cep_val = val_S3;
-assign cep_data = 1'b0 ? pkg_S3 : cep_pkg_S3;
+assign cep_data = cep_pkg_S3;
 // TODO: fix this hack
 assign cep_chipid = is_req_S3 ? {{`CEP_CHIPID_WIDTH-1{1'b0}}, ~mychipid[0]} : resp_chipid_S3[`CEP_CHIPID_WIDTH-1:0];
 

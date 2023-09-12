@@ -208,6 +208,10 @@ always @(posedge clk) begin
             flit0[`MSG_TYPE] <= `MSG_TYPE_INTERRUPT;
 
             flit1[1:0] <= {went_up, second};
+            flit1[25:18] <= x_dst;
+            flit1[33:26] <= y_dst;
+            flit1[51:48] <= 4'b0; // processor
+            flit1[47:34] <= chipid_dst;
             flit1[17:16] <= PLIC ? 2'b10 : 2'b11;
         end
     end

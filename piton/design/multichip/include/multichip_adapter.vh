@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `define MA_SETS              256
 `define MA_SET_WIDTH         8 // log2(`MA_SETS)
 
-`define MA_TAG_WIDTH         32
+`define MA_TAG_WIDTH         34
 `define MA_STATE_WIDTH       1
 `define MA_SHARER_BITS_WIDTH 6
 `define MA_SHARER_SET_WIDTH  64

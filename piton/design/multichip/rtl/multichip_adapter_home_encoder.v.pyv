@@ -35,15 +35,24 @@ HOME_ID_WIDTH = 6
 
 module multichip_adapter_home_encoder(
     input wire [`MSG_ADDR_WIDTH-1:0] addr_in,
-    input wire is_int,
     //num_homes = 0 means have the maximum number of homes
     input wire [`HOME_ID_WIDTH-1:0] num_homes,
-    output wire [`NOC_X_WIDTH-1:0] home_x_out,
-    output wire [`NOC_Y_WIDTH-1:0] home_y_out
+    output reg [`NOC_X_WIDTH-1:0] home_x_out,
+    output reg [`NOC_Y_WIDTH-1:0] home_y_out
 );
 
+wire is_int = addr_in[`MSG_ADDR_WIDTH-1];
 wire [`NOC_X_WIDTH-1:0] int_x = addr_in[`NOC_X_WIDTH+1:2];
 wire [`NOC_Y_WIDTH-1:0] int_y = addr_in[`NOC_Y_WIDTH+`NOC_X_WIDTH+1:`NOC_X_WIDTH+2];
+
+wire is_onchip_dev = (addr_in[39:33] == 7'b1110000);
+wire [`NOC_X_WIDTH-1:0] onchip_x = {4'b0, addr_in[`ON_CHIP_DEV_X_POS]};
+wire [`NOC_X_WIDTH-1:0] onchip_y = {4'b0, addr_in[`ON_CHIP_DEV_Y_POS]};
+
+wire is_rvic = (addr_in[39:28] == 12'he20);
+wire [`NOC_X_WIDTH-1:0] rvic_x = `NOC_X_WIDTH'b0;
+wire [`NOC_X_WIDTH-1:0] rvic_y = `NOC_Y_WIDTH'b0;
+
 
 wire [`HOME_ID_WIDTH-1:0] home_bits = addr_in[`HOME_ID_ADDR_POS_LOW] ^ addr_in[`HOME_ID_ADDR_POS_MIDDLE];
 
@@ -123,7 +132,24 @@ flat_id_to_xy xycoords(
     .y_coord(mem_y)
 );
 
-assign home_x_out = is_int ? int_x : mem_x;
-assign home_y_out = is_int ? int_y : mem_y;
+always @ *
+begin
+    if (is_int) begin
+        home_x_out = int_x;
+        home_y_out = int_y;
+    end
+    else if (is_rvic) begin
+        home_x_out = rvic_x;
+        home_y_out = rvic_y;
+    end
+    else if (is_onchip_dev) begin
+        home_x_out = onchip_x;
+        home_y_out = onchip_y;
+    end
+    else begin
+        home_x_out = mem_x;
+        home_y_out = mem_y;
+    end
+end
 
 endmodule

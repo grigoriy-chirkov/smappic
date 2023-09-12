@@ -43,18 +43,22 @@
 `define CEP_DATA_SIZE_WIDTH      3
 `define CEP_CACHE_TYPE_WIDTH     1
 `define CEP_ADDR_WIDTH          48
+`define CEP_INT_ID_WIDTH        64
 
 `define CEP_LAST_SUBLINE         0
 `define CEP_SUBLINE_ID          2:1
 `define CEP_IS_REQ               3
-`define CEP_MESI                5:4
-`define CEP_MSHRID             13:6
-`define CEP_MSG_TYPE           21:14
-`define CEP_LENGTH             29:22
-`define CEP_DATA_SIZE          32:30
-`define CEP_CACHE_TYPE          33
-`define CEP_ADDR               81:34
-`define CEP_SRC_CHIPID         86:82
+`define CEP_IS_RESP              4
+`define CEP_IS_INT               5
+`define CEP_MESI                7:6
+`define CEP_MSHRID             15:8
+`define CEP_MSG_TYPE           23:16
+`define CEP_LENGTH             31:24
+`define CEP_DATA_SIZE          34:32
+`define CEP_CACHE_TYPE          35
+`define CEP_SRC_CHIPID         39:35
+`define CEP_ADDR               87:40
+`define CEP_INT_ID            127:64
 
 `define CEP_WORD_WIDTH          64
 

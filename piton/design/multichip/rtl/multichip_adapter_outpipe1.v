@@ -107,11 +107,10 @@ wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1 = pkg_S1[`MSG_CACHE_TYPE];
 wire [`MSG_MESI_WIDTH-1:0] mesi_S1 = pkg_S1[`MSG_MESI];
 wire [`MSG_LENGTH_WIDTH-1:0] length_S1 = pkg_S1[`MSG_LENGTH];
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[`PKG_DATA_WIDTH-1:3*`CEP_WORD_WIDTH]};
-
-wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
-wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
-                 (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
-wire do_rd_tag_S1 = ~nc_msg_S1 & ~int_msg_S1;
+wire is_int_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
+wire is_req_S1 = ~is_int_S1;
+wire [`MSG_INT_ID_WIDTH-1:0] int_id_S1 = pkg_S1[`MSG_INT_ID];
+wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_INTERRUPT_FWD) & (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ);
 assign dir_rd_en = 1'b0;
 assign dir_rd_addr = `MA_ADDR_WIDTH'b0;
 
@@ -120,6 +119,8 @@ assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1 -> 2
 
+reg is_req_S2;
+reg is_int_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
@@ -132,6 +133,7 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -148,6 +150,9 @@ always @(posedge clk) begin
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
+        int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
+        is_req_S2 <= 1'b0;
+        is_int_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
@@ -163,6 +168,9 @@ always @(posedge clk) begin
         mesi_S2 <= mesi_S1;
         length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
+        int_id_S2 <= int_id_S1;
+        is_req_S2 <= is_req_S1;
+        is_int_S2 <= is_int_S1;
     end 
 end
 
@@ -171,9 +179,8 @@ end
 wire val_S3_next = val_S2 & ~stall_S2;
 wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ ) | 
                  (msg_type_S2 == `MSG_TYPE_NC_STORE_REQ) ;
-wire int_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
 
-wire do_write_mshr_S2 = ~int_msg_S2;
+wire do_write_mshr_S2 = is_req_S2;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;
 
@@ -218,6 +225,9 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
+reg is_int_S3;
+reg is_req_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -230,6 +240,9 @@ always @(posedge clk) begin
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
         length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
+        int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
+        is_int_S3 <= 1'b0;
+        is_req_S3 <= 1'b0;
     end
     else if (~stall_S3) begin
         val_S3 <= val_S3_next;
@@ -241,24 +254,21 @@ always @(posedge clk) begin
         mesi_S3 <= mesi_S2;
         length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
+        int_id_S3 <= int_id_S2;
+        is_int_S3 <= is_int_S2;
+        is_req_S3 <= is_req_S2;
     end 
 end
 
-wire [`CEP_CHIPID_WIDTH-1:0] dst_chipid_S3;
-multichip_adapter_numa_encoder numa_encoder(
-    .addr_in(addr_S3),
-    .chipid_out(dst_chipid_S3)
-);
-
 // Stage 3
-
-wire int_msg_S3 = (msg_type_S3 == `MSG_TYPE_INTERRUPT_FWD);
 
 wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(1'b1),
+    .is_request(is_req_S3),
+    .is_response(1'b0),
+    .is_int(is_int_S3),
     .last_subline(1'b0),
     .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
     .mesi(mesi_S3),
@@ -272,15 +282,20 @@ cep_encoder cep_encoder(
 
     .src_chipid(mychipid),
 
-    .data(msg_data_S3)
+    .data(msg_data_S3),
+    .int_id(int_id_S3)
 );
 
 assign stall_S3 = ~cep_rdy & val_S3;
 
 assign cep_data = cep_pkg_S3;
 assign cep_val = val_S3;
-wire [`MSG_DST_CHIPID_WIDTH-1:0] int_chipid_S3 = addr_S3[31:18];
-assign cep_chipid = int_msg_S3 ? int_chipid_S3[`CEP_CHIPID_WIDTH-1:0] : dst_chipid_S3;
+
+multichip_adapter_numa_encoder numa_encoder(
+    .addr_in(addr_S3),
+    .chipid_out(cep_chipid)
+);
+
 
 // sanity checks 
 

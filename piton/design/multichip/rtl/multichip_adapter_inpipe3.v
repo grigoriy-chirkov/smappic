@@ -67,6 +67,8 @@ reg val_S3;
 wire val_S2_next = val_S1 & ~stall_S1;
 
 wire is_req_S1;
+wire is_resp_S1;
+wire is_int_S1;
 wire [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline_S1;
 wire [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
@@ -78,11 +80,14 @@ wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
 wire [`CEP_CHIPID_WIDTH-1:0] src_chipid_S1;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
+wire [`CEP_INT_ID_WIDTH-1:0] int_id_S1;
 
 cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_request(is_req_S1),
+    .is_response(is_resp_S1),
+    .is_int(is_int_S1),
     .last_subline(last_subline_S1),
     .subline_id(subline_id_S1),
     .mesi(mesi_S1),
@@ -96,12 +101,11 @@ cep_decoder cep_decoder(
 
     .src_chipid(src_chipid_S1),
 
-    .data(msg_data_S1)
+    .data(msg_data_S1),
+    .int_id(int_id_S1)
 );
 
 
-wire [`CEP_DATA_WIDTH-1:0] pkg_S1 = cep_data;
-wire is_resp_S1 = ~is_req_S1;
 assign val_S1 = cep_val;
 assign cep_rdy = ~stall_S1;
 
@@ -109,7 +113,6 @@ assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1-> 2
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
@@ -127,7 +130,6 @@ reg is_resp_S2;
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S2 <= 1'b0;
-        pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
@@ -144,7 +146,6 @@ always @(posedge clk) begin
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
-        pkg_S2 <= pkg_S1;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
         src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
@@ -209,7 +210,6 @@ assign stall_S2 = stall_S3 & val_S2;
 
 // Stage 2-> 3
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
@@ -229,7 +229,6 @@ reg is_resp_S3;
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S3 <= 1'b0;
-        pkg_S3 <= `PKG_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `MSG_ADDR_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
@@ -248,7 +247,6 @@ always @(posedge clk) begin
     end
     else if (~stall_S3) begin
         val_S3 <= val_S3_next;
-        pkg_S3 <= pkg_S2;
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
         data_size_S3 <= data_size_S2;
@@ -273,6 +271,8 @@ wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(is_req_S3),
+    .is_response(is_resp_S3),
+    .is_int(1'b0),
 
     .last_subline(last_subline_S3),
     .subline_id(subline_id_S3),
@@ -289,6 +289,7 @@ multichip_adapter_noc_encoder noc_encoder(
     .cache_type(cache_type_S3),
     .subline_vector(`MSG_SUBLINE_VECTOR_WIDTH'b0),
     .addr(addr_S3),
+    .int_id(`MSG_INT_ID_WIDTH'b0),
 
     .src_fbits(`NOC_FBITS_L1),
     .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
@@ -310,7 +311,7 @@ noc_serializer noc_serializer(
     .flit_rdy(noc_rdy),
 
     .pkg_val(val_S3), 
-    .pkg_data(1'b0 ? pkg_S3 : noc_pkg_S3),
+    .pkg_data(noc_pkg_S3),
     .pkg_rdy(pkg_rdy)
 );
 

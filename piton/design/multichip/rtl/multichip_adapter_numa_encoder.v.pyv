@@ -34,25 +34,35 @@ from pyhplib import *
 %>
 
 module multichip_adapter_numa_encoder(
-    // input wire clk,
-    // input wire rst_n,
     input wire [`MSG_ADDR_WIDTH-1:0] addr_in,
     output reg [`CEP_CHIPID_WIDTH-1:0] chipid_out
 );
 
 always @(*) begin
-    if (addr_in[`PHY_ADDR_WIDTH-1] == 1'b1) // device access, always node 0
+    if (addr_in[`MSG_ADDR_WIDTH-1] == 1'b1) begin // intercore interrupt
         chipid_out = `CEP_CHIPID_WIDTH'd0;
+        chipid_out = addr_in[31:18];
+    end
+    else if (addr_in[39:28] == 12'he20) begin // rvic access
+        chipid_out = `CEP_CHIPID_WIDTH'd0;
+    end
+    else if (addr_in[39:33] == 7'b1110000) begin // on-chip device access
+        chipid_out = `CEP_CHIPID_WIDTH'd0;
+        chipid_out = addr_in[`ON_CHIP_DEV_CHIPID_POS];
+    end
+    else if (addr_in[`PHY_ADDR_WIDTH-1] == 1'b1) begin // off-chip device access, always node 0
+        chipid_out = `CEP_CHIPID_WIDTH'd0;
+    end
 
 <%
 for i in range(PITON_NUM_CHIPS_SM):
-    print("    else if (addr_in < `MSG_ADDR_WIDTH'h%x)" % (PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1)))
+    print("    else if (addr_in < `MSG_ADDR_WIDTH'h%x) begin" % (PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1)))
     print("        chipid_out = `CEP_CHIPID_WIDTH'd%d;" % i)
-    print("")
+    print("    end")
 %>
     else // send to 0 by default
         chipid_out = `CEP_CHIPID_WIDTH'd0;
-
+      
 end
 
 endmodule

@@ -116,7 +116,6 @@ assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1 -> 2
 
-reg [`PKG_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
@@ -137,7 +136,6 @@ reg is_resp_S2;
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S2 <= 1'b0;
-        pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_x_S2 <= `MSG_SRC_X_WIDTH'b0;
@@ -157,7 +155,6 @@ always @(posedge clk) begin
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
-        pkg_S2 <= pkg_S1;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
         src_x_S2 <= src_x_S1;
@@ -262,7 +259,6 @@ assign stall_S2 = stall_S3 & val_S2;
 // Stage 2 -> 3
 
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
@@ -280,7 +276,6 @@ reg is_resp_S3;
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S3 <= 1'b0;
-        pkg_S3 <= `CEP_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `MSG_ADDR_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
@@ -297,7 +292,6 @@ always @(posedge clk) begin
     end
     else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
-        pkg_S3 <= pkg_S2;
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
         data_size_S3 <= data_size_S2;
@@ -362,7 +356,9 @@ wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(1'b0),
+    .is_request(is_req_S3),
+    .is_response(is_resp_S3),
+    .is_int(1'b0),
     .last_subline(send_last_subline_S3),
     .subline_id(send_subline_id_S3),
     .mesi(mesi_S3),
@@ -376,7 +372,8 @@ cep_encoder cep_encoder(
 
     .src_chipid(mychipid),
 
-    .data({{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]})
+    .data({{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]}),
+    .int_id(`CEP_INT_ID_WIDTH'b0)
 );
 
 assign cep_val = val_S3;

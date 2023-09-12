@@ -95,6 +95,8 @@ wire recycle_S3;
 wire val_S2_next = val_S1 & ~stall_S1;
 
 wire is_req_S1;
+wire is_resp_S1;
+wire is_int_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
@@ -104,11 +106,14 @@ wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
 wire [`CEP_CHIPID_WIDTH-1:0] src_chipid_S1;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
+wire [`CEP_INT_ID_WIDTH-1:0] int_id_S1;
 
 cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_request(is_req_S1),
+    .is_response(is_resp_S1),
+    .is_int(is_int_S1),
     .last_subline(),
     .subline_id(),
     .mesi(mesi_S1),
@@ -122,17 +127,13 @@ cep_decoder cep_decoder(
 
     .src_chipid(src_chipid_S1),
 
-    .data(msg_data_S1)
+    .data(msg_data_S1),
+    .int_id(int_id_S1)
 );
 
-wire [`CEP_DATA_WIDTH-1:0] pkg_S1 = cep_data;
 assign val_S1 = cep_val;
 assign cep_rdy = ~stall_S1;
 
-wire nc_msg_S1 = (msg_type_S1 == `MSG_TYPE_NC_LOAD_REQ) |
-                 (msg_type_S1 == `MSG_TYPE_NC_STORE_REQ);
-wire int_msg_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT);
-wire is_resp_S1 = ~is_req_S1;
 
 wire do_read_mshr_S1 = is_resp_S1;
 assign mshr_out_write_en = val_S1 & ~stall_S1 & do_read_mshr_S1;
@@ -172,7 +173,7 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .data3()
 );
 
-wire do_rd_tag_S1 = ~nc_msg_S1 & ~int_msg_S1;
+wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ) & (msg_type_S1 != `MSG_TYPE_INTERRUPT);
 assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
 assign dir_rd_addr = is_resp_S1 ? resp_addr_S1 : addr_S1;
 
@@ -180,7 +181,6 @@ assign stall_S1 = stall_S2 & val_S1;
 
 // Stage 1-> 2
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
@@ -194,13 +194,14 @@ reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S2;
 reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S2;
 reg [`MSG_SRC_Y_WIDTH-1:0] resp_y_S2;
 reg [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S2;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 reg is_req_S2;
 reg is_resp_S2;
+reg is_int_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S2 <= 1'b0;
-        pkg_S2 <= `PKG_DATA_WIDTH'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
@@ -214,12 +215,13 @@ always @(posedge clk) begin
         resp_x_S2 <= `MSG_SRC_X_WIDTH'b0;
         resp_y_S2 <= `MSG_SRC_Y_WIDTH'b0;
         resp_fbits_S2 <= `MSG_SRC_FBITS_WIDTH'b0;
+        int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S2 <= 1'b0;
         is_resp_S2 <= 1'b0;
+        is_int_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
-        pkg_S2 <= pkg_S1;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
         src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
@@ -233,8 +235,10 @@ always @(posedge clk) begin
         resp_x_S2 <= resp_x_S1;
         resp_y_S2 <= resp_y_S1;
         resp_fbits_S2 <= resp_fbits_S1;
+        int_id_S2 <= int_id_S1;
         is_req_S2 <= is_req_S1;
         is_resp_S2 <= is_resp_S1;
+        is_int_S2 <= is_int_S1;
     end
 end
 
@@ -313,7 +317,6 @@ assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 
 // Stage 2-> 3
 
-reg [`CEP_DATA_WIDTH-1:0] pkg_S3;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
@@ -326,13 +329,14 @@ reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S3;
 reg [`MSG_SRC_Y_WIDTH-1:0] resp_y_S3;
 reg [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S3;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 reg is_req_S3;
 reg is_resp_S3;
+reg is_int_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         val_S3 <= 1'b0;
-        pkg_S3 <= `PKG_DATA_WIDTH'b0;
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `MSG_ADDR_WIDTH'b0;
         mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
@@ -345,12 +349,13 @@ always @(posedge clk) begin
         resp_x_S3 <= `MSG_SRC_X_WIDTH'b0;
         resp_y_S3 <= `MSG_SRC_Y_WIDTH'b0;
         resp_fbits_S3 <= `MSG_SRC_FBITS_WIDTH'b0;
+        int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S3 <= 1'b0;
         is_resp_S3 <= 1'b0;
+        is_int_S3 <= 1'b0;
     end
     else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
-        pkg_S3 <= pkg_S2;
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
         mshrid_S3 <= {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
@@ -363,8 +368,10 @@ always @(posedge clk) begin
         resp_x_S3 <= resp_x_S2;
         resp_y_S3 <= resp_y_S2;
         resp_fbits_S3 <= resp_fbits_S2;
+        int_id_S3 <= int_id_S2;
         is_req_S3 <= is_req_S2;
         is_resp_S3 <= is_resp_S2;
+        is_int_S3 <= is_int_S2;
     end
 end
 
@@ -406,21 +413,33 @@ flat_id_to_xy flat_id_to_xy(
     .flat_id(fwd_target_id_S3)
 );
 
+wire [`MSG_DST_X_WIDTH-1:0] int_target_x_S3 = int_id_S3[25:18];
+wire [`MSG_DST_Y_WIDTH-1:0] int_target_y_S3 = int_id_S3[33:26];
+wire [`MSG_DST_FBITS_WIDTH-1:0] int_target_fbits_S3 = int_id_S3[51:48];
+
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3 = is_resp_S3 ? resp_x_S3 : 
+                                       is_int_S3 ? int_target_x_S3 :
                                        fwd_routine_S3 ? fwd_target_x_S3 :
                                        `MSG_DST_X_WIDTH'b0;
 wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3 = is_resp_S3 ? resp_y_S3 :
-                                        fwd_routine_S3 ? fwd_target_y_S3 :
-                                        `MSG_DST_Y_WIDTH'b0;
+                                       is_int_S3 ? int_target_y_S3 :
+                                       fwd_routine_S3 ? fwd_target_y_S3 :
+                                       `MSG_DST_Y_WIDTH'b0;
 wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_resp_S3 ? resp_fbits_S3 :
+                                               is_int_S3 ? int_target_fbits_S3 :
                                                fwd_routine_S3 ? `NOC_FBITS_L1 :
                                                `NOC_FBITS_MEM;
-wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : mshrid_S3;
+
+wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : 
+                                             is_int_S3 ? `MSG_MSHRID_WIDTH'b0 :
+                                             mshrid_S3;
 
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(is_req_S3),
+    .is_response(is_resp_S3),
+    .is_int(is_int_S3),
 
     .last_subline(1'b0),
     .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
@@ -437,6 +456,7 @@ multichip_adapter_noc_encoder noc_encoder(
     .cache_type(cache_type_S3),
     .subline_vector({`MSG_SUBLINE_VECTOR_WIDTH{1'b1}}),
     .addr(addr_S3),
+    .int_id(int_id_S3),
 
     .src_fbits(`NOC_FBITS_L2),
     .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
@@ -457,7 +477,7 @@ noc_serializer noc_serializer(
     .flit_rdy(noc_rdy),
 
     .pkg_val(val_S3), 
-    .pkg_data(1'b0 ? pkg_S3 : noc_pkg_S3),
+    .pkg_data(noc_pkg_S3),
     .pkg_rdy(pkg_rdy)
 );
 

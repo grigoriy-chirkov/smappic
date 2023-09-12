@@ -32,6 +32,8 @@ module cep_encoder(
     output reg [`CEP_DATA_WIDTH-1:0] cep_pkg,
 
     input wire is_request,
+    input wire is_response,
+    input wire is_int,
 
     input wire [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline,
     input wire [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id,
@@ -45,7 +47,8 @@ module cep_encoder(
     input wire [`CEP_ADDR_WIDTH-1:0] addr,
     input wire [`CEP_CHIPID_WIDTH-1:0] src_chipid,
 
-    input wire [7*`CEP_WORD_WIDTH-1:0] data
+    input wire [7*`CEP_WORD_WIDTH-1:0] data,
+    input wire [`CEP_INT_ID_WIDTH-1:0] int_id
 );
 
 
@@ -61,6 +64,8 @@ begin
     cep_pkg[`CEP_MSG_TYPE] = msg_type;
     cep_pkg[`CEP_LENGTH] = length;
     cep_pkg[`CEP_IS_REQ] = is_request;
+    cep_pkg[`CEP_IS_INT] = is_int;
+    cep_pkg[`CEP_IS_RESP] = is_response;
 
     if (is_request) begin
         cep_pkg[`CEP_DATA_SIZE] = data_size;
@@ -74,7 +79,10 @@ begin
         cep_pkg[7*`CEP_WORD_WIDTH-1:6*`CEP_WORD_WIDTH] = data[4*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH];
         cep_pkg[8*`CEP_WORD_WIDTH-1:7*`CEP_WORD_WIDTH] = data[5*`CEP_WORD_WIDTH-1:4*`CEP_WORD_WIDTH];
     end
-    else begin
+    else if (is_int) begin
+        cep_pkg[`CEP_INT_ID] = int_id;
+    end
+    else if (is_response) begin
         cep_pkg[2*`CEP_WORD_WIDTH-1:1*`CEP_WORD_WIDTH] = data[1*`CEP_WORD_WIDTH-1:0*`CEP_WORD_WIDTH];
         cep_pkg[3*`CEP_WORD_WIDTH-1:2*`CEP_WORD_WIDTH] = data[2*`CEP_WORD_WIDTH-1:1*`CEP_WORD_WIDTH];
         cep_pkg[4*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH] = data[3*`CEP_WORD_WIDTH-1:2*`CEP_WORD_WIDTH];

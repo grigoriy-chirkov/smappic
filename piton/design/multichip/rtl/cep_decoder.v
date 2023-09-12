@@ -32,6 +32,8 @@ module cep_decoder(
     input wire [`CEP_DATA_WIDTH-1:0] cep_pkg,
 
     output reg is_request,
+    output reg is_response,
+    output reg is_int,
     output reg [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline,
     output reg [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id,
     output reg [`CEP_MESI_WIDTH-1:0] mesi,
@@ -44,7 +46,8 @@ module cep_decoder(
     output reg [`CEP_ADDR_WIDTH-1:0] addr,
     output reg [`CEP_CHIPID_WIDTH-1:0] src_chipid,
 
-    output reg [7*`CEP_WORD_WIDTH-1:0] data
+    output reg [7*`CEP_WORD_WIDTH-1:0] data,
+    output reg [`CEP_INT_ID_WIDTH-1:0] int_id
 );
 
 
@@ -58,13 +61,17 @@ begin
     msg_type = cep_pkg[`CEP_MSG_TYPE];
     length = cep_pkg[`CEP_LENGTH];
     is_request = cep_pkg[`CEP_IS_REQ];
+    is_response = cep_pkg[`CEP_IS_RESP];
+    is_int = cep_pkg[`CEP_IS_INT];
 
     data_size = cep_pkg[`CEP_DATA_SIZE];
     cache_type = cep_pkg[`CEP_CACHE_TYPE];
     addr = cep_pkg[`CEP_ADDR];
     src_chipid = cep_pkg[`CEP_SRC_CHIPID];
+    int_id = cep_pkg[`CEP_INT_ID];
 
     data = {7*`CEP_WORD_WIDTH{1'b0}};
+
     if (is_request) begin
         data[1*`CEP_WORD_WIDTH-1:0*`CEP_WORD_WIDTH] = cep_pkg[4*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH];
         data[2*`CEP_WORD_WIDTH-1:1*`CEP_WORD_WIDTH] = cep_pkg[5*`CEP_WORD_WIDTH-1:4*`CEP_WORD_WIDTH];

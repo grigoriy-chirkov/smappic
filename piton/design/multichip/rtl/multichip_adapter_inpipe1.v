@@ -66,7 +66,9 @@ reg val_S3;
 
 wire val_S2_next = val_S1 & ~stall_S1;
 
-wire is_request_S1;
+wire is_req_S1;
+wire is_resp_S1;
+wire is_int_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
@@ -76,11 +78,14 @@ wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
 wire [`CEP_CHIPID_WIDTH-1:0] src_chipid_S1;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
+wire [`CEP_INT_ID_WIDTH-1:0] int_id_S1;
 
 cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
-    .is_request(is_request_S1),
+    .is_request(is_req_S1),
+    .is_response(is_resp_S1),
+    .is_int(is_int_S1),
     .last_subline(),
     .subline_id(),
     .mesi(mesi_S1),
@@ -94,7 +99,8 @@ cep_decoder cep_decoder(
 
     .src_chipid(src_chipid_S1),
 
-    .data(msg_data_S1)
+    .data(msg_data_S1),
+    .int_id(int_id_S1)
 );
 
 
@@ -114,6 +120,9 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
+reg is_int_S2;
+reg is_req_S2;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -127,6 +136,9 @@ always @(posedge clk) begin
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
+        is_int_S2 <= 1'b0;
+        is_req_S2 <= 1'b0;
+        int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
@@ -139,14 +151,16 @@ always @(posedge clk) begin
         mesi_S2 <= mesi_S1;
         length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
+        is_int_S2 <= is_int_S1;
+        is_req_S2 <= is_req_S1;
+        int_id_S2 <= int_id_S1;
     end
 end
 
 // Stage 2
 
 wire val_S3_next = val_S2 & ~stall_S2;
-wire int_msg_S2 = (msg_type_S2 == `MSG_TYPE_INTERRUPT_FWD);
-wire do_write_mshr_S2 = ~int_msg_S2;
+wire do_write_mshr_S2 = is_req_S2;
 
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;
@@ -193,6 +207,9 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
+reg is_int_S3;
+reg is_req_S3;
+reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -205,6 +222,9 @@ always @(posedge clk) begin
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
         length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
+        is_int_S3 <= 1'b0;
+        is_req_S3 <= 1'b0;
+        int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
     end
     else if (~stall_S3) begin
         val_S3 <= val_S3_next;
@@ -216,36 +236,47 @@ always @(posedge clk) begin
         mesi_S3 <= mesi_S2;
         length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
+        is_int_S3 <= is_int_S2;
+        is_req_S3 <= is_req_S2;
+        int_id_S3 <= int_id_S2;
     end
 end
 
 
 // Stage 3
 
-wire int_msg_S3 = (msg_type_S3 == `MSG_TYPE_INTERRUPT_FWD);
-
-wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3;
-wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3;
+wire [`MSG_DST_X_WIDTH-1:0] home_x_S3;
+wire [`MSG_DST_Y_WIDTH-1:0] home_y_S3;
 multichip_adapter_home_encoder home_encoder(
     .addr_in(addr_S3),
-    .is_int(int_msg_S3),
     .num_homes(6'd`PITON_NUM_TILES),
-    .home_x_out(dst_x_S3),
-    .home_y_out(dst_y_S3)
+    .home_x_out(home_x_S3),
+    .home_y_out(home_y_S3)
 );
+
+wire [`MSG_DST_X_WIDTH-1:0] int_target_x_S3 = int_id_S3[25:18];
+wire [`MSG_DST_Y_WIDTH-1:0] int_target_y_S3 = int_id_S3[33:26];
+wire [`MSG_DST_FBITS_WIDTH-1:0] int_target_fbits_S3 = int_id_S3[51:48];
+
+wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3 = is_int_S3 ? int_target_x_S3 : home_x_S3;
+wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3 = is_int_S3 ? int_target_y_S3 : home_y_S3;
+wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_int_S3 ? int_target_fbits_S3 : `NOC_FBITS_L2;
+wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_int_S3 ? `MSG_MSHRID_WIDTH'b0 : mshrid_S3;
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
-    .is_request(1'b1),
+    .is_request(is_req_S3),
+    .is_int(is_int_S3),
+    .is_response(1'b0),
 
     .last_subline(1'b0),
     .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
     .mesi(mesi_S3),
-    .mshrid(mshrid_S3),
+    .mshrid(dst_mshrid_S3),
     .msg_type(msg_type_S3),
     .length(length_S3),
-    .dst_fbits(`NOC_FBITS_L2),
+    .dst_fbits(dst_fbits_S3),
     .dst_x(dst_x_S3),
     .dst_y(dst_y_S3),
     .dst_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
@@ -254,6 +285,7 @@ multichip_adapter_noc_encoder noc_encoder(
     .cache_type(cache_type_S3),
     .subline_vector(`MSG_SUBLINE_VECTOR_WIDTH'b0),
     .addr(addr_S3),
+    .int_id(int_id_S3),
 
     .src_fbits(`NOC_FBITS_L1),
     .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
