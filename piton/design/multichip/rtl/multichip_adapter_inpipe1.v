@@ -67,7 +67,6 @@ reg val_S3;
 wire val_S2_next = val_S1 & ~stall_S1;
 
 wire is_req_S1;
-wire is_resp_S1;
 wire is_int_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
@@ -84,7 +83,7 @@ cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_request(is_req_S1),
-    .is_response(is_resp_S1),
+    .is_response(),
     .is_int(is_int_S1),
     .last_subline(),
     .subline_id(),

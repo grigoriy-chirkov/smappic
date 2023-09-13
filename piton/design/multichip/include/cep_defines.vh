@@ -34,14 +34,14 @@
 `define PKG_DATA_WIDTH  `CEP_DATA_WIDTH
 `define CEP_CHIPID_WIDTH 5
 
-`define CEP_LAST_SUBLINE_WIDTH   1
-`define CEP_SUBLINE_ID_WIDTH     2
-`define CEP_MESI_WIDTH           2
+`define CEP_LAST_SUBLINE_WIDTH   1 // remove
+`define CEP_SUBLINE_ID_WIDTH     2 // remove
+`define CEP_MESI_WIDTH           2 // check (probably not)
 `define CEP_MSHRID_WIDTH         8   
 `define CEP_MSG_TYPE_WIDTH       8
-`define CEP_LENGTH_WIDTH         8
+`define CEP_LENGTH_WIDTH         8 // check (probably not)
 `define CEP_DATA_SIZE_WIDTH      3
-`define CEP_CACHE_TYPE_WIDTH     1
+`define CEP_CACHE_TYPE_WIDTH     1 // check (probably yes)
 `define CEP_ADDR_WIDTH          48
 `define CEP_INT_ID_WIDTH        64
 

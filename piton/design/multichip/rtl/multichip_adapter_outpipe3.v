@@ -109,8 +109,7 @@ wire is_resp_S1 = (msg_type_S1 == `MSG_TYPE_LOAD_FWDACK)     |
                  (msg_type_S1 == `MSG_TYPE_STORE_MEM_ACK)   |
                  (msg_type_S1 == `MSG_TYPE_NC_LOAD_MEM_ACK) |
                  (msg_type_S1 == `MSG_TYPE_NC_STORE_MEM_ACK);
-wire is_req_S1 = 1'b0;
-wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = is_req_S1 ? {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[8*`CEP_WORD_WIDTH-1:3*`CEP_WORD_WIDTH]} : pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH];
+wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH];
 
 assign stall_S1 = stall_S2 & val_S1;
 
@@ -130,7 +129,6 @@ reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
-reg is_req_S2;
 reg is_resp_S2;
 
 always @(posedge clk) begin
@@ -150,7 +148,6 @@ always @(posedge clk) begin
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
-        is_req_S2 <= 1'b0;
         is_resp_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
@@ -169,7 +166,6 @@ always @(posedge clk) begin
         mesi_S2 <= mesi_S1;
         length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
-        is_req_S2 <= is_req_S1;
         is_resp_S2 <= is_resp_S1;
     end 
 end
@@ -270,7 +266,6 @@ reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`MSG_DST_CHIPID_WIDTH-1:0] resp_chipid_S3;
-reg is_req_S3;
 reg is_resp_S3;
 
 always @(posedge clk) begin
@@ -287,7 +282,6 @@ always @(posedge clk) begin
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_chipid_S3 <= `MSG_DST_CHIPID_WIDTH'b0;
-        is_req_S3 <= 1'b0;
         is_resp_S3 <= 1'b0;
     end
     else if (~stall_S3 & ~recycle_S3) begin
@@ -303,7 +297,6 @@ always @(posedge clk) begin
         msg_data_S3 <= msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_chipid_S3 <= resp_chipid_S2;
-        is_req_S3 <= is_req_S2;
         is_resp_S3 <= is_resp_S2;
     end
 end
@@ -356,7 +349,7 @@ wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(is_req_S3),
+    .is_request(1'b0),
     .is_response(is_resp_S3),
     .is_int(1'b0),
     .last_subline(send_last_subline_S3),
@@ -400,7 +393,7 @@ always @(posedge clk) begin
     end
     else begin
         mshr_err <= mshr_err | (mshr_write_en & (mshr_read_state == `MA_MSHR_STATE_INVAL));
-        nonresp_err <= nonresp_err | val_S1 & (is_req_S1 | ~is_resp_S1);
+        nonresp_err <= nonresp_err | val_S1 & ~is_resp_S1;
         chipid_err <= chipid_err | (cep_val & (cep_chipid == mychipid));
     end
 end
