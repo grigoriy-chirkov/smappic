@@ -249,6 +249,7 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0]        msg_cache_type;
 reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0]    msg_subline_vector;
 reg [`MSG_DATA_SIZE_WIDTH-1:0]         msg_data_size;
 reg [5:0] t1_interrupt_cpuid;
+reg [`MSG_DST_CHIPID_WIDTH-1:0]        int_chipid;
 always @ *
 begin
    msg_length = 0;
@@ -272,9 +273,9 @@ begin
    // Set fbits for on-chip device access according to the fbits field in addr
    // For interrupt controller access, hard code the fbits.
    // otherwise set fbits to 0 (target L2)
-   msg_dest_fbits = (noc1buffer_noc1encoder_req_address[39:33] == 7'b1110000) ?
+   msg_dest_fbits = (noc1buffer_noc1encoder_req_address[39:36] == 4'he) ?
                     noc1buffer_noc1encoder_req_address[`ON_CHIP_DEV_FBITS] :
-          ((noc1buffer_noc1encoder_req_address[39:28]==12'he20) ? `NOC_FBITS_PLIC 
+          ((noc1buffer_noc1encoder_req_address[39:36]==4'hd) ? `NOC_FBITS_PLIC 
             : `NOC_FBITS_L2);
 
    // default value for a message, will be overwritten by interrupt reqs
@@ -285,6 +286,7 @@ begin
    // trin: removing latches
    msg_dest_l2_xpos_new = 0;
    msg_dest_l2_ypos_new = 0;
+   int_chipid = 0;
 
 
    case (req_type)
@@ -351,11 +353,12 @@ begin
          msg_length = 1; // just 1 data
          control_raw_data_flit1 = 1'b1;
          t1_interrupt_cpuid = req_data0[14:9];
-         msg_dest_l2_xpos_new = req_data0[`NOC_X_WIDTH+17:18];
-         msg_dest_l2_ypos_new = req_data0[`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_X_WIDTH+18];
+         int_chipid = req_data0[63] ? req_data0[`NOC_CHIPID_WIDTH+`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_Y_WIDTH+`NOC_X_WIDTH+18] : `NOC_CHIPID_WIDTH'b0;
+         msg_dest_chipid = chipid;
+         msg_dest_l2_xpos_new = (int_chipid == chipid) ? req_data0[`NOC_X_WIDTH+17:18] : {`NOC_X_WIDTH{1'b1}};
+         msg_dest_l2_ypos_new = (int_chipid == chipid) ? req_data0[`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_X_WIDTH+18] : {`NOC_Y_WIDTH{1'b1}};
          msg_dest_l2_xpos = req_data0[63] ? msg_dest_l2_xpos_new : msg_dest_l2_xpos_compat; 
          msg_dest_l2_ypos = req_data0[63] ? msg_dest_l2_ypos_new : msg_dest_l2_ypos_compat; 
-         msg_dest_chipid  = req_data0[63] ? req_data0[`NOC_CHIPID_WIDTH+`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_Y_WIDTH+`NOC_X_WIDTH+18] : `NOC_CHIPID_WIDTH'b0;
       end
       `L15_NOC1_REQTYPE_LR_REQUEST:
       begin

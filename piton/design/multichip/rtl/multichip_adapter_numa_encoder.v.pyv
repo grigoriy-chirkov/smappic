@@ -43,14 +43,14 @@ always @(*) begin
         chipid_out = `CEP_CHIPID_WIDTH'd0;
         chipid_out = addr_in[31:18];
     end
-    else if (addr_in[39:28] == 12'he20) begin // rvic access
+    else if (addr_in[39:36] == 4'hd) begin // rvic access
         chipid_out = `CEP_CHIPID_WIDTH'd0;
     end
-    else if (addr_in[39:33] == 7'b1110000) begin // on-chip device access
+    else if (addr_in[39:36] == 4'he) begin // on-chip device access
         chipid_out = `CEP_CHIPID_WIDTH'd0;
         chipid_out = addr_in[`ON_CHIP_DEV_CHIPID_POS];
     end
-    else if (addr_in[`PHY_ADDR_WIDTH-1] == 1'b1) begin // off-chip device access, always node 0
+    else if (addr_in[39:36] == 4'hf) begin // off-chip device access, always node 0
         chipid_out = `CEP_CHIPID_WIDTH'd0;
     end
 

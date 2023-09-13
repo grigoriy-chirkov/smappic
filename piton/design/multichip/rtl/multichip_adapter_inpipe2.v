@@ -430,10 +430,7 @@ wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_resp_S3 ? resp_fbits_S3 :
                                                is_int_S3 ? int_target_fbits_S3 :
                                                fwd_routine_S3 ? `NOC_FBITS_L1 :
                                                `NOC_FBITS_MEM;
-
-wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : 
-                                             is_int_S3 ? `MSG_MSHRID_WIDTH'b0 :
-                                             mshrid_S3;
+wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : mshrid_S3;
 
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),

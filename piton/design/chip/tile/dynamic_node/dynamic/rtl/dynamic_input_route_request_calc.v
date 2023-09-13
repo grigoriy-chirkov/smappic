@@ -91,7 +91,6 @@ wire less_y;
 wire done_x;
 wire done_y;
 wire off_chip;
-wire interchip;
 wire to_ma;
 
 wire done;
@@ -110,9 +109,7 @@ wire south_calc;
 //assigns
 
 assign off_chip = abs_chip_id != my_chip_id_in;
-assign interchip = (abs_chip_id[`CHIP_ID_WIDTH-2:0] != my_chip_id_in[`CHIP_ID_WIDTH-2:0]);
 assign to_ma = ( (abs_x == {`XY_WIDTH{1'b1}}) & (abs_y == {`XY_WIDTH{1'b1}}) );
-// assign interchip = 1'b0;
 assign more_x = to_ma ? 1'b0 : off_chip ? `OFF_CHIP_NODE_X > my_loc_x_in : abs_x > my_loc_x_in;
 assign more_y = to_ma ? 1'b0 : off_chip ? `OFF_CHIP_NODE_Y > my_loc_y_in : abs_y > my_loc_y_in;
 
@@ -127,11 +124,11 @@ assign done = done_x & done_y;
 assign north_calc = done_x & less_y;
 assign south_calc = done_x & more_y;
 
-assign north = north_calc | ((final_bits == `FINAL_NORTH) & done) | (done & (interchip | to_ma));
-assign south = south_calc | ((final_bits == `FINAL_SOUTH) & done & ~(interchip | to_ma));
-assign east = more_x | ((final_bits == `FINAL_EAST) & done & ~(interchip | to_ma));
-assign west = less_x | ((final_bits == `FINAL_WEST) & done & ~(interchip | to_ma));
-assign proc = ((final_bits == `FINAL_NONE | final_bits == `FINAL_PLIC | final_bits == `FINAL_CLINT) & done & ~(interchip | to_ma));
+assign north = north_calc | ((final_bits == `FINAL_NORTH) & done) | (done & to_ma);
+assign south = south_calc | ((final_bits == `FINAL_SOUTH) & done & ~to_ma);
+assign east = more_x | ((final_bits == `FINAL_EAST) & done & ~to_ma);
+assign west = less_x | ((final_bits == `FINAL_WEST) & done & ~to_ma);
+assign proc = ((final_bits == `FINAL_NONE | final_bits == `FINAL_PLIC | final_bits == `FINAL_CLINT) & done & ~to_ma);
 
 assign route_req_n = header_in & north;
 assign route_req_e = header_in & east;

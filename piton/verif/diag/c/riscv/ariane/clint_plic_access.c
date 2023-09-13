@@ -18,18 +18,19 @@
 
 #define NHARTS       1
 #define PLIC_SOURCES 2
-#define CLINT_BASE   0xe100f00000ULL
+#define CLINT_BASE   0xe000f00000ULL
 //#define CLINT_BASE   0xfff1020000ULL
 //#define PLIC_BASE    0xfff1030000ULL
-#define PLIC_BASE    0xe200000000ULL
+#define PLIC_BASE    0xd000000000ULL
 
 
 int main(int argc, char ** argv) {
 
-  printf("Reading CLINT registers...\n");
   
-  // only use core 0 to perform test
-  if(argv[0][0] == 0) {
+  // only use core 1 to perform test
+  if(argv[0][0] == 1) {
+    printf("Reading CLINT registers...\n");
+
 
       uint64_t *addr;
       // misp registers
@@ -51,26 +52,25 @@ int main(int argc, char ** argv) {
           printf("CLINT: result = 0x%016x\n",*addr);
       }
 
-      // printf("Reading PLIC registers...\n");
-      // 
-      // volatile uint32_t val2;
-      // // priorities
-      // for (uint64_t k = 0; k < 128; k++) {
-      //     val2 = *(uint32_t*)((PLIC_BASE + 0x4)>>2 + k);
-      //     printf("PLIC: source prio %d = 0x%08x\n",k,val2);
-      // }
-      // // pending
-      // for (uint64_t k = 0; k < 5; k++) {
-      //     val2 = *(uint32_t*)((PLIC_BASE + 0x1000)>>2 + k);
-      //     printf("PLIC: pending %d = 0x%08x\n",k,val2);
-      // }
-      // // pending
-      // for (uint64_t i = 0; i < NHARTS; i++) {
-      //     for (uint64_t k = 0; k < 5; k++) {
-      //         val2 = *(uint32_t*)((PLIC_BASE + 0x2000)>>2 + k);
-      //         printf("PLIC: hart %d m-mode enable %d = 0x%08x\n",k,val2);
-      //     }      
-      // }
+      printf("Reading PLIC registers...\n");
+      
+      uint32_t* addr2;
+      // priorities
+      for (uint64_t k = 1; k < 5; k++) {
+          addr2 = (uint32_t*)(PLIC_BASE + k*4);
+          printf("PLIC: prio %d = addr 0x%08x 0x%08x\n",k,((uint64_t)addr2)>>32,((uint64_t)addr2) & 0xFFFFFFFF);
+          printf("PLIC: result = 0x%08x\n",*addr2);
+      }
+    // pending
+        addr2 = (uint32_t*)(PLIC_BASE + 0x0001000);
+        printf("PLIC: pending 0-31 = addr 0x%08x 0x%08x\n",((uint64_t)addr2)>>32,((uint64_t)addr2) & 0xFFFFFFFF);
+        printf("PLIC: result = 0x%08x\n",*addr2);
+      // enables
+      for (uint64_t i = 0; i < NHARTS; i++) {
+            addr2 = (uint32_t*)(PLIC_BASE + 0x0002000 + 0x80*i);
+            printf("PLIC: hart %d m-mode enable 0-31 = addr 0x%08x 0x%08x\n",i,((uint64_t)addr2)>>32,((uint64_t)addr2) & 0xFFFFFFFF);
+            printf("PLIC: result = 0x%08x\n",*addr2);
+      }
 
       printf("Done!\n");
   }

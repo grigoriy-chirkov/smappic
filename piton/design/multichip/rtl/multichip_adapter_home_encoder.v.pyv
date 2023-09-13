@@ -37,21 +37,26 @@ module multichip_adapter_home_encoder(
     input wire [`MSG_ADDR_WIDTH-1:0] addr_in,
     //num_homes = 0 means have the maximum number of homes
     input wire [`HOME_ID_WIDTH-1:0] num_homes,
-    output reg [`NOC_X_WIDTH-1:0] home_x_out,
-    output reg [`NOC_Y_WIDTH-1:0] home_y_out
+    input wire is_int,
+    input wire [`MSG_INT_ID_WIDTH-1:0] int_id,
+    output reg [`NOC_X_WIDTH-1:0] dst_x_out,
+    output reg [`NOC_Y_WIDTH-1:0] dst_y_out,
+    output reg [`NOC_FBITS_WIDTH-1:0] dst_fbits_out
 );
 
-wire is_int = addr_in[`MSG_ADDR_WIDTH-1];
-wire [`NOC_X_WIDTH-1:0] int_x = addr_in[`NOC_X_WIDTH+1:2];
-wire [`NOC_Y_WIDTH-1:0] int_y = addr_in[`NOC_Y_WIDTH+`NOC_X_WIDTH+1:`NOC_X_WIDTH+2];
+wire [`NOC_X_WIDTH-1:0] int_x = int_id[25:18];
+wire [`NOC_Y_WIDTH-1:0] int_y = int_id[33:26];
+wire [`NOC_FBITS_WIDTH-1:0] int_fbits = int_id[51:48];
 
-wire is_onchip_dev = (addr_in[39:33] == 7'b1110000);
+wire is_onchip_dev = (addr_in[39:36] == 4'he);
 wire [`NOC_X_WIDTH-1:0] onchip_x = {4'b0, addr_in[`ON_CHIP_DEV_X_POS]};
 wire [`NOC_X_WIDTH-1:0] onchip_y = {4'b0, addr_in[`ON_CHIP_DEV_Y_POS]};
+wire [`NOC_FBITS_WIDTH-1:0] onchip_fbits = addr_in[`ON_CHIP_DEV_FBITS];
 
-wire is_rvic = (addr_in[39:28] == 12'he20);
+wire is_rvic = (addr_in[39:36] == 4'hd);
 wire [`NOC_X_WIDTH-1:0] rvic_x = `NOC_X_WIDTH'b0;
 wire [`NOC_X_WIDTH-1:0] rvic_y = `NOC_Y_WIDTH'b0;
+wire [`NOC_FBITS_WIDTH-1:0] rvic_fbits = `NOC_FBITS_PLIC;
 
 
 wire [`HOME_ID_WIDTH-1:0] home_bits = addr_in[`HOME_ID_ADDR_POS_LOW] ^ addr_in[`HOME_ID_ADDR_POS_MIDDLE];
@@ -125,6 +130,7 @@ end
 
 wire [`NOC_X_WIDTH-1:0] mem_x;
 wire [`NOC_Y_WIDTH-1:0] mem_y;
+wire [`NOC_FBITS_WIDTH-1:0] mem_fbits;
 
 flat_id_to_xy xycoords(
     .flat_id(home_id),
@@ -132,23 +138,29 @@ flat_id_to_xy xycoords(
     .y_coord(mem_y)
 );
 
+assign mem_fbits = `NOC_FBITS_L2;
+
 always @ *
 begin
     if (is_int) begin
-        home_x_out = int_x;
-        home_y_out = int_y;
+        dst_x_out = int_x;
+        dst_y_out = int_y;
+        dst_fbits_out = int_fbits;
     end
     else if (is_rvic) begin
-        home_x_out = rvic_x;
-        home_y_out = rvic_y;
+        dst_x_out = rvic_x;
+        dst_y_out = rvic_y;
+        dst_fbits_out = rvic_fbits;
     end
     else if (is_onchip_dev) begin
-        home_x_out = onchip_x;
-        home_y_out = onchip_y;
+        dst_x_out = onchip_x;
+        dst_y_out = onchip_y;
+        dst_fbits_out = onchip_fbits;
     end
     else begin
-        home_x_out = mem_x;
-        home_y_out = mem_y;
+        dst_x_out = mem_x;
+        dst_y_out = mem_y;
+        dst_fbits_out = mem_fbits;
     end
 end
 

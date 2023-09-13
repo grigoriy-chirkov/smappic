@@ -10,7 +10,7 @@
 #ifdef CLINT_BASE
   #undef CLINT_BASE
 #endif
-#define CLINT_BASE   0xe100f00000ULL
+#define CLINT_BASE   0xe000f00000ULL
 #define NCORES (PITON_NUMTILES * PITON_NUMCHIPS)
 
 uint64_t *mtimecmp = (uint64_t*)(CLINT_BASE + 0x4000);

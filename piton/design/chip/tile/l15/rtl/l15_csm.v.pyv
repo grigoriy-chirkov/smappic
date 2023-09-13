@@ -248,10 +248,10 @@ l15_home_encoder    l15_home_encoder(
 always @(*) begin
 `ifdef PITON_RVIC
     // We make the interrupt controller a special on-chip device.
-    // Different from other on-chip devices (addr starts from 0xe1 and 0xe0),
-    // the address mapped to interrupt controller starts from 0xe20
+    // Different from other on-chip devices (addr starts from 0xe),
+    // the address mapped to interrupt controller starts from 0xd
     // For accesses to the rvic, we hard code the destination tile to tile0. 
-    if (l15_csm_req_address_s2[39:28] == 12'he20) begin
+    if (l15_csm_req_address_s2[39:36] == 4'hd) begin
         lhid_s2 = `HOME_ID_WIDTH'd0;
     end
     else 
@@ -427,8 +427,8 @@ end
 `ifdef PITON_RVIC
 always @ *
 begin
-    //on-chip device accesses start with 0xE0 or 0xE1
-    on_chip_dev_access_s3 = (l15_csm_req_address_s3[39:33] == 7'b1110000);
+    // on-chip device accesses start with 0xE
+    on_chip_dev_access_s3 = (l15_csm_req_address_s3[39:36] == 4'he);
     on_chip_dev_access_chipid_s3 = `NOC_CHIPID_WIDTH'b0;
     on_chip_dev_access_chipid_s3 = l15_csm_req_address_s3[`ON_CHIP_DEV_CHIPID_POS];
     on_chip_dev_access_x_s3 = l15_csm_req_address_s3[`ON_CHIP_DEV_X_POS];
@@ -561,10 +561,9 @@ begin
         begin
             csm_l15_res_data_s3 = 0;
 `ifdef PITON_RVIC
-            // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'd0 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
-            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : lhid_s3_chipid;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : lhid_s3_y;
+            csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : lhid_s3_x;
 `else 
             csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : lhid_s3_chipid;
             csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
@@ -780,10 +779,9 @@ always @ *
 begin
     csm_l15_res_data_s3 = 0;
 `ifdef PITON_RVIC
-        // csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
-        csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = on_chip_dev_access_s3 ? `NOC_CHIPID_WIDTH'd0 : interchip_access_s3 ? mychipid : lhid_s3_chipid;
-        csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;
-        csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : lhid_s3_x;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : on_chip_dev_access_s3 ? on_chip_dev_access_chipid_s3 : lhid_s3_chipid;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : on_chip_dev_access_s3 ? on_chip_dev_access_y_s3 : lhid_s3_y;
+        csm_l15_res_data_s3[`PACKET_HOME_ID_X_MASK] = interchip_access_s3 ? {`NOC_X_WIDTH{1'b1}} : on_chip_dev_access_s3 ? on_chip_dev_access_x_s3 : lhid_s3_x;
 `else 
         csm_l15_res_data_s3[`PACKET_HOME_ID_CHIP_MASK] = interchip_access_s3 ? mychipid : lhid_s3_chipid;
         csm_l15_res_data_s3[`PACKET_HOME_ID_Y_MASK] = interchip_access_s3 ? {`NOC_Y_WIDTH{1'b1}} : lhid_s3_y;

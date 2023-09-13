@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include "util.h"
 #define NUM_INTERRUPTS 64
-#define CLINT_BASE   0xe100f00000ULL
+#define CLINT_BASE   0xe000f00000ULL
 #define NHARTS (PITON_NUMTILES * PITON_NUMCHIPS)
 
 uint64_t *mtimecmp = (uint64_t*)(CLINT_BASE + 0x4000);

@@ -245,23 +245,18 @@ end
 
 // Stage 3
 
-wire [`MSG_DST_X_WIDTH-1:0] home_x_S3;
-wire [`MSG_DST_Y_WIDTH-1:0] home_y_S3;
+wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3;
+wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3;
+wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3;
 multichip_adapter_home_encoder home_encoder(
     .addr_in(addr_S3),
     .num_homes(6'd`PITON_NUM_TILES),
-    .home_x_out(home_x_S3),
-    .home_y_out(home_y_S3)
+    .dst_x_out(dst_x_S3),
+    .dst_y_out(dst_y_S3),
+    .dst_fbits_out(dst_fbits_S3),
+    .is_int(is_int_S3),
+    .int_id(int_id_S3)
 );
-
-wire [`MSG_DST_X_WIDTH-1:0] int_target_x_S3 = int_id_S3[25:18];
-wire [`MSG_DST_Y_WIDTH-1:0] int_target_y_S3 = int_id_S3[33:26];
-wire [`MSG_DST_FBITS_WIDTH-1:0] int_target_fbits_S3 = int_id_S3[51:48];
-
-wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3 = is_int_S3 ? int_target_x_S3 : home_x_S3;
-wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3 = is_int_S3 ? int_target_y_S3 : home_y_S3;
-wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_int_S3 ? int_target_fbits_S3 : `NOC_FBITS_L2;
-wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_int_S3 ? `MSG_MSHRID_WIDTH'b0 : mshrid_S3;
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 multichip_adapter_noc_encoder noc_encoder(
@@ -273,7 +268,7 @@ multichip_adapter_noc_encoder noc_encoder(
     .last_subline(1'b0),
     .subline_id(`MSG_SUBLINE_ID_WIDTH'b0),
     .mesi(mesi_S3),
-    .mshrid(dst_mshrid_S3),
+    .mshrid(mshrid_S3),
     .msg_type(msg_type_S3),
     .length(length_S3),
     .dst_fbits(dst_fbits_S3),

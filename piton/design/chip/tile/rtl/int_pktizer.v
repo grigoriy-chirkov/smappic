@@ -200,9 +200,9 @@ always @(posedge clk) begin
     end 
     else begin
         if (interrupt_go) begin
-            flit0[`MSG_DST_CHIPID] <= chipid_dst;
-            flit0[`MSG_DST_X] <= x_dst;
-            flit0[`MSG_DST_Y] <= y_dst;
+            flit0[`MSG_DST_CHIPID] <= `MSG_DST_CHIPID_WIDTH'h0;
+            flit0[`MSG_DST_X] <= (chipid_dst == `MSG_DST_CHIPID_WIDTH'h0) ? x_dst : {`MSG_DST_X_WIDTH{1'b1}};
+            flit0[`MSG_DST_Y] <= (chipid_dst == `MSG_DST_CHIPID_WIDTH'h0) ? y_dst : {`MSG_DST_Y_WIDTH{1'b1}};
             flit0[`MSG_DST_FBITS] <= 4'b0; // processor
             flit0[`MSG_LENGTH] <= 8'b1;
             flit0[`MSG_TYPE] <= `MSG_TYPE_INTERRUPT;

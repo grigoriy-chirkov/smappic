@@ -59,13 +59,13 @@ Description: Peripheral address map for OpenPiton+Ariane configurations.
     <port>
         <!-- core local interrupt controller with real-time counter. this is shared among all cores -->
         <name>ariane_clint</name>
-        <base>0xe100f00000</base>
+        <base>0xe000f00000</base>
         <length>0xc0000</length>
     </port>
     <!-- platform level interrupt controller -->
     <port>
         <name>ariane_plic</name>
-        <base>0xe200000000</base>
+        <base>0xd000000000</base>
         <length>0x4000000</length>
     </port>
     <!-- end ariane specific periphs -->

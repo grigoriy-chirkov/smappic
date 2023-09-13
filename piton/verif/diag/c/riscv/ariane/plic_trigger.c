@@ -6,13 +6,12 @@
 #ifdef CLINT_BASE
     #undef CLINT_BASE
 #endif
-#define CLINT_BASE   0xe100f00000ULL
-#define PLIC_BASE    0xe200000000ULL
+#define CLINT_BASE   0xe000f00000ULL
+#define PLIC_BASE    0xd000000000ULL
 
 volatile  uint64_t int_count[8] __attribute__((aligned(64))) ; // separate cache line
 volatile  uint64_t interrupt_value[8]  __attribute__((aligned(64)));
 volatile  uint64_t *l15_int_vec_dis = (uint64_t *) 0x9800000800ULL;
-volatile  uint64_t *trigger_address[2] = {(uint64_t*)0xfff0d00000ULL, (uint64_t*)0xfff0d01000ULL};
 
 inline void trap_success(uint8_t hartid) {
     // Read mcause
@@ -23,7 +22,7 @@ inline void trap_success(uint8_t hartid) {
     if ((mcause >> 63) != 1) fail();
     if ((mcause & 15) != 11) fail();
 
-    // printf("%d\n", hartid);
+    printf("%d\n", hartid);
 
     ATOMIC_OP(int_count[0], 1, add, d); 
 
@@ -32,7 +31,7 @@ inline void trap_success(uint8_t hartid) {
     uint32_t val_claim = *addr;
     if (!val_claim) return;
     *(addr) = val_claim;
-    // printf("%d\n", val_claim);
+    printf("%d\n", val_claim);
         
     return;
 }
@@ -174,7 +173,6 @@ int main(int argc, char ** argv) {
     // trigger edge sensitive interrupt from source 1
     if (hartid == 0) {
         *l15_int_vec_dis = interrupt_value[0];
-        // *trigger_address[0] = 0x1;
     } 
     while (int_count[0] < 1) {};
     pass();
