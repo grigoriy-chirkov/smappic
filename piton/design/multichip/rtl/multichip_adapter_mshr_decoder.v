@@ -39,14 +39,10 @@ module multichip_adapter_mshr_decoder(
     output reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     output reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     output reg [`MSG_TYPE_WIDTH-1:0] msg_type,
-    output reg [`MSG_L2_MISS_BITS-1:0] msg_l2_miss,
     output reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid,
     output reg [`MSG_SRC_X_WIDTH-1:0] src_x,
     output reg [`MSG_SRC_Y_WIDTH-1:0] src_y,
     output reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits,
-    output reg [`MSG_SDID_WIDTH-1:0] sdid,
-    output reg [`MSG_LSID_WIDTH-1:0] lsid,
-    output reg [`MSG_LSID_WIDTH-1:0] miss_lsid,
     output reg smc_miss,
     output reg recycled,
     output reg inv_fwd_pending,
@@ -65,14 +61,10 @@ begin
     cache_type = data[`MA_MSHR_CACHE_TYPE];
     data_size = data[`MA_MSHR_DATA_SIZE];
     msg_type = data[`MA_MSHR_MSG_TYPE];
-    msg_l2_miss = data[`MA_MSHR_L2_MISS];
     src_chipid = data[`MA_MSHR_SRC_CHIPID];
     src_x = data[`MA_MSHR_SRC_X];
     src_y = data[`MA_MSHR_SRC_Y];
     src_fbits = data[`MA_MSHR_SRC_FBITS];
-    sdid = data[`MA_MSHR_SDID];
-    lsid = data[`MA_MSHR_LSID];
-    miss_lsid = data[`MA_MSHR_MISS_LSID];
     smc_miss = data[`MA_MSHR_SMC_MISS];
     recycled = data[`MA_MSHR_RECYCLED];
     inv_fwd_pending = data[`MA_MSHR_INV_FWD_PENDING];
