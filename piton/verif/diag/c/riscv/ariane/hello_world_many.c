@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   while(argv[0][0] != *amo_cnt);
 
   // assemble number and print
-  printf("I \nam \nprinting \nstuff %d/%d\n", argv[0][0], argv[0][1]);
+  printf("%d/%d\n", argv[0][0], argv[0][1]);
 
   // increment atomic counter
   ATOMIC_OP(*amo_cnt, 1, add, w);

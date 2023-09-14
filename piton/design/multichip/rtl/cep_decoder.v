@@ -39,7 +39,6 @@ module cep_decoder(
     output reg [`CEP_MESI_WIDTH-1:0] mesi,
     output reg [`CEP_MSHRID_WIDTH-1:0] mshrid,
     output reg [`CEP_MSG_TYPE_WIDTH-1:0] msg_type,
-    output reg [`CEP_LENGTH_WIDTH-1:0] length,
 
     output reg [`CEP_DATA_SIZE_WIDTH-1:0] data_size,
     output reg [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type,
@@ -59,7 +58,6 @@ begin
     mesi = cep_pkg[`CEP_MESI];
     mshrid = cep_pkg[`CEP_MSHRID];
     msg_type = cep_pkg[`CEP_MSG_TYPE];
-    length = cep_pkg[`CEP_LENGTH];
     is_request = cep_pkg[`CEP_IS_REQ];
     is_response = cep_pkg[`CEP_IS_RESP];
     is_int = cep_pkg[`CEP_IS_INT];

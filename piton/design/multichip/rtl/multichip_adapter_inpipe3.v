@@ -67,12 +67,12 @@ reg val_S3;
 wire val_S2_next = val_S1 & ~stall_S1;
 
 wire is_resp_S1;
+wire is_req_S1; // TODO: implement write-backs
 wire [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline_S1;
 wire [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
-wire [`CEP_LENGTH_WIDTH-1:0] length_S1;
 wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size_S1;
 wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
@@ -90,7 +90,7 @@ cep_decoder cep_decoder(
     .mesi(mesi_S1),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
-    .length(length_S1),
+    .length(),
 
     .data_size(data_size_S1),
     .cache_type(cache_type_S1),
@@ -119,7 +119,6 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_resp_S2;
 
@@ -135,7 +134,6 @@ always @(posedge clk) begin
         last_subline_S2 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
-        length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_resp_S2 <= 1'b0;
     end
@@ -150,7 +148,6 @@ always @(posedge clk) begin
         last_subline_S2 <= last_subline_S1;
         subline_id_S2 <= subline_id_S1;
         mesi_S2 <= mesi_S1;
-        length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
         is_resp_S2 <= is_resp_S1;
     end
@@ -160,8 +157,9 @@ end
 // Stage 2
 
 wire val_S3_next = val_S2 & ~stall_S2;
-wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK) | 
-                     (msg_type_S2 == `MSG_TYPE_STORE_FWDACK);
+wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK)      | 
+                     (msg_type_S2 == `MSG_TYPE_STORE_FWDACK)    |
+                     (msg_type_S2 == `MSG_TYPE_STORE_FWDDATAACK);
 wire do_read_mshr_S2 = 1'b1;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2 & ~(is_inv_ack_S2 & ~last_subline_S2);
 assign mshr_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
@@ -211,7 +209,6 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S3;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S3;
@@ -229,7 +226,6 @@ always @(posedge clk) begin
         last_subline_S3 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S3 <= `MSG_SUBLINE_ID_WIDTH'b0;
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
-        length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_x_S3 <= `MSG_SRC_X_WIDTH'b0;
@@ -246,7 +242,6 @@ always @(posedge clk) begin
         last_subline_S3 <= last_subline_S2;
         subline_id_S3 <= subline_id_S2;
         mesi_S3 <= mesi_S2;
-        length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_x_S3 <= resp_x_S2;
@@ -259,6 +254,12 @@ end
 // Stage 3
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
+
+wire is_dataless_resp_S3 = (msg_type_S3 == `MSG_TYPE_INV_FWDACK)   | 
+                           (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) |
+                           (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK)  ;
+wire [`MSG_LENGTH_WIDTH-1:0] length_S3 = ~is_dataless_resp_S3 ? `MSG_LENGTH_WIDTH'd2 : `MSG_LENGTH_WIDTH'd0;
+
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(1'b0),

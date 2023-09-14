@@ -40,7 +40,6 @@ module cep_encoder(
     input wire [`CEP_MESI_WIDTH-1:0] mesi,
     input wire [`CEP_MSHRID_WIDTH-1:0] mshrid,
     input wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type,
-    input wire [`CEP_LENGTH_WIDTH-1:0] length,
 
     input wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type,
@@ -62,7 +61,6 @@ begin
     cep_pkg[`CEP_MESI] = mesi;
     cep_pkg[`CEP_MSHRID] = mshrid;
     cep_pkg[`CEP_MSG_TYPE] = msg_type;
-    cep_pkg[`CEP_LENGTH] = length;
     cep_pkg[`CEP_IS_REQ] = is_request;
     cep_pkg[`CEP_IS_INT] = is_int;
     cep_pkg[`CEP_IS_RESP] = is_response;

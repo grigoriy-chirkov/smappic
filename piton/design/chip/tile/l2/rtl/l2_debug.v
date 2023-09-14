@@ -72,7 +72,9 @@ begin
         `MSG_TYPE_LOAD_MEM              : $sformat( msg_type_string, "     ld_mem      ");
         `MSG_TYPE_STORE_MEM             : $sformat( msg_type_string, "     st_mem      ");
         `MSG_TYPE_LOAD_FWDACK           : $sformat( msg_type_string, "   ld_fwdack     ");
+        `MSG_TYPE_LOAD_FWDDATAACK       : $sformat( msg_type_string, "   ld_fwddataack ");
         `MSG_TYPE_STORE_FWDACK          : $sformat( msg_type_string, "   st_fwdack     ");
+        `MSG_TYPE_STORE_FWDDATAACK      : $sformat( msg_type_string, "   st_fwddataack ");
         `MSG_TYPE_INV_FWDACK            : $sformat( msg_type_string, "   inv_fwdack    ");
         `MSG_TYPE_LOAD_MEM_ACK          : $sformat( msg_type_string, "   ld_mem_ack    ");
         `MSG_TYPE_STORE_MEM_ACK         : $sformat( msg_type_string, "   st_mem_ack    ");

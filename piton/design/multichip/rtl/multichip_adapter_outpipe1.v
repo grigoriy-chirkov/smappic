@@ -105,7 +105,6 @@ wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1 = pkg_S1[`MSG_MSHRID];
 wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1 = pkg_S1[`MSG_DATA_SIZE];
 wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1 = pkg_S1[`MSG_CACHE_TYPE];
 wire [`MSG_MESI_WIDTH-1:0] mesi_S1 = pkg_S1[`MSG_MESI];
-wire [`MSG_LENGTH_WIDTH-1:0] length_S1 = pkg_S1[`MSG_LENGTH];
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[`PKG_DATA_WIDTH-1:3*`CEP_WORD_WIDTH]};
 wire is_int_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
 wire is_req_S1 = ~is_int_S1;
@@ -131,7 +130,6 @@ reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 
@@ -148,7 +146,6 @@ always @(posedge clk) begin
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
-        length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S2 <= 1'b0;
@@ -166,7 +163,6 @@ always @(posedge clk) begin
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
         mesi_S2 <= mesi_S1;
-        length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
         int_id_S2 <= int_id_S1;
         is_req_S2 <= is_req_S1;
@@ -223,7 +219,6 @@ reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 reg is_int_S3;
@@ -238,7 +233,6 @@ always @(posedge clk) begin
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
-        length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
         is_int_S3 <= 1'b0;
@@ -252,7 +246,6 @@ always @(posedge clk) begin
         data_size_S3 <= data_size_S2;
         cache_type_S3 <= cache_type_S2;
         mesi_S3 <= mesi_S2;
-        length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
         int_id_S3 <= int_id_S2;
         is_int_S3 <= is_int_S2;
@@ -274,7 +267,6 @@ cep_encoder cep_encoder(
     .mesi(mesi_S3),
     .mshrid(mshrid_S3),
     .msg_type(msg_type_S3),
-    .length(length_S3),
 
     .data_size(data_size_S3),
     .cache_type(cache_type_S3),

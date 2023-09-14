@@ -71,7 +71,6 @@ wire is_int_S1;
 wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
-wire [`CEP_LENGTH_WIDTH-1:0] length_S1;
 wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size_S1;
 wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
@@ -90,7 +89,6 @@ cep_decoder cep_decoder(
     .mesi(mesi_S1),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
-    .length(length_S1),
 
     .data_size(data_size_S1),
     .cache_type(cache_type_S1),
@@ -117,7 +115,6 @@ reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_int_S2;
 reg is_req_S2;
@@ -133,7 +130,6 @@ always @(posedge clk) begin
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
-        length_S2 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_int_S2 <= 1'b0;
         is_req_S2 <= 1'b0;
@@ -148,7 +144,6 @@ always @(posedge clk) begin
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
         mesi_S2 <= mesi_S1;
-        length_S2 <= length_S1;
         msg_data_S2 <= msg_data_S1;
         is_int_S2 <= is_int_S1;
         is_req_S2 <= is_req_S1;
@@ -204,7 +199,6 @@ reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
-reg [`MSG_LENGTH_WIDTH-1:0] length_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg is_int_S3;
 reg is_req_S3;
@@ -219,7 +213,6 @@ always @(posedge clk) begin
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
-        length_S3 <= `MSG_LENGTH_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_int_S3 <= 1'b0;
         is_req_S3 <= 1'b0;
@@ -233,7 +226,6 @@ always @(posedge clk) begin
         data_size_S3 <= data_size_S2;
         cache_type_S3 <= cache_type_S2;
         mesi_S3 <= mesi_S2;
-        length_S3 <= length_S2;
         msg_data_S3 <= msg_data_S2;
         is_int_S3 <= is_int_S2;
         is_req_S3 <= is_req_S2;
@@ -256,6 +248,22 @@ multichip_adapter_home_encoder home_encoder(
     .is_int(is_int_S3),
     .int_id(int_id_S3)
 );
+wire dataless_S3 = (msg_type_S3 == `MSG_TYPE_PREFETCH_REQ) | 
+                   (msg_type_S3 == `MSG_TYPE_NC_LOAD_REQ ) | 
+                   (msg_type_S3 == `MSG_TYPE_LOAD_REQ    ) | 
+                   (msg_type_S3 == `MSG_TYPE_STORE_REQ   ) | 
+                   (msg_type_S3 == `MSG_TYPE_LR_REQ      ) | 
+                   (msg_type_S3 == `MSG_TYPE_LR_REQ      );
+
+wire [`MSG_LENGTH_WIDTH-1:0] size_to_len_S3 = data_size_S3 == `MSG_DATA_SIZE_64B ? `MSG_LENGTH_WIDTH'd10 :
+                                              data_size_S3 == `MSG_DATA_SIZE_32B ? `MSG_LENGTH_WIDTH'd6 :
+                                              data_size_S3 == `MSG_DATA_SIZE_16B ? `MSG_LENGTH_WIDTH'd4 :
+                                                                                   `MSG_LENGTH_WIDTH'd3;
+                                                                                   
+wire [`MSG_LENGTH_WIDTH-1:0] length_S3 = is_int_S3   ? `MSG_LENGTH_WIDTH'd1 : 
+                                         dataless_S3 ? `MSG_LENGTH_WIDTH'd2 : 
+                                                        size_to_len_S3;
+
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 multichip_adapter_noc_encoder noc_encoder(

@@ -300,7 +300,7 @@ begin
             //       tag_clk_en      tag_rdw_en   state_rd_en
             cs_S1 = {n,              rd,           y};
         end
-        `MSG_TYPE_LOAD_FWDACK, `MSG_TYPE_STORE_FWDACK:
+        `MSG_TYPE_LOAD_FWDACK, `MSG_TYPE_STORE_FWDACK, `MSG_TYPE_LOAD_FWDDATAACK, `MSG_TYPE_STORE_FWDDATAACK:
         begin
             cs_S1 = {n,              rd,         y};
         end
@@ -518,22 +518,9 @@ begin
                         if (lsid_S2 == `L2_PUBLIC_SHARER)
                         begin
                             if (subline_valid_S2)   
-                            begin
-                                if (msg_length_S2_f != 0)
-                                begin
-                                    //       data   dir        dir         dir      state      state        state        state       state 
-                                    //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
-                                    cs_S2 = {y,     y,         wr,         y,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                    //       state   state          state    state           state   state
-                                    //       vd_en   vd             mesi_en  mesi            lru_en  lru
-                                             y,      `L2_VD_DIRTY,  y,      `L2_MESI_B,      n,      `L2_LRU_CLR};  
-                                end     
-                                else
-                                begin       
-                                    cs_S2 = {n,     y,         wr,         y,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                             y,      `L2_VD_DIRTY,  y,      `L2_MESI_B,      n,      `L2_LRU_CLR};  
-
-                                end
+                            begin     
+                                cs_S2 = {n,     y,         wr,         y,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_B,      n,      `L2_LRU_CLR};  
                             end
                             else
                             begin
@@ -544,22 +531,10 @@ begin
                         else
                         begin
                             if (subline_valid_S2)   
-                            begin
-                                if (msg_length_S2_f != 0)
-                                begin
-                                    //       data   dir        dir         dir      state      state        state        state       state 
-                                    //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
-                                    cs_S2 = {y,     y,         wr,         n,        y,         `OP_LD,     y,           `OP_LD,    n, 
-                                    //       state   state          state    state           state   state
-                                    //       vd_en   vd             mesi_en  mesi            lru_en  lru
-                                             y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
-                                end     
-                                else
-                                begin       
-                                    cs_S2 = {n,     y,         wr,         n,        y,         `OP_LD,     y,           `OP_LD,    n, 
-                                             y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
+                            begin     
+                                cs_S2 = {n,     y,         wr,         n,        y,         `OP_LD,     y,           `OP_LD,    n, 
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
 
-                                end
                             end
                             else
                             begin
@@ -572,22 +547,9 @@ begin
                     `endif
                     begin
                         if (subline_valid_S2)   
-                        begin
-                            if (msg_length_S2_f != 0)
-                            begin
-                                //       data   dir        dir         dir      state      state        state        state       state 
-                                //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
-                                cs_S2 = {y,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                //       state   state          state    state           state   state
-                                //       vd_en   vd             mesi_en  mesi            lru_en  lru
-                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
-                            end     
-                            else
-                            begin       
-                                cs_S2 = {n,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
-                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
-
-                            end
+                        begin   
+                            cs_S2 = {n,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
                         end
                         else
                         begin
@@ -601,16 +563,98 @@ begin
                 begin
                     if (subline_valid_S2)   
                     begin
-                        if (msg_length_S2_f != 0)
+                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                    end
+                    else
+                    begin
+                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                    end
+                end  
+            end
+            `L2_MESI_I:
+            begin
+                cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,      n,           `OP_CLR,    n,       
+                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+            end
+            default:
+            begin
+                cs_S2 = {`CS_SIZE_P2S2{1'bx}};
+            end
+            endcase
+        end
+        `MSG_TYPE_LOAD_FWDDATAACK:
+        begin
+            case (l2_way_state_mesi_S2)
+            `L2_MESI_E:
+            begin
+                if (is_last_subline_S2)
+                begin
+                    `ifndef NO_RTL_CSM
+                    if (csm_en)
+                    begin
+                        if (lsid_S2 == `L2_PUBLIC_SHARER)
                         begin
-                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            if (subline_valid_S2)   
+                            begin
+                                //       data   dir        dir         dir      state      state        state        state       state 
+                                //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
+                                cs_S2 = {y,     y,         wr,         y,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                                //       state   state          state    state           state   state
+                                //       vd_en   vd             mesi_en  mesi            lru_en  lru
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_B,      n,      `L2_LRU_CLR};  
+                            end
+                            else
+                            begin
+                                cs_S2 = {n,     n,         wr,         n,       y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_B,      n,      `L2_LRU_CLR};    
+                            end
                         end
                         else
                         begin
-                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                            if (subline_valid_S2)   
+                            begin
+                                //       data   dir        dir         dir      state      state        state        state       state 
+                                //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
+                                cs_S2 = {y,     y,         wr,         n,        y,         `OP_LD,     y,           `OP_LD,    n, 
+                                //       state   state          state    state           state   state
+                                //       vd_en   vd             mesi_en  mesi            lru_en  lru
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
+                            end
+                            else
+                            begin
+                                cs_S2 = {n,     y,         wr,         n,       y,         `OP_LD,     y,           `OP_LD,    n, 
+                                         y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};    
+                            end
                         end
+                    end
+                    else
+                    `endif
+                    begin
+                        if (subline_valid_S2)   
+                        begin
+                            //       data   dir        dir         dir      state      state        state        state       state 
+                            //       clk_en clk_en     rdw_en      clr_en   owner_en   owner_op     subline_en   subline_op  di_en  
+                            cs_S2 = {y,     y,         wr,         n,        y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                            //       state   state          state    state           state   state
+                            //       vd_en   vd             mesi_en  mesi            lru_en  lru
+                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};  
+                        end
+                        else
+                        begin
+                            cs_S2 = {n,     y,         wr,         n,       y,         `OP_CLR,     n,           `OP_CLR,    n, 
+                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_S,      n,      `L2_LRU_CLR};    
+                        end
+
+                    end
+                end
+                else
+                begin
+                    if (subline_valid_S2)   
+                    begin
+                        cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
                     end
                     else
                     begin
@@ -639,16 +683,51 @@ begin
                 begin
                     if (subline_valid_S2)   
                     begin
-                        if (msg_length_S2_f != 0)
-                        begin
-                            cs_S2 = {y,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
-                        end
-                        else
-                        begin
-                            cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
-                                     y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
-                        end
+                        cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
+                                 y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
+                    end
+                    else
+                    begin
+                        cs_S2 = {n,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
+                                 y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
+                    end  
+                end
+                else
+                begin
+                    if (subline_valid_S2)   
+                    begin
+                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                    end
+                    else
+                    begin
+                        cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+                    end 
+                end 
+            end
+            `L2_MESI_I:
+            begin
+                cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                         n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
+            end
+            default:
+            begin
+                cs_S2 = {`CS_SIZE_P2S2{1'bx}};
+            end
+            endcase
+        end
+        `MSG_TYPE_STORE_FWDDATAACK:
+        begin
+            case (l2_way_state_mesi_S2)
+            `L2_MESI_E:
+            begin
+                if (is_last_subline_S2)
+                begin
+                    if (subline_valid_S2)   
+                    begin
+                        cs_S2 = {y,     y,         wr,         y,       y,         `OP_CLR,     y,           `OP_CLR,    n, 
+                                 y,      `L2_VD_DIRTY,  y,      `L2_MESI_I,      n,      `L2_LRU_CLR};  
                         
                     end
                     else
@@ -661,16 +740,8 @@ begin
                 begin
                     if (subline_valid_S2)   
                     begin
-                        if (msg_length_S2_f != 0)
-                        begin
-                            cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
-                        end
-                        else
-                        begin
-                            cs_S2 = {n,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
-                                     n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
-                        end
+                        cs_S2 = {y,     n,         rd,         n,       n,         `OP_CLR,     n,           `OP_CLR,    n,       
+                                 n,      `L2_VD_ERROR,  n,      `L2_MESI_I,  n,      `L2_LRU_CLR};
                     end
                     else
                     begin
@@ -794,7 +865,8 @@ end
 always @ *
 begin
     broadcast_counter_op_val_S2 = !stall_S2 && valid_S2 && is_last_subline_S2 
-                               && (msg_type_S2_f == `MSG_TYPE_INV_FWDACK) && (l2_way_state_mesi_S2 == `L2_MESI_B);
+                               && (msg_type_S2_f == `MSG_TYPE_INV_FWDACK) 
+                               && (l2_way_state_mesi_S2 == `L2_MESI_B);
 end
 
 always @ *
@@ -848,15 +920,17 @@ begin
     end
     else if (msg_type_S2_f == `MSG_TYPE_INV_FWDACK 
           || msg_type_S2_f == `MSG_TYPE_LOAD_FWDACK
-          || msg_type_S2_f == `MSG_TYPE_STORE_FWDACK)
+          || msg_type_S2_f == `MSG_TYPE_STORE_FWDACK
+          || msg_type_S2_f == `MSG_TYPE_LOAD_FWDDATAACK
+          || msg_type_S2_f == `MSG_TYPE_STORE_FWDDATAACK)
     begin
         if (is_last_subline_S2)
         begin
             `ifndef NO_RTL_CSM 
-            if (msg_type_S2_f == `MSG_TYPE_INV_FWDACK 
+            if ((msg_type_S2_f == `MSG_TYPE_INV_FWDACK)
             && ((l2_way_state_owner_S2 != 1) || smc_miss_S2_f || inv_fwd_pending_S2_f))
             `else 
-            if (msg_type_S2_f == `MSG_TYPE_INV_FWDACK 
+            if ((msg_type_S2_f == `MSG_TYPE_INV_FWDACK)
             && ((l2_way_state_owner_S2 != 1) || inv_fwd_pending_S2_f))
             `endif
             begin

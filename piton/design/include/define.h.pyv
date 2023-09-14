@@ -247,7 +247,8 @@ print("`define PITON_NUM_CHIPS %d" % PITON_NUM_CHIPS)
 `define MSG_TYPE_LOAD_FWDACK        8'd21
 `define MSG_TYPE_STORE_FWDACK       8'd22
 `define MSG_TYPE_INV_FWDACK         8'd23
-
+`define MSG_TYPE_LOAD_FWDDATAACK    8'd63
+`define MSG_TYPE_STORE_FWDDATAACK   8'd64
 
 
 

@@ -155,17 +155,6 @@ begin
 
     address = l15_noc3encoder_req_address;
 
-    // old non-csm implementation
-    // if (`HOME_ID_MASK_X_ENABLE)
-    //     dest_l2_xpos = l15_noc3encoder_req_address[`HOME_ID_MASK_X];
-    // else
-    //     dest_l2_xpos = 0;
-    // if (`HOME_ID_MASK_Y_ENABLE)
-    //     dest_l2_ypos = l15_noc3encoder_req_address[`HOME_ID_MASK_Y];
-    // else
-    //     dest_l2_ypos = 0;
-    // dest_chipid = 0;
-
     dest_l2_xpos = l15_noc3encoder_req_homeid[`PACKET_HOME_ID_X_MASK];
     dest_l2_ypos = l15_noc3encoder_req_homeid[`PACKET_HOME_ID_Y_MASK];
     dest_chipid = l15_noc3encoder_req_homeid[`PACKET_HOME_ID_CHIP_MASK];
@@ -199,30 +188,31 @@ begin
         end
         `L15_NOC3_REQTYPE_DOWNGRADE_ACK:
         begin
-            msg_type = `MSG_TYPE_LOAD_FWDACK;
             if (l15_noc3encoder_req_with_data)
             begin
+                msg_type = `MSG_TYPE_LOAD_FWDDATAACK;
                 msg_length = 2;
-                msg_data_size = `MSG_DATA_SIZE_32B;
             end
-            else
+            else begin
+                msg_type = `MSG_TYPE_LOAD_FWDACK;
                 msg_length = 0;
+            end
         end
         `L15_NOC3_REQTYPE_INVAL_ACK:
         begin
             // specify sequence id + if is last
-            if (l15_noc3encoder_req_was_inval)
-               msg_type = `MSG_TYPE_INV_FWDACK;
-            else
-               msg_type = `MSG_TYPE_STORE_FWDACK;
-           
             if (l15_noc3encoder_req_with_data)
             begin
                 msg_length = 2;
-                msg_data_size = `MSG_DATA_SIZE_32B;
+                msg_type = `MSG_TYPE_STORE_FWDDATAACK;
             end
-            else
+            else begin
                 msg_length = 0;
+                if (l15_noc3encoder_req_was_inval)
+                    msg_type = `MSG_TYPE_INV_FWDACK;
+                else
+                    msg_type = `MSG_TYPE_STORE_FWDACK;
+            end
         end
         `L15_NOC3_REQTYPE_ICACHE_INVAL_ACK:
         begin
