@@ -70,11 +70,9 @@ wire is_resp_S1;
 wire is_req_S1; // TODO: implement write-backs
 wire [`CEP_LAST_SUBLINE_WIDTH-1:0] last_subline_S1;
 wire [`CEP_SUBLINE_ID_WIDTH-1:0] subline_id_S1;
-wire [`CEP_MESI_WIDTH-1:0] mesi_S1;
 wire [`CEP_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`CEP_MSG_TYPE_WIDTH-1:0] msg_type_S1;
 wire [`CEP_DATA_SIZE_WIDTH-1:0] data_size_S1;
-wire [`CEP_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
 wire [`CEP_ADDR_WIDTH-1:0] addr_S1;
 wire [`CEP_CHIPID_WIDTH-1:0] src_chipid_S1;
 wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
@@ -87,13 +85,10 @@ cep_decoder cep_decoder(
     .is_int(),
     .last_subline(last_subline_S1),
     .subline_id(subline_id_S1),
-    .mesi(mesi_S1),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
-    .length(),
 
     .data_size(data_size_S1),
-    .cache_type(cache_type_S1),
     .addr(addr_S1),
 
     .src_chipid(src_chipid_S1),
@@ -115,10 +110,8 @@ reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
 reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
-reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
-reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_resp_S2;
 
@@ -130,10 +123,8 @@ always @(posedge clk) begin
         src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
-        cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
         last_subline_S2 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
-        mesi_S2 <= `MSG_MESI_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_resp_S2 <= 1'b0;
     end
@@ -144,10 +135,8 @@ always @(posedge clk) begin
         src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
         mshrid_S2 <= mshrid_S1;
         data_size_S2 <= data_size_S1;
-        cache_type_S2 <= cache_type_S1;
         last_subline_S2 <= last_subline_S1;
         subline_id_S2 <= subline_id_S1;
-        mesi_S2 <= mesi_S1;
         msg_data_S2 <= msg_data_S1;
         is_resp_S2 <= is_resp_S1;
     end
@@ -205,10 +194,8 @@ assign stall_S2 = stall_S3 & val_S2;
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S3;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S3;
-reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S3;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
-reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S3;
@@ -222,10 +209,8 @@ always @(posedge clk) begin
         msg_type_S3 <= `MSG_TYPE_WIDTH'b0;
         addr_S3 <= `MSG_ADDR_WIDTH'b0;
         data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
-        cache_type_S3 <= `MSG_CACHE_TYPE_WIDTH'b0;
         last_subline_S3 <= `MSG_LAST_SUBLINE_WIDTH'b0;
         subline_id_S3 <= `MSG_SUBLINE_ID_WIDTH'b0;
-        mesi_S3 <= `MSG_MESI_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_x_S3 <= `MSG_SRC_X_WIDTH'b0;
@@ -238,10 +223,8 @@ always @(posedge clk) begin
         msg_type_S3 <= msg_type_S2;
         addr_S3 <= addr_S2;
         data_size_S3 <= data_size_S2;
-        cache_type_S3 <= cache_type_S2;
         last_subline_S3 <= last_subline_S2;
         subline_id_S3 <= subline_id_S2;
-        mesi_S3 <= mesi_S2;
         msg_data_S3 <= msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_x_S3 <= resp_x_S2;
@@ -268,7 +251,7 @@ multichip_adapter_noc_encoder noc_encoder(
 
     .last_subline(last_subline_S3),
     .subline_id(subline_id_S3),
-    .mesi(mesi_S3),
+    .mesi(`MSG_MESI_I),
     .mshrid(resp_mshrid_S3),
     .msg_type(msg_type_S3),
     .length(length_S3),
@@ -278,7 +261,7 @@ multichip_adapter_noc_encoder noc_encoder(
     .dst_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
 
     .data_size(data_size_S3),
-    .cache_type(cache_type_S3),
+    .cache_type(`MSG_CACHE_TYPE_WIDTH'b0),
     .subline_vector(`MSG_SUBLINE_VECTOR_WIDTH'b0),
     .addr(addr_S3),
     .int_id(`MSG_INT_ID_WIDTH'b0),
