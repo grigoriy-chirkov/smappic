@@ -91,10 +91,10 @@ wire val_S2_next = val_S1 & ~stall_S1;
 
 wire [`MSG_ADDR_WIDTH-1:0] addr_S1;
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1;
-wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1;
-wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1;
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1;
-wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1;
+wire [`NOC_X_WIDTH-1:0] src_x_S1;
+wire [`NOC_Y_WIDTH-1:0] src_y_S1;
+wire [`NOC_CHIPID_WIDTH-1:0] src_chipid_S1;
+wire [`NOC_FBITS_WIDTH-1:0] src_fbits_S1;
 wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1;
 wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1;
 wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
@@ -135,10 +135,10 @@ assign stall_S1 = stall_S2 & val_S1;
 
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
-reg [`MSG_SRC_X_WIDTH-1:0] src_x_S2;
-reg [`MSG_SRC_Y_WIDTH-1:0] src_y_S2;
-reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S2;
-reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
+reg [`NOC_X_WIDTH-1:0] src_x_S2;
+reg [`NOC_Y_WIDTH-1:0] src_y_S2;
+reg [`NOC_FBITS_WIDTH-1:0] src_fbits_S2;
+reg [`NOC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
@@ -154,10 +154,10 @@ always @(posedge clk) begin
         val_S2 <= 1'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
-        src_x_S2 <= `MSG_SRC_X_WIDTH'b0;
-        src_y_S2 <= `MSG_SRC_Y_WIDTH'b0;
-        src_fbits_S2 <= `MSG_SRC_FBITS_WIDTH'b0;
-        src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
+        src_x_S2 <= `NOC_X_WIDTH'b0;
+        src_y_S2 <= `NOC_Y_WIDTH'b0;
+        src_fbits_S2 <= `NOC_FBITS_WIDTH'b0;
+        src_chipid_S2 <= `NOC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
@@ -199,7 +199,7 @@ assign mshr_in_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
 assign mshr_in_read_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 
 wire [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S2;
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] resp_chipid_S2;
+wire [`NOC_CHIPID_WIDTH-1:0] resp_chipid_S2;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_in_read_data),
@@ -250,7 +250,7 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
-reg [`MSG_DST_CHIPID_WIDTH-1:0] resp_chipid_S3;
+reg [`NOC_CHIPID_WIDTH-1:0] resp_chipid_S3;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 reg is_req_S3;
 reg is_resp_S3;
@@ -267,7 +267,7 @@ always @(posedge clk) begin
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
-        resp_chipid_S3 <= `MSG_DST_CHIPID_WIDTH'b0;
+        resp_chipid_S3 <= `NOC_CHIPID_WIDTH'b0;
         int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S3 <= 1'b0;
         is_resp_S3 <= 1'b0;

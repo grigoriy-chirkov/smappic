@@ -41,26 +41,81 @@ module multichip_adapter_noc_encoder(
     input wire [`MSG_MESI_WIDTH-1:0] mesi,
     input wire [`MSG_MSHRID_WIDTH-1:0] mshrid,
     input wire [`MSG_TYPE_WIDTH-1:0] msg_type,
-    input wire [`MSG_LENGTH_WIDTH-1:0] length,
-    input wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits,
-    input wire [`MSG_DST_X_WIDTH-1:0] dst_x,
-    input wire [`MSG_DST_Y_WIDTH-1:0] dst_y,
-    input wire [`MSG_DST_CHIPID_WIDTH-1:0] dst_chipid,
+    input wire [`NOC_FBITS_WIDTH-1:0] dst_fbits,
+    input wire [`NOC_X_WIDTH-1:0] dst_x,
+    input wire [`NOC_Y_WIDTH-1:0] dst_y,
+    input wire [`NOC_CHIPID_WIDTH-1:0] dst_chipid,
 
     input wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     input wire [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
     input wire [`MSG_ADDR_WIDTH-1:0] addr,
 
-    input wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits,
-    input wire [`MSG_SRC_X_WIDTH-1:0] src_x,
-    input wire [`MSG_SRC_Y_WIDTH-1:0] src_y,
-    input wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid,
+    input wire [`NOC_FBITS_WIDTH-1:0] src_fbits,
+    input wire [`NOC_X_WIDTH-1:0] src_x,
+    input wire [`NOC_Y_WIDTH-1:0] src_y,
+    input wire [`NOC_CHIPID_WIDTH-1:0] src_chipid,
 
     input wire [7*`NOC_DATA_WIDTH-1:0] data,
     input wire [`MSG_INT_ID_WIDTH-1:0] int_id
 );
 
+reg dataless_req;
+reg dataful_req;
+reg dataless_resp;
+reg dataful_resp;
+reg [`MSG_LENGTH_WIDTH-1:0] req_size_to_len;
+reg [`MSG_LENGTH_WIDTH-1:0] resp_size_to_len;
+reg [`MSG_LENGTH_WIDTH-1:0] length;
+
+always @* begin
+    dataless_req = (msg_type == `MSG_TYPE_PREFETCH_REQ) | 
+                   (msg_type == `MSG_TYPE_NC_LOAD_REQ ) | 
+                   (msg_type == `MSG_TYPE_LOAD_REQ    ) | 
+                   (msg_type == `MSG_TYPE_STORE_REQ   ) | 
+                   (msg_type == `MSG_TYPE_LR_REQ      ) | 
+                   (msg_type == `MSG_TYPE_LOAD_FWD    ) | 
+                   (msg_type == `MSG_TYPE_STORE_FWD   ) | 
+                   (msg_type == `MSG_TYPE_INV_FWD     ) ;
+    dataful_req  = is_request & ~dataless_req;
+    
+    dataless_resp = (msg_type == `MSG_TYPE_INV_FWDACK)   | 
+                    (msg_type == `MSG_TYPE_STORE_FWDACK) |
+                    (msg_type == `MSG_TYPE_LOAD_FWDACK)  |
+                    (msg_type == `MSG_TYPE_NODATA_ACK)   ;
+    dataful_resp  = is_response & ~dataless_resp;    
+
+    case (data_size)
+        `MSG_DATA_SIZE_64B: begin
+            req_size_to_len = `MSG_LENGTH_WIDTH'd10;
+            resp_size_to_len = `MSG_LENGTH_WIDTH'd8;
+        end
+        `MSG_DATA_SIZE_32B: begin
+            req_size_to_len = `MSG_LENGTH_WIDTH'd6;
+            resp_size_to_len = `MSG_LENGTH_WIDTH'd4;
+        end
+        `MSG_DATA_SIZE_16B: begin
+            req_size_to_len = `MSG_LENGTH_WIDTH'd4;
+            resp_size_to_len = `MSG_LENGTH_WIDTH'd2;
+        end
+        default: begin
+            req_size_to_len = `MSG_LENGTH_WIDTH'd3;
+            resp_size_to_len = `MSG_LENGTH_WIDTH'd1;
+        end
+    endcase
+
+    length = `MSG_LENGTH_WIDTH'd0;
+    if (is_int)
+        length = `MSG_LENGTH_WIDTH'd1;
+    if (dataless_req)
+        length = `MSG_LENGTH_WIDTH'd2;
+    if (dataless_resp)
+        length = `MSG_LENGTH_WIDTH'd0;
+    if (dataful_req)
+        length = req_size_to_len;
+    if (dataful_resp)
+        length = resp_size_to_len;
+end
 
 always @ *
 begin

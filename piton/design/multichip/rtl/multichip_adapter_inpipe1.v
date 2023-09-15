@@ -105,7 +105,7 @@ assign stall_S1 = stall_S2 & val_S1;
 
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
-reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
+reg [`NOC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
@@ -119,7 +119,7 @@ always @(posedge clk) begin
         val_S2 <= 1'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
-        src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
+        src_chipid_S2 <= `NOC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
@@ -132,7 +132,7 @@ always @(posedge clk) begin
         val_S2 <= val_S2_next;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
-        src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
+        src_chipid_S2 <= {{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
         mshrid_S2 <= mshrid_S1;
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
@@ -162,8 +162,8 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data_size(data_size_S2),
     .msg_type(msg_type_S2),
     .src_chipid(src_chipid_S2),
-    .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
-    .src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
+    .src_x({`NOC_X_WIDTH{1'b1}}),
+    .src_y({`NOC_Y_WIDTH{1'b1}}),
     .src_fbits(`NOC_FBITS_L1),
     .smc_miss(1'b0),
     .recycled(1'b0),
@@ -221,9 +221,9 @@ end
 
 // Stage 3
 
-wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3;
-wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3;
-wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3;
+wire [`NOC_X_WIDTH-1:0] dst_x_S3;
+wire [`NOC_Y_WIDTH-1:0] dst_y_S3;
+wire [`NOC_FBITS_WIDTH-1:0] dst_fbits_S3;
 multichip_adapter_home_encoder home_encoder(
     .addr_in(addr_S3),
     .num_homes(6'd`PITON_NUM_TILES),
@@ -233,22 +233,6 @@ multichip_adapter_home_encoder home_encoder(
     .is_int(is_int_S3),
     .int_id(int_id_S3)
 );
-wire dataless_S3 = (msg_type_S3 == `MSG_TYPE_PREFETCH_REQ) | 
-                   (msg_type_S3 == `MSG_TYPE_NC_LOAD_REQ ) | 
-                   (msg_type_S3 == `MSG_TYPE_LOAD_REQ    ) | 
-                   (msg_type_S3 == `MSG_TYPE_STORE_REQ   ) | 
-                   (msg_type_S3 == `MSG_TYPE_LR_REQ      ) | 
-                   (msg_type_S3 == `MSG_TYPE_LR_REQ      );
-
-wire [`MSG_LENGTH_WIDTH-1:0] size_to_len_S3 = data_size_S3 == `MSG_DATA_SIZE_64B ? `MSG_LENGTH_WIDTH'd10 :
-                                              data_size_S3 == `MSG_DATA_SIZE_32B ? `MSG_LENGTH_WIDTH'd6 :
-                                              data_size_S3 == `MSG_DATA_SIZE_16B ? `MSG_LENGTH_WIDTH'd4 :
-                                                                                   `MSG_LENGTH_WIDTH'd3;
-                                                                                   
-wire [`MSG_LENGTH_WIDTH-1:0] length_S3 = is_int_S3   ? `MSG_LENGTH_WIDTH'd1 : 
-                                         dataless_S3 ? `MSG_LENGTH_WIDTH'd2 : 
-                                                        size_to_len_S3;
-
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 multichip_adapter_noc_encoder noc_encoder(
@@ -262,11 +246,10 @@ multichip_adapter_noc_encoder noc_encoder(
     .mesi(`MSG_MESI_I),
     .mshrid(mshrid_S3),
     .msg_type(msg_type_S3),
-    .length(length_S3),
     .dst_fbits(dst_fbits_S3),
     .dst_x(dst_x_S3),
     .dst_y(dst_y_S3),
-    .dst_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
+    .dst_chipid({{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
 
     .data_size(data_size_S3),
     .cache_type(cache_type_S3),
@@ -275,9 +258,9 @@ multichip_adapter_noc_encoder noc_encoder(
     .int_id(int_id_S3),
 
     .src_fbits(`NOC_FBITS_L1),
-    .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
-    .src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
-    .src_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
+    .src_x({`NOC_X_WIDTH{1'b1}}),
+    .src_y({`NOC_Y_WIDTH{1'b1}}),
+    .src_chipid({{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
     
     .data(msg_data_S3)
 );

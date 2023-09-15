@@ -138,9 +138,9 @@ assign mshr_out_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
 assign mshr_out_read_index = mshrid_S1[`MA_MSHR_INDEX_WIDTH-1:0];
 
 wire [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S1;
-wire [`MSG_SRC_X_WIDTH-1:0] resp_x_S1;
-wire [`MSG_SRC_Y_WIDTH-1:0] resp_y_S1;
-wire [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S1;
+wire [`NOC_X_WIDTH-1:0] resp_x_S1;
+wire [`NOC_Y_WIDTH-1:0] resp_y_S1;
+wire [`NOC_FBITS_WIDTH-1:0] resp_fbits_S1;
 wire [`MSG_ADDR_WIDTH-1:0] resp_addr_S1;
 wire [`MSG_DATA_SIZE_WIDTH-1:0] resp_data_size_S1;
 
@@ -165,16 +165,16 @@ assign stall_S1 = stall_S2 & val_S1;
 
 reg [`MSG_TYPE_WIDTH-1:0] msg_type_S2;
 reg [`MSG_ADDR_WIDTH-1:0] addr_S2;
-reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S2;
+reg [`NOC_CHIPID_WIDTH-1:0] src_chipid_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] mshrid_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S2;
 reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S2;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S2;
-reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S2;
-reg [`MSG_SRC_Y_WIDTH-1:0] resp_y_S2;
-reg [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S2;
+reg [`NOC_X_WIDTH-1:0] resp_x_S2;
+reg [`NOC_Y_WIDTH-1:0] resp_y_S2;
+reg [`NOC_FBITS_WIDTH-1:0] resp_fbits_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] resp_data_size_S2;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 reg is_req_S2;
@@ -186,16 +186,16 @@ always @(posedge clk) begin
         val_S2 <= 1'b0;
         msg_type_S2 <= `MSG_TYPE_WIDTH'b0;
         addr_S2 <= `MSG_ADDR_WIDTH'b0;
-        src_chipid_S2 <= `MSG_SRC_CHIPID_WIDTH'b0;
+        src_chipid_S2 <= `NOC_CHIPID_WIDTH'b0;
         mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
         data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
         mesi_S2 <= `MSG_MESI_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S2 <= `MSG_MSHRID_WIDTH'b0;
-        resp_x_S2 <= `MSG_SRC_X_WIDTH'b0;
-        resp_y_S2 <= `MSG_SRC_Y_WIDTH'b0;
-        resp_fbits_S2 <= `MSG_SRC_FBITS_WIDTH'b0;
+        resp_x_S2 <= `NOC_X_WIDTH'b0;
+        resp_y_S2 <= `NOC_Y_WIDTH'b0;
+        resp_fbits_S2 <= `NOC_FBITS_WIDTH'b0;
         resp_data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
         int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S2 <= 1'b0;
@@ -206,7 +206,7 @@ always @(posedge clk) begin
         val_S2 <= val_S2_next;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
-        src_chipid_S2 <= {{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
+        src_chipid_S2 <= {{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, src_chipid_S1};
         mshrid_S2 <= mshrid_S1;
         data_size_S2 <= data_size_S1;
         cache_type_S2 <= cache_type_S1;
@@ -251,8 +251,8 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data_size(data_size_S2),
     .msg_type(msg_type_S2),
     .src_chipid(src_chipid_S2),
-    .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
-    .src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
+    .src_x({`NOC_X_WIDTH{1'b1}}),
+    .src_y({`NOC_Y_WIDTH{1'b1}}),
     .src_fbits(`NOC_FBITS_L2),
     .smc_miss(1'b0),
     .recycled(1'b0),
@@ -303,9 +303,9 @@ reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S3;
 reg [`MSG_MESI_WIDTH-1:0] mesi_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
-reg [`MSG_SRC_X_WIDTH-1:0] resp_x_S3;
-reg [`MSG_SRC_Y_WIDTH-1:0] resp_y_S3;
-reg [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S3;
+reg [`NOC_X_WIDTH-1:0] resp_x_S3;
+reg [`NOC_Y_WIDTH-1:0] resp_y_S3;
+reg [`NOC_FBITS_WIDTH-1:0] resp_fbits_S3;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] resp_data_size_S3;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S3;
 reg is_req_S3;
@@ -323,9 +323,9 @@ always @(posedge clk) begin
         mesi_S3 <= `MSG_MESI_WIDTH'b0;
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
-        resp_x_S3 <= `MSG_SRC_X_WIDTH'b0;
-        resp_y_S3 <= `MSG_SRC_Y_WIDTH'b0;
-        resp_fbits_S3 <= `MSG_SRC_FBITS_WIDTH'b0;
+        resp_x_S3 <= `NOC_X_WIDTH'b0;
+        resp_y_S3 <= `NOC_Y_WIDTH'b0;
+        resp_fbits_S3 <= `NOC_FBITS_WIDTH'b0;
         resp_data_size_S3 <= `MSG_DATA_SIZE_WIDTH'b0;
         int_id_S3 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S3 <= 1'b0;
@@ -391,45 +391,26 @@ flat_id_to_xy flat_id_to_xy(
     .flat_id(fwd_target_id_S3)
 );
 
-wire [`MSG_DST_X_WIDTH-1:0] int_target_x_S3 = int_id_S3[25:18];
-wire [`MSG_DST_Y_WIDTH-1:0] int_target_y_S3 = int_id_S3[33:26];
-wire [`MSG_DST_FBITS_WIDTH-1:0] int_target_fbits_S3 = int_id_S3[51:48];
+wire [`NOC_X_WIDTH-1:0] int_target_x_S3 = int_id_S3[25:18];
+wire [`NOC_Y_WIDTH-1:0] int_target_y_S3 = int_id_S3[33:26];
+wire [`NOC_FBITS_WIDTH-1:0] int_target_fbits_S3 = int_id_S3[51:48];
+
+wire [`NOC_X_WIDTH-1:0] dst_x_S3 = is_resp_S3 ? resp_x_S3 : 
+                                   is_int_S3 ? int_target_x_S3 :
+                                   fwd_routine_S3 ? fwd_target_x_S3 :
+                                   `NOC_X_WIDTH'b0;
+wire [`NOC_Y_WIDTH-1:0] dst_y_S3 = is_resp_S3 ? resp_y_S3 :
+                                   is_int_S3 ? int_target_y_S3 :
+                                   fwd_routine_S3 ? fwd_target_y_S3 :
+                                   `NOC_Y_WIDTH'b0;
+wire [`NOC_FBITS_WIDTH-1:0] dst_fbits_S3 = is_resp_S3 ? resp_fbits_S3 :
+                                           is_int_S3 ? int_target_fbits_S3 :
+                                           fwd_routine_S3 ? `NOC_FBITS_L1 :
+                                           `NOC_FBITS_MEM;
+wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : mshrid_S3;
+wire [`MSG_DATA_SIZE_WIDTH-1:0] dst_data_size_S3 = is_resp_S3 ? resp_data_size_S3 : data_size_S3;
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
-wire [`MSG_DST_X_WIDTH-1:0] dst_x_S3 = is_resp_S3 ? resp_x_S3 : 
-                                       is_int_S3 ? int_target_x_S3 :
-                                       fwd_routine_S3 ? fwd_target_x_S3 :
-                                       `MSG_DST_X_WIDTH'b0;
-wire [`MSG_DST_Y_WIDTH-1:0] dst_y_S3 = is_resp_S3 ? resp_y_S3 :
-                                       is_int_S3 ? int_target_y_S3 :
-                                       fwd_routine_S3 ? fwd_target_y_S3 :
-                                       `MSG_DST_Y_WIDTH'b0;
-wire [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits_S3 = is_resp_S3 ? resp_fbits_S3 :
-                                               is_int_S3 ? int_target_fbits_S3 :
-                                               fwd_routine_S3 ? `NOC_FBITS_L1 :
-                                               `NOC_FBITS_MEM;
-wire [`MSG_MSHRID_WIDTH-1:0] dst_mshrid_S3 = is_resp_S3 ? resp_mshrid_S3 : mshrid_S3;
-
-wire is_dataless_req_S3 = (msg_type_S3 == `MSG_TYPE_LOAD_FWD) | (msg_type_S3 == `MSG_TYPE_STORE_FWD) | (msg_type_S3 == `MSG_TYPE_INV_FWD);
-wire is_dataless_resp_S3 = (msg_type_S3 == `MSG_TYPE_NODATA_ACK);
-
-wire [`MSG_LENGTH_WIDTH-1:0] req_size_to_len_S3 = data_size_S3 == `MSG_DATA_SIZE_64B ? `MSG_LENGTH_WIDTH'd10 :
-                                                  data_size_S3 == `MSG_DATA_SIZE_32B ? `MSG_LENGTH_WIDTH'd6  :
-                                                  data_size_S3 == `MSG_DATA_SIZE_16B ? `MSG_LENGTH_WIDTH'd4  :
-                                                                                       `MSG_LENGTH_WIDTH'd3  ;
-
-wire [`MSG_LENGTH_WIDTH-1:0] resp_size_to_len_S3 = resp_data_size_S3 == `MSG_DATA_SIZE_64B ? `MSG_LENGTH_WIDTH'd8 :
-                                                   resp_data_size_S3 == `MSG_DATA_SIZE_32B ? `MSG_LENGTH_WIDTH'd4 :
-                                                   resp_data_size_S3 == `MSG_DATA_SIZE_16B ? `MSG_LENGTH_WIDTH'd2 :
-                                                                                             `MSG_LENGTH_WIDTH'd1 ;
-
-wire [`MSG_LENGTH_WIDTH-1:0] length_S3 = is_int_S3 ? `MSG_LENGTH_WIDTH'd1 : 
-                                         is_dataless_req_S3 ? `MSG_LENGTH_WIDTH'd2  :
-                                         is_dataless_resp_S3 ? `MSG_LENGTH_WIDTH'd0 :
-                                         is_req_S3 ? req_size_to_len_S3 :
-                                         is_resp_S3 ? resp_size_to_len_S3 :
-                                            `MSG_LENGTH_WIDTH'd0;
-
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(is_req_S3),
@@ -441,22 +422,21 @@ multichip_adapter_noc_encoder noc_encoder(
     .mesi(mesi_S3),
     .mshrid(dst_mshrid_S3),
     .msg_type(msg_type_S3),
-    .length(length_S3),
     .dst_fbits(dst_fbits_S3),
     .dst_x(dst_x_S3),
     .dst_y(dst_y_S3),
-    .dst_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
+    .dst_chipid({{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
 
-    .data_size(data_size_S3),
+    .data_size(dst_data_size_S3),
     .cache_type(cache_type_S3),
     .subline_vector({`MSG_SUBLINE_VECTOR_WIDTH{1'b1}}),
     .addr(addr_S3),
     .int_id(int_id_S3),
 
     .src_fbits(`NOC_FBITS_L2),
-    .src_x({`MSG_SRC_X_WIDTH{1'b1}}),
-    .src_y({`MSG_SRC_Y_WIDTH{1'b1}}),
-    .src_chipid({{`MSG_SRC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
+    .src_x({`NOC_X_WIDTH{1'b1}}),
+    .src_y({`NOC_Y_WIDTH{1'b1}}),
+    .src_chipid({{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
     
     .data(msg_data_S3)
 );

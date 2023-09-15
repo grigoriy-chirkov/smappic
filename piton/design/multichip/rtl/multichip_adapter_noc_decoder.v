@@ -42,20 +42,20 @@ module multichip_adapter_noc_decoder(
     output reg [`MSG_MSHRID_WIDTH-1:0] mshrid,
     output reg [`MSG_TYPE_WIDTH-1:0] msg_type,
     output reg [`MSG_LENGTH_WIDTH-1:0] length,
-    output reg [`MSG_DST_FBITS_WIDTH-1:0] dst_fbits,
-    output reg [`MSG_DST_X_WIDTH-1:0] dst_x,
-    output reg [`MSG_DST_Y_WIDTH-1:0] dst_y,
-    output reg [`MSG_DST_CHIPID_WIDTH-1:0] dst_chipid,
+    output reg [`NOC_FBITS_WIDTH-1:0] dst_fbits,
+    output reg [`NOC_X_WIDTH-1:0] dst_x,
+    output reg [`NOC_Y_WIDTH-1:0] dst_y,
+    output reg [`NOC_CHIPID_WIDTH-1:0] dst_chipid,
 
     output reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     output reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     output reg [`MSG_SUBLINE_VECTOR_WIDTH-1:0] subline_vector,
     output reg [`MSG_ADDR_WIDTH-1:0] addr,
 
-    output reg [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits,
-    output reg [`MSG_SRC_X_WIDTH-1:0] src_x,
-    output reg [`MSG_SRC_Y_WIDTH-1:0] src_y,
-    output reg [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid,
+    output reg [`NOC_FBITS_WIDTH-1:0] src_fbits,
+    output reg [`NOC_X_WIDTH-1:0] src_x,
+    output reg [`NOC_Y_WIDTH-1:0] src_y,
+    output reg [`NOC_CHIPID_WIDTH-1:0] src_chipid,
 
     output reg [7*`NOC_DATA_WIDTH-1:0] data,
     output reg [`MSG_INT_ID_WIDTH-1:0] int_id
