@@ -113,8 +113,6 @@ cep_decoder cep_decoder(
     .is_request(is_req_S1),
     .is_response(is_resp_S1),
     .is_int(is_int_S1),
-    .last_subline(),
-    .subline_id(),
     .mesi(mesi_S1),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
@@ -150,22 +148,11 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_out_read_data),
 
     .addr(resp_addr_S1),
-    .way(),
     .mshrid(resp_mshrid_S1),
-    .cache_type(),
     .data_size(resp_data_size_S1),
-    .msg_type(),
-    .src_chipid(),
     .src_x(resp_x_S1),
     .src_y(resp_y_S1),
-    .src_fbits(resp_fbits_S1),
-    .smc_miss(),
-    .recycled(),
-    .inv_fwd_pending(),
-    .data0(),
-    .data1(), 
-    .data2(), 
-    .data3()
+    .src_fbits(resp_fbits_S1)
 );
 
 wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ) & (msg_type_S1 != `MSG_TYPE_INTERRUPT);

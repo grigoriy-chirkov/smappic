@@ -80,9 +80,7 @@ wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
 cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
-    .is_request(),
     .is_response(is_resp_S1),
-    .is_int(),
     .last_subline(last_subline_S1),
     .subline_id(subline_id_S1),
     .mshrid(mshrid_S1),
@@ -163,23 +161,10 @@ wire [`MSG_SRC_FBITS_WIDTH-1:0] resp_fbits_S2;
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_read_data),
 
-    .addr(),
-    .way(),
     .mshrid(resp_mshrid_S2),
-    .cache_type(),
-    .data_size(),
-    .msg_type(),
-    .src_chipid(),
     .src_x(resp_x_S2),
     .src_y(resp_y_S2),
-    .src_fbits(resp_fbits_S2),
-    .smc_miss(),
-    .recycled(),
-    .inv_fwd_pending(),
-    .data0(),
-    .data1(),
-    .data2(),
-    .data3()
+    .src_fbits(resp_fbits_S2)
 );
 
 assign stall_S2 = stall_S3 & val_S2;

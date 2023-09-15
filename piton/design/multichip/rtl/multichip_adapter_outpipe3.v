@@ -89,27 +89,41 @@ noc_deserializer noc_deserializer(
 
 wire val_S2_next = val_S1 & ~stall_S1;
 
-wire [`MSG_ADDR_WIDTH-1:0] addr_S1 = pkg_S1[`MSG_ADDR_FULL];
-wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1 = pkg_S1[`MSG_TYPE];
-wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1 = pkg_S1[`MSG_SRC_X];
-wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1 = pkg_S1[`MSG_SRC_Y];
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1 = pkg_S1[`MSG_SRC_CHIPID];
-wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1 = pkg_S1[`MSG_SRC_FBITS];
-wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1 = pkg_S1[`MSG_MSHRID];
-wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1 = pkg_S1[`MSG_DATA_SIZE];
-wire [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S1 = pkg_S1[`MSG_LAST_SUBLINE];
-wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S1 = pkg_S1[`MSG_SUBLINE_ID];
-wire is_resp_S1 = (msg_type_S1 == `MSG_TYPE_LOAD_FWDACK)      |
-                  (msg_type_S1 == `MSG_TYPE_STORE_FWDACK)     |
-                  (msg_type_S1 == `MSG_TYPE_LOAD_FWDDATAACK)  |
-                  (msg_type_S1 == `MSG_TYPE_STORE_FWDDATAACK) |
-                  (msg_type_S1 == `MSG_TYPE_INV_FWDACK)       |
-                  (msg_type_S1 == `MSG_TYPE_LOAD_MEM_ACK)     |
-                  (msg_type_S1 == `MSG_TYPE_STORE_MEM_ACK)    |
-                  (msg_type_S1 == `MSG_TYPE_NC_LOAD_MEM_ACK)  |
-                  (msg_type_S1 == `MSG_TYPE_NC_STORE_MEM_ACK) ;
-wire is_req_S1 = (msg_type_S1 == `MSG_TYPE_WB_REQ); // TODO: implement write-backs
-wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = pkg_S1[`PKG_DATA_WIDTH-1:`CEP_WORD_WIDTH];
+wire [`MSG_ADDR_WIDTH-1:0] addr_S1;
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1;
+wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1;
+wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1;
+wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1;
+wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1;
+wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1;
+wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1;
+wire [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S1;
+wire [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S1;
+wire is_resp_S1;
+wire is_req_S1; // TODO: implement write-backs
+wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
+
+multichip_adapter_noc_decoder noc_decoder(
+    .pkg(pkg_S1),
+
+    .is_request(is_req_S1),
+    .is_response(is_resp_S1),
+
+    .last_subline(last_subline_S1),
+    .subline_id(subline_id_S1),
+    .mshrid(mshrid_S1),
+    .msg_type(msg_type_S1),
+
+    .data_size(data_size_S1),
+    .addr(addr_S1),
+
+    .src_fbits(src_fbits_S1),
+    .src_x(src_x_S1),
+    .src_y(src_y_S1),
+    .src_chipid(src_chipid_S1),
+
+    .data(msg_data_S1)
+);
 
 assign stall_S1 = stall_S2 & val_S1;
 
@@ -220,23 +234,8 @@ wire [`MSG_SRC_CHIPID_WIDTH-1:0] resp_chipid_S2;
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_read_data),
 
-    .addr(),
-    .way(),
     .mshrid(resp_mshrid_S2),
-    .cache_type(),
-    .data_size(),
-    .msg_type(),
-    .src_chipid(resp_chipid_S2),
-    .src_x(),
-    .src_y(),
-    .src_fbits(),
-    .smc_miss(),
-    .recycled(),
-    .inv_fwd_pending(),
-    .data0(),
-    .data1(),
-    .data2(),
-    .data3()
+    .src_chipid(resp_chipid_S2)
 );
 
 assign stall_S2 = stall_S3 & val_S2;

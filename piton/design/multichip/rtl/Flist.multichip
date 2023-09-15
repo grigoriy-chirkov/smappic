@@ -28,5 +28,6 @@ multichip_adapter_prio_encoder.v
 cep_encoder.v
 cep_decoder.v
 multichip_adapter_noc_encoder.v
+multichip_adapter_noc_decoder.v
 multichip_adapter_numa_encoder.v
 multichip_adapter_home_encoder.v

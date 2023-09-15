@@ -92,22 +92,44 @@ noc_deserializer noc_deserializer(
     .pkg_rdy(~stall_S1)
 );
 
-
 wire val_S2_next = val_S1 & ~stall_S1;
 
-wire [`MSG_ADDR_WIDTH-1:0] addr_S1 = pkg_S1[`MSG_ADDR_FULL];
-wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1 = pkg_S1[`MSG_TYPE];
-wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1 = pkg_S1[`MSG_SRC_X];
-wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1 = pkg_S1[`MSG_SRC_Y];
-wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1 = pkg_S1[`MSG_SRC_CHIPID];
-wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1 = pkg_S1[`MSG_SRC_FBITS];
-wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1 = pkg_S1[`MSG_MSHRID];
-wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1 = pkg_S1[`MSG_DATA_SIZE];
-wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1 = pkg_S1[`MSG_CACHE_TYPE];
-wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1 = {{2*`CEP_WORD_WIDTH{1'b0}}, pkg_S1[`PKG_DATA_WIDTH-1:3*`CEP_WORD_WIDTH]};
-wire is_int_S1 = (msg_type_S1 == `MSG_TYPE_INTERRUPT_FWD);
-wire is_req_S1 = ~is_int_S1;
-wire [`MSG_INT_ID_WIDTH-1:0] int_id_S1 = pkg_S1[`MSG_INT_ID];
+wire [`MSG_ADDR_WIDTH-1:0] addr_S1;
+wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1;
+wire [`MSG_SRC_X_WIDTH-1:0] src_x_S1;
+wire [`MSG_SRC_Y_WIDTH-1:0] src_y_S1;
+wire [`MSG_SRC_CHIPID_WIDTH-1:0] src_chipid_S1;
+wire [`MSG_SRC_FBITS_WIDTH-1:0] src_fbits_S1;
+wire [`MSG_MSHRID_WIDTH-1:0] mshrid_S1;
+wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size_S1;
+wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type_S1;
+wire [7*`CEP_WORD_WIDTH-1:0] msg_data_S1;
+wire is_int_S1;
+wire is_req_S1;
+wire [`MSG_INT_ID_WIDTH-1:0] int_id_S1;
+
+multichip_adapter_noc_decoder noc_decoder(
+    .pkg(pkg_S1),
+
+    .is_request(is_req_S1),
+    .is_int(is_int_S1),
+
+    .mshrid(mshrid_S1),
+    .msg_type(msg_type_S1),
+
+    .data_size(data_size_S1),
+    .cache_type(cache_type_S1),
+    .addr(addr_S1),
+
+    .src_fbits(src_fbits_S1),
+    .src_x(src_x_S1),
+    .src_y(src_y_S1),
+    .src_chipid(src_chipid_S1),
+
+    .data(msg_data_S1),
+    .int_id(int_id_S1)
+);
+
 wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_INTERRUPT_FWD) & (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ);
 assign dir_rd_en = 1'b0;
 assign dir_rd_addr = `MA_ADDR_WIDTH'b0;

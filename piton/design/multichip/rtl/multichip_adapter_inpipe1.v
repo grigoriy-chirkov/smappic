@@ -81,10 +81,7 @@ cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_request(is_req_S1),
-    .is_response(),
     .is_int(is_int_S1),
-    .last_subline(),
-    .subline_id(),
     .mshrid(mshrid_S1),
     .msg_type(msg_type_S1),
 

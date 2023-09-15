@@ -101,6 +101,7 @@ begin
         pkg[5*`NOC_DATA_WIDTH-1:4*`NOC_DATA_WIDTH] = int_id;
         pkg[6*`NOC_DATA_WIDTH-1:5*`NOC_DATA_WIDTH] = int_id;
         pkg[7*`NOC_DATA_WIDTH-1:6*`NOC_DATA_WIDTH] = int_id;
+        pkg[8*`NOC_DATA_WIDTH-1:7*`NOC_DATA_WIDTH] = int_id;
     end
     else if (is_response) begin
         pkg[2*`NOC_DATA_WIDTH-1:1*`NOC_DATA_WIDTH] = data[1*`NOC_DATA_WIDTH-1:0*`NOC_DATA_WIDTH];
