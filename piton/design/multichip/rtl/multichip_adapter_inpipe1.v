@@ -146,7 +146,7 @@ end
 // Stage 2
 
 wire val_S3_next = val_S2 & ~stall_S2;
-wire do_write_mshr_S2 = is_req_S2;
+wire do_write_mshr_S2 = is_req_S2 & (msg_type_S2 != `MSG_TYPE_WBGUARD_REQ);
 
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;

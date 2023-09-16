@@ -56,9 +56,9 @@ always @(*) begin
 
 <%
 for i in range(PITON_NUM_CHIPS_SM):
-    print("    else if (addr_in < `MSG_ADDR_WIDTH'h%x) begin" % (PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1)))
-    print("        chipid_out = `CEP_CHIPID_WIDTH'd%d;" % i)
-    print("    end")
+    print(f"    else if (addr_in < `MSG_ADDR_WIDTH'h{PITON_NUMA_NODE_MEM_START + PITON_NUMA_NODE_MEM_SIZE * (i+1):x}) begin")
+    print(f"        chipid_out = `CEP_CHIPID_WIDTH'd{i};")
+    print(f"    end")
 %>
     else // send to 0 by default
         chipid_out = `CEP_CHIPID_WIDTH'd0;

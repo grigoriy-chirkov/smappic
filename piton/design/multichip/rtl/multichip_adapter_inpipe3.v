@@ -81,6 +81,7 @@ cep_decoder cep_decoder(
     .cep_pkg(cep_data),
 
     .is_response(is_resp_S1),
+    .is_request(is_req_S1),
     .last_subline(last_subline_S1),
     .subline_id(subline_id_S1),
     .mshrid(mshrid_S1),
@@ -91,8 +92,7 @@ cep_decoder cep_decoder(
 
     .src_chipid(src_chipid_S1),
 
-    .data(msg_data_S1),
-    .int_id()
+    .data(msg_data_S1)
 );
 
 
@@ -112,6 +112,7 @@ reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_resp_S2;
+reg is_req_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -125,6 +126,7 @@ always @(posedge clk) begin
         subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_resp_S2 <= 1'b0;
+        is_req_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
@@ -137,6 +139,7 @@ always @(posedge clk) begin
         subline_id_S2 <= subline_id_S1;
         msg_data_S2 <= msg_data_S1;
         is_resp_S2 <= is_resp_S1;
+        is_req_S2 <= is_req_S1;
     end
 end
 
@@ -147,7 +150,7 @@ wire val_S3_next = val_S2 & ~stall_S2;
 wire is_inv_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK)      | 
                      (msg_type_S2 == `MSG_TYPE_STORE_FWDACK)    |
                      (msg_type_S2 == `MSG_TYPE_STORE_FWDDATAACK);
-wire do_read_mshr_S2 = 1'b1;
+wire do_read_mshr_S2 = is_resp_S2;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr_S2 & ~(is_inv_ack_S2 & ~last_subline_S2);
 assign mshr_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_write_data = `MA_MSHR_ARRAY_WIDTH'b0;
@@ -183,6 +186,7 @@ reg [`NOC_X_WIDTH-1:0] resp_x_S3;
 reg [`NOC_Y_WIDTH-1:0] resp_y_S3;
 reg [`NOC_FBITS_WIDTH-1:0] resp_fbits_S3;
 reg is_resp_S3;
+reg is_req_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -198,6 +202,7 @@ always @(posedge clk) begin
         resp_y_S3 <= `NOC_Y_WIDTH'b0;
         resp_fbits_S3 <= `NOC_FBITS_WIDTH'b0;
         is_resp_S3 <= 1'b0;
+        is_req_S3 <= 1'b0;
     end
     else if (~stall_S3) begin
         val_S3 <= val_S3_next;
@@ -212,6 +217,7 @@ always @(posedge clk) begin
         resp_y_S3 <= resp_y_S2;
         resp_fbits_S3 <= resp_fbits_S2;
         is_resp_S3 <= is_resp_S2;
+        is_req_S3 <= is_req_S2;
     end
 end
 
@@ -221,7 +227,7 @@ wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
-    .is_request(1'b0),
+    .is_request(is_req_S3),
     .is_response(is_resp_S3),
     .is_int(1'b0),
 

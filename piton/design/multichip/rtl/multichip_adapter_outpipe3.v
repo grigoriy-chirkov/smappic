@@ -141,6 +141,7 @@ reg [`MSG_LAST_SUBLINE_WIDTH-1:0] last_subline_S2;
 reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S2;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S2;
 reg is_resp_S2;
+reg is_req_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -157,6 +158,7 @@ always @(posedge clk) begin
         subline_id_S2 <= `MSG_SUBLINE_ID_WIDTH'b0;
         msg_data_S2 <= {7*`CEP_WORD_WIDTH{1'b0}};
         is_resp_S2 <= 1'b0;
+        is_req_S2 <= 1'b0;
     end
     else if (~stall_S2) begin
         val_S2 <= val_S2_next;
@@ -172,6 +174,7 @@ always @(posedge clk) begin
         subline_id_S2 <= subline_id_S1;
         msg_data_S2 <= msg_data_S1;
         is_resp_S2 <= is_resp_S1;
+        is_req_S2 <= is_req_S1;
     end 
 end
 
@@ -181,14 +184,10 @@ assign stall_S2 = (stall_S3 | recycle_S3) & val_S2;
 
 wire suppress_next_stage_S2;
 wire val_S3_next = val_S2 & ~stall_S2 & ~suppress_next_stage_S2;
-wire fwd_ack_S2 = (msg_type_S2 == `MSG_TYPE_INV_FWDACK  )     | 
-                  (msg_type_S2 == `MSG_TYPE_STORE_FWDACK)     |
-                  (msg_type_S2 == `MSG_TYPE_LOAD_FWDACK )     |
-                  (msg_type_S2 == `MSG_TYPE_STORE_FWDDATAACK) |
-                  (msg_type_S2 == `MSG_TYPE_LOAD_FWDDATAACK ) ;
+wire fwd_ack_S2 = is_resp_S2;
 wire long_fwd_ack_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWDDATAACK) |
                        (msg_type_S2 == `MSG_TYPE_LOAD_FWDDATAACK ) ;
-wire do_read_mshr = 1'b1;
+wire do_read_mshr = is_resp_S2;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
 assign mshr_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 assign suppress_next_stage_S2 = (fwd_ack_S2 & (~last_subline_S2 | mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1}));
@@ -253,6 +252,7 @@ reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`NOC_CHIPID_WIDTH-1:0] resp_chipid_S3;
 reg is_resp_S3;
+reg is_req_S3;
 
 always @(posedge clk) begin
     if (~rst_n) begin
@@ -266,6 +266,7 @@ always @(posedge clk) begin
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_chipid_S3 <= `NOC_CHIPID_WIDTH'b0;
         is_resp_S3 <= 1'b0;
+        is_req_S3 <= 1'b0;
     end
     else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
@@ -278,6 +279,7 @@ always @(posedge clk) begin
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_chipid_S3 <= resp_chipid_S2;
         is_resp_S3 <= is_resp_S2;
+        is_req_S3 <= is_req_S2;
     end
 end
 
@@ -317,25 +319,25 @@ multichip_adapter_prio_encoder_2 prio_encoder(
     .nonzero_out(subline_vals_nz)
 );
 
-wire fwd_ack_S3 = (msg_type_S3 == `MSG_TYPE_INV_FWDACK  )     | 
-                  (msg_type_S3 == `MSG_TYPE_STORE_FWDACK)     |
-                  (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK )     |
-                  (msg_type_S3 == `MSG_TYPE_STORE_FWDDATAACK) |
-                  (msg_type_S3 == `MSG_TYPE_LOAD_FWDDATAACK ) ;
+wire fwd_ack_S3 = is_resp_S3;
 wire new_last_subline_S3 = ((subline_vals_S3 & subline_mask_S3) == 4'b0);
 wire [`CEP_SUBLINE_ID_WIDTH-1:0] send_subline_id_S3 = subline_vals_nz & fwd_ack_S3 ? new_subline_id_S3 : subline_id_S3;
 wire [`CEP_LAST_SUBLINE_WIDTH-1:0] send_last_subline_S3 = subline_vals_nz & fwd_ack_S3 ? new_last_subline_S3 : last_subline_S3;
-wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_store_type_S3 = subline_vals_nz ? `MSG_TYPE_STORE_FWDDATAACK : `MSG_TYPE_STORE_FWDACK;
-wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_load_type_S3 = subline_vals_nz ? `MSG_TYPE_LOAD_FWDDATAACK : `MSG_TYPE_LOAD_FWDACK;
-wire [`CEP_MSG_TYPE_WIDTH-1:0] send_msg_type_S3 = (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) | (msg_type_S3 == `MSG_TYPE_STORE_FWDDATAACK)  ? dataaware_store_type_S3 : 
-                                                  (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK ) | (msg_type_S3 == `MSG_TYPE_LOAD_FWDDATAACK )  ? dataaware_load_type_S3  : 
-                                                        `MSG_TYPE_INV_FWDACK;
+wire is_st_ack_S3 = (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) | (msg_type_S3 == `MSG_TYPE_STORE_FWDDATAACK);
+wire is_ld_ack_S3 = (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK ) | (msg_type_S3 == `MSG_TYPE_LOAD_FWDDATAACK );
+wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_st_ack_type_S3 = subline_vals_nz ? `MSG_TYPE_STORE_FWDDATAACK : `MSG_TYPE_STORE_FWDACK;
+wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_ld_ack_type_S3 = subline_vals_nz ? `MSG_TYPE_LOAD_FWDDATAACK : `MSG_TYPE_LOAD_FWDACK;
+wire [`CEP_MSG_TYPE_WIDTH-1:0] send_msg_type_S3 = is_st_ack_S3  ? dataaware_st_ack_type_S3 : 
+                                                  is_ld_ack_S3  ? dataaware_ld_ack_type_S3 : 
+                                                  fwd_ack_S3    ? `MSG_TYPE_INV_FWDACK     :
+                                                                  msg_type_S3              ;
+wire [7*`CEP_WORD_WIDTH-1:0] send_data_S3 = is_req_S3 ? msg_data_S3 : {{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]};
 
 wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(1'b0),
+    .is_request(is_req_S3),
     .is_response(is_resp_S3),
     .is_int(1'b0),
     .last_subline(send_last_subline_S3),
@@ -350,7 +352,7 @@ cep_encoder cep_encoder(
 
     .src_chipid(mychipid),
 
-    .data({{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]}),
+    .data(send_data_S3),
     .int_id(`CEP_INT_ID_WIDTH'b0)
 );
 

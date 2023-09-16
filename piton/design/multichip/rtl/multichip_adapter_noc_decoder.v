@@ -94,21 +94,13 @@ begin
                   (msg_type == `MSG_TYPE_STORE_FWDACK)     |
                   (msg_type == `MSG_TYPE_LOAD_FWDDATAACK)  |
                   (msg_type == `MSG_TYPE_STORE_FWDDATAACK) |
-                  (msg_type == `MSG_TYPE_INV_FWDACK)       |
-                  (msg_type == `MSG_TYPE_LOAD_MEM_ACK)     |
-                  (msg_type == `MSG_TYPE_STORE_MEM_ACK)    |
-                  (msg_type == `MSG_TYPE_NC_LOAD_MEM_ACK)  |
-                  (msg_type == `MSG_TYPE_NC_STORE_MEM_ACK) ;
+                  (msg_type == `MSG_TYPE_INV_FWDACK)       ;
 
     is_int = (msg_type == `MSG_TYPE_INTERRUPT_FWD) | (msg_type == `MSG_TYPE_INTERRUPT);
     
     is_request = (msg_type == `MSG_TYPE_LOAD_FWD)        |
                  (msg_type == `MSG_TYPE_STORE_FWD)       |
                  (msg_type == `MSG_TYPE_INV_FWD)         |
-                 (msg_type == `MSG_TYPE_LOAD_MEM)        |
-                 (msg_type == `MSG_TYPE_STORE_MEM)       |
-                 (msg_type == `MSG_TYPE_NC_LOAD_MEM)     |
-                 (msg_type == `MSG_TYPE_NC_STORE_MEM)    |
                  (msg_type == `MSG_TYPE_WB_REQ)          |
                  (msg_type == `MSG_TYPE_LOAD_REQ)        | 
                  (msg_type == `MSG_TYPE_PREFETCH_REQ)    | 

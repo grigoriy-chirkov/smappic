@@ -185,6 +185,7 @@ begin
             msg_type = `MSG_TYPE_WB_REQ;
             msg_length = 4; // 2 extra req headers + 2 data (128b)
             // msg_cache_type = `MSG_CACHE_TYPE_DATA;
+            msg_data_size = `MSG_DATA_SIZE_16B;
         end
         `L15_NOC3_REQTYPE_DOWNGRADE_ACK:
         begin

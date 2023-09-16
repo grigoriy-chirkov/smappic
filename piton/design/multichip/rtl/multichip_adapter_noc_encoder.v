@@ -76,7 +76,8 @@ always @* begin
                    (msg_type == `MSG_TYPE_LR_REQ      ) | 
                    (msg_type == `MSG_TYPE_LOAD_FWD    ) | 
                    (msg_type == `MSG_TYPE_STORE_FWD   ) | 
-                   (msg_type == `MSG_TYPE_INV_FWD     ) ;
+                   (msg_type == `MSG_TYPE_INV_FWD     ) |
+                   (msg_type == `MSG_TYPE_WBGUARD_REQ ) ;
     dataful_req  = is_request & ~dataless_req;
     
     dataless_resp = (msg_type == `MSG_TYPE_INV_FWDACK)   | 
