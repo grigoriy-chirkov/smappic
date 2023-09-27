@@ -166,7 +166,7 @@ multichip_adapter_dir dir(
 wire mshr_out1_p1_write_en;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_write_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out1_p1_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out1_p1_empty_slots;
+wire mshr_out1_p1_full;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out1_p1_empty_index;
 
 wire mshr_out1_p2_write_en;
@@ -198,7 +198,7 @@ multichip_adapter_mshr mshr_out1 (
     .wr_counter_in1({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
     .wr_index_in1(mshr_out1_p1_write_index),
     .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_out1_p1_empty_slots),
+    .full(mshr_out1_p1_full),
     .empty_index(mshr_out1_p1_empty_index),
 
     .wr_state_en2(mshr_out1_p2_write_en),
@@ -230,7 +230,7 @@ wire mshr_in2_p2_write_en;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_write_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in2_p2_write_data;
 wire [`MA_SHARER_BITS_WIDTH:0] mshr_in2_p2_write_counter;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in2_p2_empty_slots;
+wire mshr_in2_p2_full;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in2_p2_empty_index;
 
 wire mshr_in2_p3_write_en;
@@ -265,7 +265,7 @@ multichip_adapter_mshr mshr_in2 (
     .wr_counter_in1(mshr_in2_p2_write_counter),
     .wr_index_in1(mshr_in2_p2_write_index),
     .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_in2_p2_empty_slots),
+    .full(mshr_in2_p2_full),
     .empty_index(mshr_in2_p2_empty_index),
 
     .wr_state_en2(mshr_in2_p3_write_en),
@@ -309,7 +309,7 @@ multichip_adapter_outpipe1 outpipe1 (
     .cep_rdy(cep_queue1_rdy_out), 
 
     .mshr_empty_index(mshr_out1_p1_empty_index),
-    .mshr_empty_slots(mshr_out1_p1_empty_slots),
+    .mshr_full(mshr_out1_p1_full),
     .mshr_write_en(mshr_out1_p1_write_en),
     .mshr_write_index(mshr_out1_p1_write_index),
     .mshr_write_data(mshr_out1_p1_write_data), 
@@ -343,7 +343,7 @@ multichip_adapter_inpipe2 inpipe2 (
     .cep_rdy(cep_queue2_rdy_in),
 
     .mshr_in_empty_index(mshr_in2_p2_empty_index),
-    .mshr_in_empty_slots(mshr_in2_p2_empty_slots),
+    .mshr_in_full(mshr_in2_p2_full),
     .mshr_in_write_en(mshr_in2_p2_write_en),
     .mshr_in_write_index(mshr_in2_p2_write_index),
     .mshr_in_write_data(mshr_in2_p2_write_data),
@@ -409,7 +409,7 @@ multichip_adapter_outpipe3 outpipe3 (
 wire mshr_out2_p2_write_en;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_write_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_out2_p2_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_out2_p2_empty_slots;
+wire mshr_out2_p2_full;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_out2_p2_empty_index;
 
 wire mshr_out2_p3_write_en;
@@ -442,7 +442,7 @@ multichip_adapter_mshr mshr_out2 (
     .wr_index_in1(mshr_out2_p2_write_index),
     .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
     .empty_index(mshr_out2_p2_empty_index),
-    .empty_slots(mshr_out2_p2_empty_slots),
+    .full(mshr_out2_p2_full),
 
     .wr_state_en2(mshr_out2_p3_write_en),
     .wr_data_en2(mshr_out2_p3_write_en),
@@ -472,7 +472,7 @@ multichip_adapter_mshr mshr_out2 (
 wire mshr_in1_p1_write_en;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_write_index;
 wire [`MA_MSHR_ARRAY_WIDTH-1:0] mshr_in1_p1_write_data;
-wire [`MA_MSHR_INDEX_WIDTH:0] mshr_in1_p1_empty_slots;
+wire mshr_in1_p1_full;
 wire [`MA_MSHR_INDEX_WIDTH-1:0] mshr_in1_p1_empty_index;
 
 wire mshr_in1_p2_write_en;
@@ -504,7 +504,7 @@ multichip_adapter_mshr mshr_in1 (
     .wr_counter_in1({`MA_SHARER_BITS_WIDTH+1{1'b0}}),
     .wr_index_in1(mshr_in1_p1_write_index),
     .addr_in1(`MA_MSHR_ADDR_IN_WIDTH'b0),
-    .empty_slots(mshr_in1_p1_empty_slots),
+    .full(mshr_in1_p1_full),
     .empty_index(mshr_in1_p1_empty_index),
 
     .wr_state_en2(mshr_in1_p2_write_en),
@@ -546,7 +546,7 @@ multichip_adapter_inpipe1 inpipe1 (
     .cep_rdy(cep_queue1_rdy_in), 
 
     .mshr_empty_index(mshr_in1_p1_empty_index),
-    .mshr_empty_slots(mshr_in1_p1_empty_slots),
+    .mshr_full(mshr_in1_p1_full),
     .mshr_write_en(mshr_in1_p1_write_en),
     .mshr_write_index(mshr_in1_p1_write_index),
     .mshr_write_data(mshr_in1_p1_write_data), 
@@ -569,7 +569,7 @@ multichip_adapter_outpipe2 outpipe2 (
     .cep_rdy(cep_queue2_rdy_out), 
 
     .mshr_out_empty_index(mshr_out2_p2_empty_index),
-    .mshr_out_empty_slots(mshr_out2_p2_empty_slots),
+    .mshr_out_full(mshr_out2_p2_full),
     .mshr_out_write_en(mshr_out2_p2_write_en),
     .mshr_out_write_index(mshr_out2_p2_write_index),
     .mshr_out_write_data(mshr_out2_p2_write_data), 

@@ -1,13 +1,13 @@
 // Do not edit - auto-generated
 module plic_regs (
-  input logic [2:0][2:0] prio_i,
-  output logic [2:0][2:0] prio_o,
-  output logic [2:0] prio_we_o,
-  output logic [2:0] prio_re_o,
-  input logic [0:0][2:0] ip_i,
+  input logic [3:0][2:0] prio_i,
+  output logic [3:0][2:0] prio_o,
+  output logic [3:0] prio_we_o,
+  output logic [3:0] prio_re_o,
+  input logic [0:0][3:0] ip_i,
   output logic [0:0] ip_re_o,
-  input logic [3:0][2:0] ie_i,
-  output logic [3:0][2:0] ie_o,
+  input logic [3:0][3:0] ie_i,
+  output logic [3:0][3:0] ie_o,
   output logic [3:0] ie_we_o,
   output logic [3:0] ie_re_o,
   input logic [3:0][2:0] threshold_i,
@@ -53,20 +53,24 @@ always_comb begin
           prio_o[2][2:0] = req_i.wdata[2:0];
           prio_we_o[2] = 1'b1;
         end
+        32'hc00000c: begin
+          prio_o[3][2:0] = req_i.wdata[2:0];
+          prio_we_o[3] = 1'b1;
+        end
         32'hc002000: begin
-          ie_o[0][2:0] = req_i.wdata[2:0];
+          ie_o[0][3:0] = req_i.wdata[3:0];
           ie_we_o[0] = 1'b1;
         end
         32'hc002080: begin
-          ie_o[1][2:0] = req_i.wdata[2:0];
+          ie_o[1][3:0] = req_i.wdata[3:0];
           ie_we_o[1] = 1'b1;
         end
         32'hc002100: begin
-          ie_o[2][2:0] = req_i.wdata[2:0];
+          ie_o[2][3:0] = req_i.wdata[3:0];
           ie_we_o[2] = 1'b1;
         end
         32'hc002180: begin
-          ie_o[3][2:0] = req_i.wdata[2:0];
+          ie_o[3][3:0] = req_i.wdata[3:0];
           ie_we_o[3] = 1'b1;
         end
         32'hc200000: begin
@@ -117,24 +121,28 @@ always_comb begin
           resp_o.rdata[2:0] = prio_i[2][2:0];
           prio_re_o[2] = 1'b1;
         end
+        32'hc00000c: begin
+          resp_o.rdata[2:0] = prio_i[3][2:0];
+          prio_re_o[3] = 1'b1;
+        end
         32'hc001000: begin
-          resp_o.rdata[2:0] = ip_i[0][2:0];
+          resp_o.rdata[3:0] = ip_i[0][3:0];
           ip_re_o[0] = 1'b1;
         end
         32'hc002000: begin
-          resp_o.rdata[2:0] = ie_i[0][2:0];
+          resp_o.rdata[3:0] = ie_i[0][3:0];
           ie_re_o[0] = 1'b1;
         end
         32'hc002080: begin
-          resp_o.rdata[2:0] = ie_i[1][2:0];
+          resp_o.rdata[3:0] = ie_i[1][3:0];
           ie_re_o[1] = 1'b1;
         end
         32'hc002100: begin
-          resp_o.rdata[2:0] = ie_i[2][2:0];
+          resp_o.rdata[3:0] = ie_i[2][3:0];
           ie_re_o[2] = 1'b1;
         end
         32'hc002180: begin
-          resp_o.rdata[2:0] = ie_i[3][2:0];
+          resp_o.rdata[3:0] = ie_i[3][3:0];
           ie_re_o[3] = 1'b1;
         end
         32'hc200000: begin

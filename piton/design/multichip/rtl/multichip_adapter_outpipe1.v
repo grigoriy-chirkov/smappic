@@ -45,7 +45,7 @@ module multichip_adapter_outpipe1 (
     input  wire                                   cep_rdy,
 
     input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_empty_index,
-    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_empty_slots,
+    input  wire                                   mshr_full,
     output wire                                   mshr_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data, 
@@ -92,7 +92,7 @@ noc_deserializer noc_deserializer(
     .pkg_rdy(~stall_S1)
 );
 
-wire val_S2_next = val_S1 & ~stall_S1;
+wire val_S2_next = val_S1 & ~stall_S1 & (msg_type_S1 != `MSG_TYPE_WBGUARD_REQ);
 
 wire [`MSG_ADDR_WIDTH-1:0] addr_S1;
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1;
@@ -221,8 +221,7 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
-wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);
+wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_full | stall_mshr_from_p2);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 
 // Stage 2 -> 3

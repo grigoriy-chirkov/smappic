@@ -66,7 +66,7 @@ module multichip_adapter_mshr (
     // output reg [`MA_MSHR_ARRAY_WIDTH-1:0] pending_data_out,
 
     output reg [`MA_SHARER_BITS_WIDTH:0] inv_counter_out,
-    output reg [`MA_MSHR_INDEX_WIDTH:0] empty_slots,
+    output reg full,
     // output reg pending,
     // output reg [`MA_MSHR_INDEX_WIDTH-1:0] pending_index,
     output reg [`MA_MSHR_INDEX_WIDTH-1:0] empty_index
@@ -120,12 +120,12 @@ reg [`MA_SHARER_BITS_WIDTH:0] counter_mem_f [`MA_MSHR_ENTRIES-1:0];
 
 always @ *
 begin
-    empty_slots = {`MA_MSHR_INDEX_WIDTH+1{1'b0}};
+    full = 1'b1;
 <%
 for i in range(MA_MSHR_ENTRIES):
     print("    if (state_mem_f[%d] == `MA_MSHR_STATE_INVAL)" % (i))
     print("    begin")
-    print("        empty_slots = empty_slots + {{`MA_MSHR_INDEX_WIDTH{1'b0}}, 1'b1};")
+    print("        full = 1'b0;")
     print("    end")
 %>
 end

@@ -45,7 +45,7 @@ module multichip_adapter_outpipe2 (
     input  wire                                   cep_rdy,
 
     input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_empty_index,
-    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_out_empty_slots,
+    input  wire                                   mshr_out_full,
     output wire                                   mshr_out_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_out_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_out_write_data, 
@@ -235,8 +235,7 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
-wire stall_mshr_out_full_S2 = (mshr_out_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_out_full_S2 | stall_mshr_out_from_p3);
+wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_out_full | stall_mshr_out_from_p3);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 
 // Stage 2 -> 3

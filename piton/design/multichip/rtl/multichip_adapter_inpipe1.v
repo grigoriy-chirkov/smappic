@@ -46,7 +46,7 @@ module multichip_adapter_inpipe1 (
 
     // MSHR interface
     input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_empty_index,
-    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_empty_slots,
+    input  wire                                   mshr_full,
     output wire                                   mshr_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data, 
@@ -175,8 +175,7 @@ multichip_adapter_mshr_encoder mshr_encoder(
 );
 
 
-wire stall_mshr_full_S2 = (mshr_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_full_S2 | stall_mshr_from_p2);
+wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_full | stall_mshr_from_p2);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2);
 
 // Stage 2 -> 3

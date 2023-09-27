@@ -52,7 +52,7 @@ module multichip_adapter_inpipe2 (
     input  wire [`MA_MSHR_STATE_BITS-1:0]         mshr_out_read_state,
 
     input  wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_empty_index,
-    input  wire [`MA_MSHR_INDEX_WIDTH:0]          mshr_in_empty_slots,
+    input  wire                                   mshr_in_full,
     output wire                                   mshr_in_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_in_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_in_write_data, 
@@ -287,8 +287,7 @@ end
 assign dir_wr_sharer_set = inv_msg_S2 ? `MA_SHARER_SET_WIDTH'b0 : new_sharer_set_S2;
 assign dir_wr_state = inv_msg_S2 ? `MA_STATE_INVALID : `MA_STATE_VALID;
 
-wire stall_mshr_in_full_S2 = (mshr_in_empty_slots == {`MA_MSHR_INDEX_WIDTH+1{1'b0}});
-wire stall_mshr_S2 = do_write_mshr_S2 & (stall_mshr_in_full_S2 | stall_mshr_in_from_p3);
+wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_in_full | stall_mshr_in_from_p3);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 
 
