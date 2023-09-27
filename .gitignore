@@ -120,3 +120,4 @@ piton/tools/src/xdma/dma_os
 cscope.*
 tags
 *.bak
+piton/design/chip/tile/ariane/src/rv_plic/rtl/plic_regmap.sv
