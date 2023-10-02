@@ -49,21 +49,7 @@ module multichip_adapter_outpipe1 (
     output wire                                   mshr_write_en,
     output wire [`MA_MSHR_INDEX_WIDTH-1:0]        mshr_write_index,
     output wire [`MA_MSHR_ARRAY_WIDTH-1:0]        mshr_write_data, 
-    input  wire                                   stall_mshr_from_p2,
-
-    // Dir interface
-    output wire                                   dir_rd_en,
-    output wire [`MA_ADDR_WIDTH-1:0]              dir_rd_addr,
-    input  wire                                   dir_rd_hit,
-    input  wire [`MA_SET_WIDTH-1:0]               dir_rd_set,
-    input  wire [`MA_WAY_WIDTH-1:0]               dir_rd_way,
-    input  wire [`MA_TAG_WIDTH-1:0]               dir_rd_tag,
-    input  wire [`MA_STATE_WIDTH-1:0]             dir_rd_state,
-    input  wire                                   dir_rd_shared,
-    input  wire [`MA_SHARER_SET_WIDTH-1:0]        dir_rd_sharer_set,
-    input  wire [`MA_WAY_WIDTH:0]                 dir_num_empty_ways,
-    input  wire [`MA_WAY_WIDTH-1:0]               dir_empty_way,
-    input  wire                                   dir_rd_stall_from_p2
+    input  wire                                   stall_mshr_from_p2
 );
 
 
@@ -130,10 +116,6 @@ multichip_adapter_noc_decoder noc_decoder(
     .int_id(int_id_S1)
 );
 
-wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_INTERRUPT_FWD) & (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ);
-assign dir_rd_en = 1'b0;
-assign dir_rd_addr = `MA_ADDR_WIDTH'b0;
-
 assign stall_S1 = stall_S2 & val_S1;
 
 
@@ -198,16 +180,17 @@ wire do_write_mshr_S2 = is_req_S2 & (msg_type_S2 != `MSG_TYPE_WBGUARD_REQ);
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;
 
+wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ) | (msg_type_S2 == `MSG_TYPE_NC_STORE_REQ);
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_write_data),
 
     .addr(addr_S2),
-    .way(`MA_WAY_WIDTH'd0),
     .mshrid(mshrid_S2),
     .cache_type(cache_type_S2),
     .data_size(data_size_S2),
     .msg_type(msg_type_S2),
+    .nc(nc_msg_S2),
     .src_chipid(src_chipid_S2),
     .src_x(src_x_S2),
     .src_y(src_y_S2),

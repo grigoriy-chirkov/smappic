@@ -34,11 +34,11 @@ module multichip_adapter_mshr_decoder(
     input wire [`MA_MSHR_ARRAY_WIDTH-1:0] data,
 
     output reg [`MA_MSHR_ADDR_OUT_WIDTH-1:0] addr,
-    output reg [`MA_WAY_WIDTH-1:0] way,
     output reg [`MSG_MSHRID_WIDTH-1:0] mshrid,
     output reg [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     output reg [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     output reg [`MSG_TYPE_WIDTH-1:0] msg_type,
+    output reg nc,
     output reg [`NOC_CHIPID_WIDTH-1:0] src_chipid,
     output reg [`NOC_X_WIDTH-1:0] src_x,
     output reg [`NOC_Y_WIDTH-1:0] src_y,
@@ -56,11 +56,11 @@ module multichip_adapter_mshr_decoder(
 always @ *
 begin
     addr = data[`MA_MSHR_ADDR];
-    way = data[`MA_MSHR_WAY];
     mshrid = data[`MA_MSHR_MSHRID];
     cache_type = data[`MA_MSHR_CACHE_TYPE];
     data_size = data[`MA_MSHR_DATA_SIZE];
     msg_type = data[`MA_MSHR_MSG_TYPE];
+    nc = data[`MA_MSHR_NC];
     src_chipid = data[`MA_MSHR_SRC_CHIPID];
     src_x = data[`MA_MSHR_SRC_X];
     src_y = data[`MA_MSHR_SRC_Y];

@@ -82,27 +82,19 @@ module multichip_adapter_core (
 
 
 
-wire dir_rd_en1;
-wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr1;
-wire dir_rd_hit1;
-wire [`MA_SET_WIDTH-1:0] dir_rd_set1;
-wire [`MA_WAY_WIDTH-1:0] dir_rd_way1;
-wire [`MA_TAG_WIDTH-1:0] dir_rd_tag1;
-wire [`MA_STATE_WIDTH-1:0] dir_rd_state1;
-wire dir_rd_shared1;
-wire [`MA_SHARER_SET_WIDTH-1:0] dir_rd_sharer_set1;
-wire [`MA_WAY_WIDTH:0] dir_num_empty_ways1;
-wire [`MA_WAY_WIDTH-1:0] dir_empty_way1;
 wire dir_rd_en2;
 wire [`MA_ADDR_WIDTH-1:0] dir_rd_addr2;
 wire dir_rd_hit2;
+wire dir_rd_valid2;
 wire [`MA_SET_WIDTH-1:0] dir_rd_set2;
 wire [`MA_WAY_WIDTH-1:0] dir_rd_way2;
 wire [`MA_TAG_WIDTH-1:0] dir_rd_tag2;
 wire [`MA_STATE_WIDTH-1:0] dir_rd_state2;
 wire dir_rd_shared2;
 wire [`MA_SHARER_SET_WIDTH-1:0] dir_rd_sharer_set2;
-wire [`MA_WAY_WIDTH:0] dir_num_empty_ways2;
+wire dir_rd_full2;
+wire [`MA_ADDR_WIDTH-1:0] dir_rd_replace_addr2;
+wire [`MA_CACHE_TYPE_WIDTH-1:0] dir_rd_cache_type2;
 wire [`MA_WAY_WIDTH-1:0] dir_empty_way2;
 wire dir_wr_en2;
 wire [`MA_SET_WIDTH-1:0] dir_wr_set2;
@@ -118,35 +110,30 @@ multichip_adapter_dir dir(
     .pipe_rd_sel(dir_rd_en2), 
     .pipe_wr_sel(dir_wr_en2),
 
-    .rd_en1(dir_rd_en1),
-    .rd_addr1(dir_rd_addr1),
-    .rd_hit1(dir_rd_hit1),
-    .rd_set1(dir_rd_set1),
-    .rd_way1(dir_rd_way1),
-    .rd_tag1(dir_rd_tag1),
-    .rd_state1(dir_rd_state1),
-    .rd_shared1(dir_rd_shared1),
-    .rd_sharer_set1(dir_rd_sharer_set1),
-    .num_empty_ways1(dir_num_empty_ways1),
-    .empty_way1(dir_empty_way1),
+    .rd_en1(1'b0),
+    .rd_addr1(`MSG_ADDR_WIDTH'h0),
 
     .wr_en1(1'b0),
     .wr_set1(`MA_SET_WIDTH'b0),
     .wr_way1(`MA_WAY_WIDTH'b0),
     .wr_tag1(`MA_TAG_WIDTH'b0),
     .wr_state1(`MA_STATE_INVALID),
+    .wr_cache_type1(`MA_CACHE_TYPE_WIDTH'b0),
     .wr_sharer_set1(`MA_SHARER_SET_WIDTH'b0),
 
     .rd_en2(dir_rd_en2),
     .rd_addr2(dir_rd_addr2),
     .rd_hit2(dir_rd_hit2),
+    .rd_valid2(dir_rd_valid2),
     .rd_set2(dir_rd_set2),
     .rd_way2(dir_rd_way2),
     .rd_tag2(dir_rd_tag2),
     .rd_state2(dir_rd_state2),
     .rd_shared2(dir_rd_shared2),
     .rd_sharer_set2(dir_rd_sharer_set2),
-    .num_empty_ways2(dir_num_empty_ways2),
+    .rd_full2(dir_rd_full2),
+    .rd_replace_addr2(dir_rd_replace_addr2),
+    .rd_cache_type2(dir_rd_cache_type2),
     .empty_way2(dir_empty_way2),
 
     .wr_en2(dir_wr_en2),
@@ -154,6 +141,7 @@ multichip_adapter_dir dir(
     .wr_way2(dir_wr_way2),
     .wr_tag2(dir_wr_tag2),
     .wr_state2(dir_wr_state2),
+    .wr_cache_type2(dir_wr_cache_type2),
     .wr_sharer_set2(dir_wr_sharer_set2)
 );
 
@@ -313,20 +301,7 @@ multichip_adapter_outpipe1 outpipe1 (
     .mshr_write_en(mshr_out1_p1_write_en),
     .mshr_write_index(mshr_out1_p1_write_index),
     .mshr_write_data(mshr_out1_p1_write_data), 
-    .stall_mshr_from_p2(mshr_out1_p2_write_en),
-
-    .dir_rd_en(dir_rd_en1),
-    .dir_rd_addr(dir_rd_addr1),
-    .dir_rd_hit(dir_rd_hit1),
-    .dir_rd_set(dir_rd_set1),
-    .dir_rd_way(dir_rd_way1),
-    .dir_rd_tag(dir_rd_tag1),
-    .dir_rd_state(dir_rd_state1),
-    .dir_rd_shared(dir_rd_shared1),
-    .dir_rd_sharer_set(dir_rd_sharer_set1),
-    .dir_num_empty_ways(dir_num_empty_ways1),
-    .dir_empty_way(dir_empty_way1),
-    .dir_rd_stall_from_p2(dir_rd_en2)
+    .stall_mshr_from_p2(mshr_out1_p2_write_en)
 );
 
 multichip_adapter_inpipe2 inpipe2 (
@@ -360,19 +335,23 @@ multichip_adapter_inpipe2 inpipe2 (
     .dir_rd_en(dir_rd_en2),
     .dir_rd_addr(dir_rd_addr2),
     .dir_rd_hit(dir_rd_hit2),
+    .dir_rd_valid(dir_rd_valid2),
     .dir_rd_set(dir_rd_set2),
     .dir_rd_way(dir_rd_way2),
     .dir_rd_tag(dir_rd_tag2),
     .dir_rd_state(dir_rd_state2),
     .dir_rd_shared(dir_rd_shared2),
     .dir_rd_sharer_set(dir_rd_sharer_set2),
-    .dir_num_empty_ways(dir_num_empty_ways2),
+    .dir_rd_full(dir_rd_full2),
+    .dir_rd_replace_addr(dir_rd_replace_addr2),
+    .dir_rd_cache_type(dir_rd_cache_type2),
     .dir_empty_way(dir_empty_way2),
     .dir_wr_en(dir_wr_en2),
     .dir_wr_set(dir_wr_set2),
     .dir_wr_way(dir_wr_way2),
     .dir_wr_tag(dir_wr_tag2),
     .dir_wr_state(dir_wr_state2),
+    .dir_wr_cache_type(dir_wr_cache_type2),
     .dir_wr_sharer_set(dir_wr_sharer_set2)
 );
 

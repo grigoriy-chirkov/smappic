@@ -190,8 +190,8 @@ wire long_fwd_ack_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWDDATAACK) |
 wire do_read_mshr = is_resp_S2;
 assign mshr_write_en = val_S2 & ~stall_S2 & do_read_mshr;
 assign mshr_write_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
-assign suppress_next_stage_S2 = (fwd_ack_S2 & (~last_subline_S2 | mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1}));
-assign mshr_write_state = suppress_next_stage_S2 ? mshr_read_state : `MA_MSHR_STATE_INVAL;
+wire not_full_ack_S2 = (fwd_ack_S2 & ((~last_subline_S2 | mshr_read_inv_counter > {{`MA_SHARER_BITS_WIDTH{1'b0}}, 1'b1})));
+assign mshr_write_state = not_full_ack_S2 ? mshr_read_state : `MA_MSHR_STATE_INVAL;
 assign mshr_read_dec_counter_en = val_S2 & ~stall_S2 & fwd_ack_S2 & last_subline_S2;
 assign mshr_read_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
 assign mshr_read_inv_counter_index = mshrid_S2[`MA_MSHR_INDEX_WIDTH-1:0];
@@ -229,13 +229,18 @@ end
 
 wire [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S2;
 wire [`NOC_CHIPID_WIDTH-1:0] resp_chipid_S2;
+wire [`MSG_ADDR_WIDTH-1:0] resp_addr_S2;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_read_data),
 
+    .addr(resp_addr_S2),
     .mshrid(resp_mshrid_S2),
     .src_chipid(resp_chipid_S2)
 );
+
+wire internal_inv_ack_S2 = (resp_chipid_S2 == mychipid) & is_resp_S2;
+assign suppress_next_stage_S2 = not_full_ack_S2;
 
 assign stall_S2 = stall_S3 & val_S2;
 
@@ -251,6 +256,7 @@ reg [`MSG_SUBLINE_ID_WIDTH-1:0] subline_id_S3;
 reg [7*`CEP_WORD_WIDTH-1:0] msg_data_S3;
 reg [`MSG_MSHRID_WIDTH-1:0] resp_mshrid_S3;
 reg [`NOC_CHIPID_WIDTH-1:0] resp_chipid_S3;
+reg [`MSG_ADDR_WIDTH-1:0] resp_addr_S3;
 reg is_resp_S3;
 reg is_req_S3;
 
@@ -265,6 +271,7 @@ always @(posedge clk) begin
         msg_data_S3 <= {7*`CEP_WORD_WIDTH{1'b0}};
         resp_mshrid_S3 <= `MSG_MSHRID_WIDTH'b0;
         resp_chipid_S3 <= `NOC_CHIPID_WIDTH'b0;
+        resp_addr_S3 <= `MSG_ADDR_WIDTH'b0;
         is_resp_S3 <= 1'b0;
         is_req_S3 <= 1'b0;
     end
@@ -278,6 +285,7 @@ always @(posedge clk) begin
         msg_data_S3 <= msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_chipid_S3 <= resp_chipid_S2;
+        resp_addr_S3 <= resp_addr_S2;
         is_resp_S3 <= is_resp_S2;
         is_req_S3 <= is_req_S2;
     end
@@ -289,7 +297,7 @@ reg [3:0] subline_vals_S3;
 
 wire [`MSG_SUBLINE_ID_WIDTH-1:0] new_subline_id_S3;
 wire [3:0] subline_mask_S3;
-wire subline_vals_nz;
+wire subline_vals_nz_S3;
 always @(posedge clk) begin
     if (~rst_n) begin
         subline_vals_S3 <= 4'b0;
@@ -316,18 +324,20 @@ multichip_adapter_prio_encoder_2 prio_encoder(
     .data_in(subline_vals_S3),
     .data_out(new_subline_id_S3),
     .data_out_mask(subline_mask_S3),
-    .nonzero_out(subline_vals_nz)
+    .nonzero_out(subline_vals_nz_S3)
 );
 
+wire internal_inv_ack_S3 = (resp_chipid_S3 == mychipid) & is_resp_S3;
 wire fwd_ack_S3 = is_resp_S3;
 wire new_last_subline_S3 = ((subline_vals_S3 & subline_mask_S3) == 4'b0);
-wire [`CEP_SUBLINE_ID_WIDTH-1:0] send_subline_id_S3 = subline_vals_nz & fwd_ack_S3 ? new_subline_id_S3 : subline_id_S3;
-wire [`CEP_LAST_SUBLINE_WIDTH-1:0] send_last_subline_S3 = subline_vals_nz & fwd_ack_S3 ? new_last_subline_S3 : last_subline_S3;
+wire [`CEP_SUBLINE_ID_WIDTH-1:0] send_subline_id_S3 = subline_vals_nz_S3 & fwd_ack_S3 ? new_subline_id_S3 : subline_id_S3;
+wire [`CEP_LAST_SUBLINE_WIDTH-1:0] send_last_subline_S3 = subline_vals_nz_S3 & fwd_ack_S3 ? new_last_subline_S3 : last_subline_S3;
 wire is_st_ack_S3 = (msg_type_S3 == `MSG_TYPE_STORE_FWDACK) | (msg_type_S3 == `MSG_TYPE_STORE_FWDDATAACK);
 wire is_ld_ack_S3 = (msg_type_S3 == `MSG_TYPE_LOAD_FWDACK ) | (msg_type_S3 == `MSG_TYPE_LOAD_FWDDATAACK );
-wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_st_ack_type_S3 = subline_vals_nz ? `MSG_TYPE_STORE_FWDDATAACK : `MSG_TYPE_STORE_FWDACK;
-wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_ld_ack_type_S3 = subline_vals_nz ? `MSG_TYPE_LOAD_FWDDATAACK : `MSG_TYPE_LOAD_FWDACK;
-wire [`CEP_MSG_TYPE_WIDTH-1:0] send_msg_type_S3 = is_st_ack_S3  ? dataaware_st_ack_type_S3 : 
+wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_st_ack_type_S3 = subline_vals_nz_S3 ? `MSG_TYPE_STORE_FWDDATAACK : `MSG_TYPE_STORE_FWDACK;
+wire [`CEP_MSG_TYPE_WIDTH-1:0] dataaware_ld_ack_type_S3 = subline_vals_nz_S3 ? `MSG_TYPE_LOAD_FWDDATAACK : `MSG_TYPE_LOAD_FWDACK;
+wire [`CEP_MSG_TYPE_WIDTH-1:0] send_msg_type_S3 = internal_inv_ack_S3 ? `MSG_TYPE_WB_REQ   :
+                                                  is_st_ack_S3  ? dataaware_st_ack_type_S3 : 
                                                   is_ld_ack_S3  ? dataaware_ld_ack_type_S3 : 
                                                   fwd_ack_S3    ? `MSG_TYPE_INV_FWDACK     :
                                                                   msg_type_S3              ;
@@ -337,18 +347,18 @@ wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
     .cep_pkg(cep_pkg_S3),
     
-    .is_request(is_req_S3),
-    .is_response(is_resp_S3),
+    .is_request(internal_inv_ack_S3 ? 1'b1 : is_req_S3),
+    .is_response(internal_inv_ack_S3 ? 1'b0 : is_resp_S3),
     .is_int(1'b0),
     .last_subline(send_last_subline_S3),
     .subline_id(send_subline_id_S3),
     .mesi(`MSG_MESI_I),
-    .mshrid(resp_mshrid_S3),
+    .mshrid(internal_inv_ack_S3 ? `CEP_MSHRID_WIDTH'h0 : resp_mshrid_S3),
     .msg_type(send_msg_type_S3),
 
-    .data_size(data_size_S3),
+    .data_size(internal_inv_ack_S3 ? `MSG_DATA_SIZE_16B : data_size_S3),
     .cache_type(`CEP_CACHE_TYPE_WIDTH'b0),
-    .addr(addr_S3),
+    .addr(internal_inv_ack_S3 ? resp_addr_S3 : addr_S3),
 
     .src_chipid(mychipid),
 
@@ -356,8 +366,15 @@ cep_encoder cep_encoder(
     .int_id(`CEP_INT_ID_WIDTH'b0)
 );
 
-assign cep_val = val_S3;
-assign cep_chipid = resp_chipid_S3[`CEP_CHIPID_WIDTH-1:0];
+wire [`CEP_CHIPID_WIDTH-1:0] wb_chipid;
+multichip_adapter_numa_encoder numa_encoder(
+    .addr_in(internal_inv_ack_S3 ? resp_addr_S3 : addr_S3),
+    .chipid_out(wb_chipid)
+);
+
+wire internal_dataless_ack_S3 = (internal_inv_ack_S3 & ~subline_vals_nz_S3);
+assign cep_val = val_S3 & ~internal_dataless_ack_S3;
+assign cep_chipid = (send_msg_type_S3 == `MSG_TYPE_WB_REQ) ? wb_chipid : resp_chipid_S3[`CEP_CHIPID_WIDTH-1:0];
 assign cep_data = cep_pkg_S3;
 
 assign stall_S3 = ~cep_rdy & val_S3;
@@ -369,18 +386,15 @@ assign recycle_S3 = val_S3 & ~new_last_subline_S3;
 // sanity checks 
 
 reg mshr_err;
-reg nonresp_err;
 reg chipid_err;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         mshr_err <= 1'b0;
-        nonresp_err <= 1'b0;
         chipid_err <= 1'b0;
     end
     else begin
         mshr_err <= mshr_err | (mshr_write_en & (mshr_read_state == `MA_MSHR_STATE_INVAL));
-        nonresp_err <= nonresp_err | val_S1 & ~is_resp_S1;
         chipid_err <= chipid_err | (cep_val & (cep_chipid == mychipid));
     end
 end

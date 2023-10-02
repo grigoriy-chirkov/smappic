@@ -38,13 +38,16 @@ module multichip_adapter_dir (
     input wire rd_en1,
     input wire [`MA_ADDR_WIDTH-1:0] rd_addr1,
     output wire rd_hit1,
+    output wire rd_valid1,
     output wire [`MA_SET_WIDTH-1:0] rd_set1,
     output wire [`MA_WAY_WIDTH-1:0] rd_way1,
     output wire [`MA_TAG_WIDTH-1:0] rd_tag1,
     output wire [`MA_STATE_WIDTH-1:0] rd_state1,
     output wire rd_shared1,
     output wire [`MA_SHARER_SET_WIDTH-1:0] rd_sharer_set1,
-    output wire [`MA_WAY_WIDTH:0] num_empty_ways1,
+    output wire rd_full1,
+    output wire [`MA_ADDR_WIDTH-1:0] rd_replace_addr1,
+    output wire [`MA_CACHE_TYPE_WIDTH-1:0] rd_cache_type1,
     output wire [`MA_WAY_WIDTH-1:0] empty_way1,
 
     input wire wr_en1,
@@ -52,18 +55,22 @@ module multichip_adapter_dir (
     input wire [`MA_WAY_WIDTH-1:0] wr_way1,
     input wire [`MA_TAG_WIDTH-1:0] wr_tag1,
     input wire [`MA_STATE_WIDTH-1:0] wr_state1,
+    input wire [`MA_CACHE_TYPE_WIDTH-1:0] wr_cache_type1,
     input wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set1,
 
     input wire rd_en2,
     input wire [`MA_ADDR_WIDTH-1:0] rd_addr2,
     output wire rd_hit2,
+    output wire rd_valid2,
     output wire [`MA_SET_WIDTH-1:0] rd_set2,
     output wire [`MA_WAY_WIDTH-1:0] rd_way2,
     output wire [`MA_TAG_WIDTH-1:0] rd_tag2,
     output wire [`MA_STATE_WIDTH-1:0] rd_state2,
     output wire rd_shared2,
     output wire [`MA_SHARER_SET_WIDTH-1:0] rd_sharer_set2,
-    output wire [`MA_WAY_WIDTH:0] num_empty_ways2,
+    output wire rd_full2,
+    output wire [`MA_ADDR_WIDTH-1:0] rd_replace_addr2,
+    output wire [`MA_CACHE_TYPE_WIDTH-1:0] rd_cache_type2,
     output wire [`MA_WAY_WIDTH-1:0] empty_way2,
 
     input wire wr_en2,
@@ -71,6 +78,7 @@ module multichip_adapter_dir (
     input wire [`MA_WAY_WIDTH-1:0] wr_way2,
     input wire [`MA_TAG_WIDTH-1:0] wr_tag2,
     input wire [`MA_STATE_WIDTH-1:0] wr_state2,
+    input wire [`MA_CACHE_TYPE_WIDTH-1:0] wr_cache_type2,
     input wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set2
 );
 
@@ -81,6 +89,7 @@ wire [`MA_SET_WIDTH-1:0] wr_set = pipe_wr_sel ? wr_set2 : wr_set1;
 wire [`MA_WAY_WIDTH-1:0] wr_way = pipe_wr_sel ? wr_way2 : wr_way1;
 wire [`MA_TAG_WIDTH-1:0] wr_tag = pipe_wr_sel ? wr_tag2 : wr_tag1;
 wire [`MA_STATE_WIDTH-1:0] wr_state = pipe_wr_sel ? wr_state2 : wr_state1;
+wire [`MA_CACHE_TYPE_WIDTH-1:0] wr_cache_type = pipe_wr_sel ? wr_cache_type2 : wr_cache_type1;
 wire [`MA_SHARER_SET_WIDTH-1:0] wr_sharer_set = pipe_wr_sel ? wr_sharer_set2 : wr_sharer_set1;
 
 
@@ -98,6 +107,7 @@ multichip_adapter_dir_decoder decoder1(
   .data_in(read_data_out),
   .addr_in(rd_addr1),
 
+  .valid(rd_valid1),
   .hit(rd_hit1),
   .set(rd_set1),
   .way(rd_way1),
@@ -105,7 +115,9 @@ multichip_adapter_dir_decoder decoder1(
   .state(rd_state1),
   .shared(rd_shared1),
   .sharer_set(rd_sharer_set1),
-  .num_empty_ways(num_empty_ways1),
+  .full(rd_full1),
+  .addr_out(rd_replace_addr1),
+  .cache_type(rd_cache_type1),
   .empty_way(empty_way1)
 );
 
@@ -113,6 +125,7 @@ multichip_adapter_dir_decoder decoder2(
   .clk(clk),
   .rst_n(rst_n),
 
+  .valid(rd_valid2),
   .rd_en(rd_en2 & pipe_rd_sel),
   .data_in(read_data_out),
   .addr_in(rd_addr2),
@@ -124,7 +137,9 @@ multichip_adapter_dir_decoder decoder2(
   .state(rd_state2),
   .shared(rd_shared2),
   .sharer_set(rd_sharer_set2),
-  .num_empty_ways(num_empty_ways2),
+  .full(rd_full2),
+  .addr_out(rd_replace_addr2),
+  .cache_type(rd_cache_type2),
   .empty_way(empty_way2)
 );
 
@@ -135,6 +150,7 @@ multichip_adapter_dir_encoder encoder(
   .way(wr_way),
   .tag(wr_tag),
   .state(wr_state),
+  .cache_type(wr_cache_type),
   .sharer_set(wr_sharer_set)
 );
 

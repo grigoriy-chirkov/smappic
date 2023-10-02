@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from pyhplib import *
 import math
 
-MA_NUM_WAYS = 8
+MA_NUM_WAYS = 2
 %>
 
 
@@ -46,29 +46,37 @@ module multichip_adapter_dir_decoder (
     input wire [`MA_WIDTH-1:0] data_in,
 
     output reg hit,
+    output reg valid,
+    output reg [`MA_ADDR_WIDTH-1:0] addr_out,
     output reg [`MA_SET_WIDTH-1:0] set,
     output reg [`MA_WAY_WIDTH-1:0] way,
     output reg [`MA_TAG_WIDTH-1:0] tag,
     output reg [`MA_STATE_WIDTH-1:0] state,
     output reg shared,
     output reg [`MA_SHARER_SET_WIDTH-1:0] sharer_set,
-    output reg [`MA_WAY_WIDTH:0] num_empty_ways,
-    output reg [`MA_WAY_WIDTH-1:0] empty_way
+    output reg full,
+    output reg [`MA_WAY_WIDTH-1:0] empty_way,
+    output reg [`MA_CACHE_TYPE_WIDTH-1:0] cache_type
 );
 
 reg [`MA_ADDR_WIDTH-1:0] addr_in_f;
 reg rd_en_f;
 reg [`MA_WIDTH-1:0] data_in_f;
 
+reg [`MA_WAY_WIDTH-1:0] fifo_counter;
+
 always @(posedge clk) begin
   if (~rst_n) begin
     addr_in_f <= `MA_ADDR_WIDTH'h0;
     rd_en_f <= 1'b0;
     data_in_f <= `MA_WIDTH'h0;
+    fifo_counter <= `MA_WAY_WIDTH'h0;
   end
   else begin
-    if (rd_en) 
+    if (rd_en) begin
       addr_in_f <= addr_in;
+      fifo_counter <= (fifo_counter + `MA_WAY_WIDTH'h1) % `MA_WAYS;
+    end
     rd_en_f <= rd_en;
     data_in_f <= rd_en_f ? data_in : data_in_f;
   end
@@ -82,13 +90,14 @@ reg [`MA_ENTRY_WIDTH-1:0] entries[`MA_WAYS-1:0];
 reg [`MA_STATE_WIDTH-1:0] states[`MA_WAYS-1:0];
 reg [`MA_SHARER_SET_WIDTH-1:0] sharer_sets[`MA_WAYS-1:0];
 reg [`MA_TAG_WIDTH-1:0] tags[`MA_WAYS-1:0];
+reg [`MA_CACHE_TYPE_WIDTH-1:0] cache_types[`MA_WAYS-1:0];
 reg [`MA_WAYS-1:0] hits;
 
 always @(*) begin
   set = addr_in_f[`MA_ADDR_SET];
   tag = addr_in_f[`MA_ADDR_TAG];
   empty_way = `MA_WAY_WIDTH'd0;
-  num_empty_ways = {`MA_WAY_WIDTH+1{1'b0}};
+  full = 1'b1;
 
 <%
 for i in range(MA_NUM_WAYS):
@@ -98,9 +107,10 @@ for i in range(MA_NUM_WAYS):
   sharer_sets[{i}] = entries[{i}][`MA_ENTRY_OWNER_BITS];
   tags[{i}] = entries[{i}][`MA_ENTRY_TAG];
   hits[{i}] = (tag == tags[{i}]) & (states[{i}] != `MA_STATE_INVALID);
+  cache_types[{i}] = entries[{i}][`MA_CACHE_TYPE];
   if (states[{i}] == `MA_STATE_INVALID) begin
     empty_way = `MA_WAY_WIDTH'd{i};
-    num_empty_ways = num_empty_ways + {{{{`MA_WAY_WIDTH{{1'b0}}}}, 1'd1}};
+    full = 1'b0;
   end
 """)
 %>
@@ -111,21 +121,21 @@ for i in range(MA_NUM_WAYS):
     `MA_WAYS'b{(1 << i):0{MA_NUM_WAYS}b}: begin
       way = `MA_WAY_WIDTH'd{i};
       hit = 1'b1;
-      state = states[{i}];
-      sharer_set = sharer_sets[{i}];
-      shared = |(sharer_set & (sharer_set - `MA_SHARER_SET_WIDTH'd1));
     end
 """)
 %>
-    default: begin// should never happen
-      way = `MA_WAY_WIDTH'd0;
+    default: begin // This is miss
+      way = full ? fifo_counter : empty_way;
       hit = 1'b0;
-      state = `MA_STATE_INVALID;
-      sharer_set = `MA_SHARER_SET_WIDTH'd0;
-      shared = 1'b0;
     end
   endcase
-
+  
+  state = states[way];
+  valid = (state != `MA_STATE_INVALID);
+  sharer_set = sharer_sets[way];
+  shared = |(sharer_set & (sharer_set - `MA_SHARER_SET_WIDTH'd1));
+  addr_out = {tags[way], set, `MA_OFFSET_WIDTH'b0};
+  cache_type = cache_types[way];
 end
 
 endmodule

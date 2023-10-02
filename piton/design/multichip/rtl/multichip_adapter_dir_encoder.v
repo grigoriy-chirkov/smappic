@@ -36,6 +36,7 @@ module multichip_adapter_dir_encoder (
     input wire [`MA_WAY_WIDTH-1:0] way,
     input wire [`MA_TAG_WIDTH-1:0] tag,
     input wire [`MA_STATE_WIDTH-1:0] state,
+    input wire [`MA_CACHE_TYPE_WIDTH-1:0] cache_type,
     input wire [`MA_SHARER_SET_WIDTH-1:0] sharer_set
 );
 
@@ -44,10 +45,13 @@ reg [`MA_ENTRY_WIDTH-1:0] entry;
 
 always @(*) begin
   entry = `MA_ENTRY_WIDTH'h0;
-  entry[`MA_ENTRY_STATE] = state;
   entry[`MA_ENTRY_TAG] = tag;
   entry[`MA_ENTRY_OWNER_BITS] = sharer_set;
+  entry[`MA_ENTRY_STATE] = state;
+  if (sharer_set == `MA_SHARER_SET_WIDTH'b0)
+    entry[`MA_ENTRY_STATE] = `MA_STATE_INVALID;
 
+  entry[`MA_CACHE_TYPE] = cache_type;
   data_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, entry} << (way * `MA_ENTRY_WIDTH);
   mask_out = {{`MA_WIDTH-`MA_ENTRY_WIDTH{1'b0}}, {`MA_ENTRY_WIDTH{1'b1}}} << (way * `MA_ENTRY_WIDTH);
 end

@@ -34,11 +34,11 @@ module multichip_adapter_mshr_encoder(
     output reg [`MA_MSHR_ARRAY_WIDTH-1:0] data,
 
     input wire [`MA_MSHR_ADDR_OUT_WIDTH-1:0] addr,
-    input wire [`MA_WAY_WIDTH-1:0] way,
     input wire [`MSG_MSHRID_WIDTH-1:0] mshrid,
     input wire [`MSG_CACHE_TYPE_WIDTH-1:0] cache_type,
     input wire [`MSG_DATA_SIZE_WIDTH-1:0] data_size,
     input wire [`MSG_TYPE_WIDTH-1:0] msg_type,
+    input wire nc,
     input wire [`NOC_CHIPID_WIDTH-1:0] src_chipid,
     input wire [`NOC_X_WIDTH-1:0] src_x,
     input wire [`NOC_Y_WIDTH-1:0] src_y,
@@ -57,11 +57,11 @@ always @ *
 begin
     data = `MA_MSHR_ARRAY_WIDTH'b0;
     data[`MA_MSHR_ADDR] = addr;
-    data[`MA_MSHR_WAY] = way;
     data[`MA_MSHR_MSHRID] = mshrid;
     data[`MA_MSHR_CACHE_TYPE] = cache_type;
     data[`MA_MSHR_DATA_SIZE] = data_size;
     data[`MA_MSHR_MSG_TYPE] = msg_type;
+    data[`MA_MSHR_NC] = nc;
     data[`MA_MSHR_SRC_CHIPID] = src_chipid;
     data[`MA_MSHR_SRC_X] = src_x;
     data[`MA_MSHR_SRC_Y] = src_y;

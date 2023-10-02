@@ -217,11 +217,11 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_out_write_data),
 
     .addr(addr_S2),
-    .way(`MA_WAY_WIDTH'd0),
     .mshrid(mshrid_S2),
     .cache_type(cache_type_S2),
     .data_size(data_size_S2),
     .msg_type(msg_type_S2),
+    .nc(1'b0),
     .src_chipid(src_chipid_S2),
     .src_x(src_x_S2),
     .src_y(src_y_S2),

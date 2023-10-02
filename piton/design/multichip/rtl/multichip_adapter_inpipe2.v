@@ -63,13 +63,16 @@ module multichip_adapter_inpipe2 (
     output wire                                   dir_rd_en,
     output wire [`MA_ADDR_WIDTH-1:0]              dir_rd_addr,
     input  wire                                   dir_rd_hit,
+    input  wire                                   dir_rd_valid,
     input  wire [`MA_SET_WIDTH-1:0]               dir_rd_set,
     input  wire [`MA_WAY_WIDTH-1:0]               dir_rd_way,
     input  wire [`MA_TAG_WIDTH-1:0]               dir_rd_tag,
     input  wire [`MA_STATE_WIDTH-1:0]             dir_rd_state,
     input  wire                                   dir_rd_shared,
     input  wire [`MA_SHARER_SET_WIDTH-1:0]        dir_rd_sharer_set,
-    input  wire [`MA_WAY_WIDTH:0]                 dir_num_empty_ways,
+    input  wire                                   dir_rd_full,
+    input  wire [`MA_ADDR_WIDTH-1:0]              dir_rd_replace_addr,
+    input  wire [`MA_CACHE_TYPE_WIDTH-1:0]        dir_rd_cache_type,
     input  wire [`MA_WAY_WIDTH-1:0]               dir_empty_way,
 
     output wire                                   dir_wr_en,
@@ -77,6 +80,7 @@ module multichip_adapter_inpipe2 (
     output wire [`MA_WAY_WIDTH-1:0]               dir_wr_way,
     output wire [`MA_TAG_WIDTH-1:0]               dir_wr_tag,
     output wire [`MA_STATE_WIDTH-1:0]             dir_wr_state,
+    output wire [`MA_CACHE_TYPE_WIDTH-1:0]        dir_wr_cache_type,
     output wire [`MA_SHARER_SET_WIDTH-1:0]        dir_wr_sharer_set
 );
 
@@ -88,6 +92,8 @@ wire stall_S3;
 wire val_S1;
 reg val_S2;
 reg val_S3;
+
+wire recycle_S2;
 wire recycle_S3;
 
 // Stage 1
@@ -143,6 +149,8 @@ wire [`NOC_Y_WIDTH-1:0] resp_y_S1;
 wire [`NOC_FBITS_WIDTH-1:0] resp_fbits_S1;
 wire [`MSG_ADDR_WIDTH-1:0] resp_addr_S1;
 wire [`MSG_DATA_SIZE_WIDTH-1:0] resp_data_size_S1;
+wire resp_nc_msg_S1;
+wire resp_cache_type_S1;
 
 multichip_adapter_mshr_decoder mshr_decoder(
     .data(mshr_out_read_data),
@@ -152,14 +160,18 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .data_size(resp_data_size_S1),
     .src_x(resp_x_S1),
     .src_y(resp_y_S1),
-    .src_fbits(resp_fbits_S1)
+    .src_fbits(resp_fbits_S1),
+    .nc(resp_nc_msg_S1),
+    .cache_type(resp_cache_type_S1)
 );
 
-wire do_rd_tag_S1 = (msg_type_S1 != `MSG_TYPE_NC_LOAD_REQ) & (msg_type_S1 != `MSG_TYPE_NC_STORE_REQ) & (msg_type_S1 != `MSG_TYPE_INTERRUPT);
+wire inv_msg_S1 = (msg_type_S1 == `MSG_TYPE_STORE_FWD) |
+                  (msg_type_S1 == `MSG_TYPE_INV_FWD  ) ;
+wire do_rd_tag_S1 = (is_resp_S1 & ~resp_nc_msg_S1) | inv_msg_S1;
 assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
 assign dir_rd_addr = is_resp_S1 ? resp_addr_S1 : addr_S1;
 
-assign stall_S1 = stall_S2 & val_S1;
+assign stall_S1 = (stall_S2 | recycle_S2) & val_S1;
 
 // Stage 1-> 2
 
@@ -176,6 +188,8 @@ reg [`NOC_X_WIDTH-1:0] resp_x_S2;
 reg [`NOC_Y_WIDTH-1:0] resp_y_S2;
 reg [`NOC_FBITS_WIDTH-1:0] resp_fbits_S2;
 reg [`MSG_DATA_SIZE_WIDTH-1:0] resp_data_size_S2;
+reg resp_nc_msg_S2;
+reg resp_cache_type_S2;
 reg [`MSG_INT_ID_WIDTH-1:0] int_id_S2;
 reg is_req_S2;
 reg is_resp_S2;
@@ -197,12 +211,14 @@ always @(posedge clk) begin
         resp_y_S2 <= `NOC_Y_WIDTH'b0;
         resp_fbits_S2 <= `NOC_FBITS_WIDTH'b0;
         resp_data_size_S2 <= `MSG_DATA_SIZE_WIDTH'b0;
+        resp_nc_msg_S2 <= 1'b0;
+        resp_cache_type_S2 <= `MSG_CACHE_TYPE_WIDTH'b0;
         int_id_S2 <= `MSG_INT_ID_WIDTH'b0;
         is_req_S2 <= 1'b0;
         is_resp_S2 <= 1'b0;
         is_int_S2 <= 1'b0;
     end
-    else if (~stall_S2) begin
+    else if (~stall_S2 & ~recycle_S2) begin
         val_S2 <= val_S2_next;
         msg_type_S2 <= msg_type_S1;
         addr_S2 <= addr_S1;
@@ -217,6 +233,8 @@ always @(posedge clk) begin
         resp_y_S2 <= resp_y_S1;
         resp_fbits_S2 <= resp_fbits_S1;
         resp_data_size_S2 <= resp_data_size_S1;
+        resp_nc_msg_S2 <= resp_nc_msg_S1;
+        resp_cache_type_S2 <= resp_cache_type_S1;
         int_id_S2 <= int_id_S1;
         is_req_S2 <= is_req_S1;
         is_resp_S2 <= is_resp_S1;
@@ -232,25 +250,44 @@ wire inv_msg_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWD) |
                   (msg_type_S2 == `MSG_TYPE_INV_FWD  ) ;
 wire fwd_msg_S2 = inv_msg_S2 | (msg_type_S2 == `MSG_TYPE_LOAD_FWD);
 
-wire do_write_mshr_S2 = is_req_S2;
-assign mshr_in_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
-assign mshr_in_write_index = mshr_in_empty_index;
+wire do_write_tag_S2 = (is_resp_S2 & ~resp_nc_msg_S2) | inv_msg_S2;
+assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
+assign dir_wr_set = dir_rd_set;
+assign dir_wr_way = dir_rd_way;
+assign dir_wr_tag = dir_rd_tag;
+
+reg evicted_S2;
+wire do_dir_evict_S2 = is_resp_S2 & ~dir_rd_hit & dir_rd_valid & dir_rd_full & ~evicted_S2;
+
+always @(posedge clk) begin
+    if (~rst_n) begin
+        evicted_S2 <= 1'b0;
+    end
+    else if (~stall_S2) begin
+        evicted_S2 <= do_dir_evict_S2;
+    end
+end
 
 multichip_adapter_bitsum_64 bitsum(
-    .data_in(dir_rd_sharer_set),
+    .data_in(dir_rd_hit | do_dir_evict_S2 ? dir_rd_sharer_set : `MA_SHARER_BITS_WIDTH'b1),
     .bitsum_out(mshr_in_write_counter)
 );
+
+
+wire do_write_mshr_S2 = is_req_S2 | do_dir_evict_S2;
+assign mshr_in_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
+assign mshr_in_write_index = mshr_in_empty_index;
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_in_write_data),
 
-    .addr(addr_S2),
-    .way(`MA_WAY_WIDTH'd0),
+    .addr(do_dir_evict_S2 ? dir_rd_replace_addr : addr_S2),
     .mshrid(mshrid_S2),
-    .cache_type(cache_type_S2),
-    .data_size(data_size_S2),
-    .msg_type(msg_type_S2),
-    .src_chipid(src_chipid_S2),
+    .cache_type(do_dir_evict_S2 ? dir_rd_cache_type : cache_type_S2),
+    .data_size(do_dir_evict_S2 ? `MSG_DATA_SIZE_64B : data_size_S2),
+    .msg_type(do_dir_evict_S2 ? `MSG_TYPE_STORE_FWD : msg_type_S2),
+    .nc(1'b0),
+    .src_chipid(do_dir_evict_S2 ? mychipid : src_chipid_S2),
     .src_x({`NOC_X_WIDTH{1'b1}}),
     .src_y({`NOC_Y_WIDTH{1'b1}}),
     .src_fbits(`NOC_FBITS_L2),
@@ -263,12 +300,6 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .data3(`MA_MSHR_DATA_CHUNK_WIDTH'b0)
 );
 
-
-wire do_write_tag_S2 = is_resp_S2 | inv_msg_S2;
-assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
-assign dir_wr_set = dir_rd_set;
-assign dir_wr_way = dir_rd_hit ? dir_rd_way : dir_empty_way;
-assign dir_wr_tag = dir_rd_tag;
 
 wire [`HOME_ID_WIDTH-1:0] resp_flat_id_S2;
 xy_to_flat_id xy_to_flat_id(
@@ -284,12 +315,13 @@ always @(*) begin
         new_sharer_set_S2 = new_sharer_set_S2 | dir_rd_sharer_set;
 end
 
-assign dir_wr_sharer_set = inv_msg_S2 ? `MA_SHARER_SET_WIDTH'b0 : new_sharer_set_S2;
-assign dir_wr_state = inv_msg_S2 ? `MA_STATE_INVALID : `MA_STATE_VALID;
+assign dir_wr_sharer_set = inv_msg_S2 | do_dir_evict_S2 ? `MA_SHARER_SET_WIDTH'b0 : new_sharer_set_S2;
+assign dir_wr_state = inv_msg_S2 | do_dir_evict_S2 ? `MA_STATE_INVALID : `MA_STATE_VALID;
+assign dir_wr_cache_type = resp_cache_type_S2;
 
 wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_in_full | stall_mshr_in_from_p3);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
-
+assign recycle_S2 = val_S2 & do_dir_evict_S2;
 
 
 // Stage 2-> 3
@@ -333,22 +365,22 @@ always @(posedge clk) begin
     end
     else if (~stall_S3 & ~recycle_S3) begin
         val_S3 <= val_S3_next;
-        msg_type_S3 <= msg_type_S2;
-        addr_S3 <= addr_S2;
+        msg_type_S3 <= do_dir_evict_S2 ? `MSG_TYPE_STORE_FWD : msg_type_S2;
+        addr_S3 <= do_dir_evict_S2 ? dir_rd_replace_addr : addr_S2;
         mshrid_S3 <= {{`MSG_MSHRID_WIDTH-`MA_MSHR_INDEX_WIDTH{1'b0}}, mshr_in_empty_index};
-        data_size_S3 <= data_size_S2;
-        cache_type_S3 <= cache_type_S2;
-        mesi_S3 <= mesi_S2;
-        msg_data_S3 <= msg_data_S2;
+        data_size_S3 <= do_dir_evict_S2 ? `MSG_DATA_SIZE_64B : data_size_S2;
+        cache_type_S3 <= do_dir_evict_S2 ? dir_rd_cache_type : cache_type_S2;
+        mesi_S3 <= do_dir_evict_S2 ? `MSG_MESI_I : mesi_S2;
+        msg_data_S3 <= do_dir_evict_S2 ? {7*`CEP_WORD_WIDTH{1'b0}} : msg_data_S2;
         resp_mshrid_S3 <= resp_mshrid_S2;
         resp_x_S3 <= resp_x_S2;
         resp_y_S3 <= resp_y_S2;
         resp_fbits_S3 <= resp_fbits_S2;
         resp_data_size_S3 <= resp_data_size_S2;
         int_id_S3 <= int_id_S2;
-        is_req_S3 <= is_req_S2;
-        is_resp_S3 <= is_resp_S2;
-        is_int_S3 <= is_int_S2;
+        is_req_S3 <= do_dir_evict_S2 ? 1'b1 : is_req_S2;
+        is_resp_S3 <= do_dir_evict_S2 ? 1'b0 : is_resp_S2;
+        is_int_S3 <= do_dir_evict_S2 ? 1'b0 : is_int_S2;
     end
 end
 
@@ -359,8 +391,8 @@ always @(posedge clk) begin
     if (~rst_n) begin
         fwd_set_S3 <= `MA_SHARER_SET_WIDTH'b0;
     end
-    else if (~stall_S3 & ~recycle_S3 & fwd_msg_S2) begin
-        fwd_set_S3 <= dir_rd_sharer_set;
+    else if (~stall_S3 & ~recycle_S3 & (fwd_msg_S2 | do_dir_evict_S2)) begin
+        fwd_set_S3 <= (dir_rd_hit | do_dir_evict_S2) ? dir_rd_sharer_set : `MA_SHARER_BITS_WIDTH'b1;
     end
     else if (~stall_S3) begin
         fwd_set_S3 <= fwd_set_S3 & fwd_set_mask_S3;
@@ -461,19 +493,16 @@ assign stall_S3 = ~pkg_rdy & val_S3;
 // some sanity checks 
 
 reg mshr_err;
-reg dir_miss_err;
 reg dir_full_err;
 
 always @(posedge clk) begin
     if (~rst_n) begin
         mshr_err <= 1'b0;
-        dir_miss_err <= 1'b0;
         dir_full_err <= 1'b0;
     end
     else begin
         mshr_err <= mshr_err | (mshr_out_write_en & (mshr_out_read_state == `MA_MSHR_STATE_INVAL));
-        dir_miss_err <= dir_miss_err | (inv_msg_S2 & dir_wr_en & (dir_rd_state == `MA_STATE_INVALID));
-        dir_full_err <= dir_full_err | (dir_wr_en & ~dir_rd_hit & (dir_num_empty_ways == {`MA_WAY_WIDTH+1{1'b0}}));
+        dir_full_err <= dir_full_err | (dir_wr_en & ~dir_rd_hit & dir_rd_full);
     end
 end
 

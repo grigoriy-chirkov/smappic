@@ -225,6 +225,22 @@ end
 
 wire [`PKG_DATA_WIDTH-1:0] noc_pkg_S3;
 
+
+wire [`NOC_X_WIDTH-1:0] wb_x_S3;
+wire [`NOC_Y_WIDTH-1:0] wb_y_S3;
+wire [`NOC_FBITS_WIDTH-1:0] wb_fbits_S3;
+multichip_adapter_home_encoder home_encoder(
+    .addr_in(addr_S3),
+    .num_homes(6'd`PITON_NUM_TILES),
+    .dst_x_out(wb_x_S3),
+    .dst_y_out(wb_y_S3),
+    .dst_fbits_out(wb_fbits_S3),
+    .is_int(1'b0),
+    .int_id(`CEP_INT_ID_WIDTH'h0)
+);
+
+wire is_wb_S3 = is_req_S3;
+
 multichip_adapter_noc_encoder noc_encoder(
     .pkg(noc_pkg_S3),
     .is_request(is_req_S3),
@@ -236,9 +252,9 @@ multichip_adapter_noc_encoder noc_encoder(
     .mesi(`MSG_MESI_I),
     .mshrid(resp_mshrid_S3),
     .msg_type(msg_type_S3),
-    .dst_fbits(resp_fbits_S3),
-    .dst_x(resp_x_S3),
-    .dst_y(resp_y_S3),
+    .dst_fbits(is_wb_S3 ? wb_fbits_S3 : resp_fbits_S3),
+    .dst_x(is_wb_S3 ? wb_x_S3 : resp_x_S3),
+    .dst_y(is_wb_S3 ? wb_y_S3 : resp_y_S3),
     .dst_chipid({{`NOC_CHIPID_WIDTH-`CEP_CHIPID_WIDTH{1'b0}}, mychipid}),
 
     .data_size(`MSG_DATA_SIZE_16B),
