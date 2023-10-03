@@ -342,6 +342,7 @@ wire [`CEP_MSG_TYPE_WIDTH-1:0] send_msg_type_S3 = internal_inv_ack_S3 ? `MSG_TYP
                                                   fwd_ack_S3    ? `MSG_TYPE_INV_FWDACK     :
                                                                   msg_type_S3              ;
 wire [7*`CEP_WORD_WIDTH-1:0] send_data_S3 = is_req_S3 ? msg_data_S3 : {{7*`CEP_WORD_WIDTH-`MA_MSHR_DATA_CHUNK_WIDTH{1'b0}}, subline_data_S3[send_subline_id_S3]};
+wire [`MSG_ADDR_WIDTH-1:0] wb_addr_S3 = resp_addr_S3 | ({{`CEP_ADDR_WIDTH-`CEP_SUBLINE_ID_WIDTH{1'b0}}, send_subline_id_S3} << 4);
 
 wire [`CEP_DATA_WIDTH-1:0] cep_pkg_S3;
 cep_encoder cep_encoder(
@@ -350,15 +351,15 @@ cep_encoder cep_encoder(
     .is_request(internal_inv_ack_S3 ? 1'b1 : is_req_S3),
     .is_response(internal_inv_ack_S3 ? 1'b0 : is_resp_S3),
     .is_int(1'b0),
-    .last_subline(send_last_subline_S3),
-    .subline_id(send_subline_id_S3),
+    .last_subline(internal_inv_ack_S3 ? 1'b1 : send_last_subline_S3),
+    .subline_id(internal_inv_ack_S3 ? `CEP_SUBLINE_ID_WIDTH'h0 : send_subline_id_S3),
     .mesi(`MSG_MESI_I),
     .mshrid(internal_inv_ack_S3 ? `CEP_MSHRID_WIDTH'h0 : resp_mshrid_S3),
     .msg_type(send_msg_type_S3),
 
     .data_size(internal_inv_ack_S3 ? `MSG_DATA_SIZE_16B : data_size_S3),
     .cache_type(`CEP_CACHE_TYPE_WIDTH'b0),
-    .addr(internal_inv_ack_S3 ? resp_addr_S3 : addr_S3),
+    .addr(internal_inv_ack_S3 ? wb_addr_S3 : addr_S3),
 
     .src_chipid(mychipid),
 

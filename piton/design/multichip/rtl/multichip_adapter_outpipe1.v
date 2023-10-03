@@ -78,8 +78,6 @@ noc_deserializer noc_deserializer(
     .pkg_rdy(~stall_S1)
 );
 
-wire val_S2_next = val_S1 & ~stall_S1 & (msg_type_S1 != `MSG_TYPE_WBGUARD_REQ);
-
 wire [`MSG_ADDR_WIDTH-1:0] addr_S1;
 wire [`MSG_TYPE_WIDTH-1:0] msg_type_S1;
 wire [`NOC_X_WIDTH-1:0] src_x_S1;
@@ -116,6 +114,7 @@ multichip_adapter_noc_decoder noc_decoder(
     .int_id(int_id_S1)
 );
 
+wire val_S2_next = val_S1 & ~stall_S1 & (msg_type_S1 != `MSG_TYPE_WBGUARD_REQ);
 assign stall_S1 = stall_S2 & val_S1;
 
 
@@ -179,8 +178,6 @@ wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ ) |
 wire do_write_mshr_S2 = is_req_S2 & (msg_type_S2 != `MSG_TYPE_WBGUARD_REQ);
 assign mshr_write_en = val_S2 & ~stall_S2 & do_write_mshr_S2;
 assign mshr_write_index = mshr_empty_index;
-
-wire nc_msg_S2 = (msg_type_S2 == `MSG_TYPE_NC_LOAD_REQ) | (msg_type_S2 == `MSG_TYPE_NC_STORE_REQ);
 
 multichip_adapter_mshr_encoder mshr_encoder(
     .data(mshr_write_data),

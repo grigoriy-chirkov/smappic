@@ -101,6 +101,7 @@ wire [`MA_SET_WIDTH-1:0] dir_wr_set2;
 wire [`MA_WAY_WIDTH-1:0] dir_wr_way2;
 wire [`MA_TAG_WIDTH-1:0] dir_wr_tag2;
 wire [`MA_STATE_WIDTH-1:0] dir_wr_state2;
+wire [`MA_CACHE_TYPE_WIDTH-1:0] dir_wr_cache_type2;
 wire [`MA_SHARER_SET_WIDTH-1:0] dir_wr_sharer_set2;
 
 
