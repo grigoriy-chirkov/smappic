@@ -171,7 +171,10 @@ wire do_rd_tag_S1 = (is_resp_S1 & ~resp_nc_msg_S1) | inv_msg_S1;
 assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
 assign dir_rd_addr = is_resp_S1 ? resp_addr_S1 : addr_S1;
 
-assign stall_S1 = (stall_S2 | recycle_S2) & val_S1;
+reg [`MSG_ADDR_WIDTH-1:0] dir_rd_addr_S2;
+reg dir_rd_prev_stage_S2;
+wire addr_conflict_S1 = val_S2 & dir_rd_prev_stage_S2 & (dir_rd_addr_S2 == dir_rd_addr) & do_rd_tag_S1;
+assign stall_S1 = (stall_S2 | recycle_S2 | addr_conflict_S1) & val_S1;
 
 // Stage 1-> 2
 
@@ -217,6 +220,8 @@ always @(posedge clk) begin
         is_req_S2 <= 1'b0;
         is_resp_S2 <= 1'b0;
         is_int_S2 <= 1'b0;
+        dir_rd_addr_S2 <= `MSG_ADDR_WIDTH'b0;
+        dir_rd_prev_stage_S2 <= 1'b0;
     end
     else if (~stall_S2 & ~recycle_S2) begin
         val_S2 <= val_S2_next;
@@ -239,6 +244,8 @@ always @(posedge clk) begin
         is_req_S2 <= is_req_S1;
         is_resp_S2 <= is_resp_S1;
         is_int_S2 <= is_int_S1;
+        dir_rd_addr_S2 <= dir_rd_addr;
+        dir_rd_prev_stage_S2 <= dir_rd_en;
     end
 end
 
@@ -250,7 +257,7 @@ wire inv_msg_S2 = (msg_type_S2 == `MSG_TYPE_STORE_FWD) |
                   (msg_type_S2 == `MSG_TYPE_INV_FWD  ) ;
 wire fwd_msg_S2 = inv_msg_S2 | (msg_type_S2 == `MSG_TYPE_LOAD_FWD);
 
-wire do_write_tag_S2 = (is_resp_S2 & ~resp_nc_msg_S2) | inv_msg_S2;
+wire do_write_tag_S2 = (is_resp_S2 & ~resp_nc_msg_S2) | (inv_msg_S2 & dir_rd_hit);
 assign dir_wr_en = val_S2 & ~stall_S2 & do_write_tag_S2;
 assign dir_wr_set = dir_rd_set;
 assign dir_wr_way = dir_rd_way;

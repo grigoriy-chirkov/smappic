@@ -22,16 +22,16 @@ int main(int argc, char** argv) {
   // synchronization variable
   volatile static uint32_t* amo_cnt1 = 0x90000000;
   volatile static uint32_t* amo_cnt2 = 0xa0000000;
-  // volatile static uint32_t* amo_cnt3 = 0xb0000000;
+  volatile static uint32_t* amo_cnt3 = 0xb0000000;
   if (argv[0][0] == 0){
     *amo_cnt1 = 0;
     *amo_cnt2 = 0;
-    // *amo_cnt3 = 0;
+    *amo_cnt3 = 0;
   }
   // synchronize with other cores and wait until it is this core's turn
   while(argv[0][0] != *amo_cnt1);
   while(argv[0][0] != *amo_cnt2);
-  // while(argv[0][0] != *amo_cnt3);
+  while(argv[0][0] != *amo_cnt3);
 
   // assemble number and print
   printf("%d/%d\n", argv[0][0], argv[0][1]);
@@ -39,11 +39,11 @@ int main(int argc, char** argv) {
   // increment atomic counter
   ATOMIC_OP(*amo_cnt1, 1, add, w);
   ATOMIC_OP(*amo_cnt2, 1, add, w);
-  // ATOMIC_OP(*amo_cnt3, 1, add, w);
+  ATOMIC_OP(*amo_cnt3, 1, add, w);
 
   while(argv[0][1] != *amo_cnt1);
   while(argv[0][1] != *amo_cnt2);
-  // while(argv[0][1] != *amo_cnt3);
+  while(argv[0][1] != *amo_cnt3);
 
   return 0;
 }
