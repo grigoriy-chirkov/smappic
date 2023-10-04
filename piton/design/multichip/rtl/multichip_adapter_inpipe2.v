@@ -173,8 +173,9 @@ assign dir_rd_addr = is_resp_S1 ? resp_addr_S1 : addr_S1;
 
 reg [`MSG_ADDR_WIDTH-1:0] dir_rd_addr_S2;
 reg dir_rd_prev_stage_S2;
+wire addr_conflict_dir_evict_S1;
 wire addr_conflict_S1 = val_S2 & dir_rd_prev_stage_S2 & (dir_rd_addr_S2 == dir_rd_addr) & do_rd_tag_S1;
-assign stall_S1 = (stall_S2 | recycle_S2 | addr_conflict_S1) & val_S1;
+assign stall_S1 = (stall_S2 | recycle_S2 | addr_conflict_S1 | addr_conflict_dir_evict_S1) & val_S1;
 
 // Stage 1-> 2
 
@@ -330,6 +331,7 @@ wire stall_mshr_S2 = do_write_mshr_S2 & (mshr_in_full | stall_mshr_in_from_p3);
 assign stall_S2 = val_S2 & (stall_S3 | stall_mshr_S2 | recycle_S3);
 assign recycle_S2 = val_S2 & do_dir_evict_S2;
 
+assign addr_conflict_dir_evict_S1 = val_S2 & do_dir_evict_S2 & (dir_rd_replace_addr == dir_rd_addr) & do_rd_tag_S1;
 
 // Stage 2-> 3
 
