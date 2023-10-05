@@ -165,9 +165,10 @@ multichip_adapter_mshr_decoder mshr_decoder(
     .cache_type(resp_cache_type_S1)
 );
 
-wire inv_msg_S1 = (msg_type_S1 == `MSG_TYPE_STORE_FWD) |
-                  (msg_type_S1 == `MSG_TYPE_INV_FWD  ) ;
-wire do_rd_tag_S1 = (is_resp_S1 & ~resp_nc_msg_S1) | inv_msg_S1;
+wire fwd_msg_S1 = (msg_type_S1 == `MSG_TYPE_STORE_FWD) |
+                  (msg_type_S1 == `MSG_TYPE_INV_FWD  ) |
+                  (msg_type_S1 == `MSG_TYPE_LOAD_FWD);
+wire do_rd_tag_S1 = (is_resp_S1 & ~resp_nc_msg_S1) | fwd_msg_S1;
 assign dir_rd_en = val_S1 & ~stall_S1 & do_rd_tag_S1;
 assign dir_rd_addr = is_resp_S1 ? resp_addr_S1 : addr_S1;
 
@@ -265,7 +266,7 @@ assign dir_wr_way = dir_rd_way;
 assign dir_wr_tag = dir_rd_tag;
 
 reg evicted_S2;
-wire do_dir_evict_S2 = is_resp_S2 & ~dir_rd_hit & dir_rd_valid & dir_rd_full & ~evicted_S2;
+wire do_dir_evict_S2 = is_resp_S2 & ~resp_nc_msg_S2 & ~dir_rd_hit & dir_rd_valid & dir_rd_full & ~evicted_S2;
 
 always @(posedge clk) begin
     if (~rst_n) begin
