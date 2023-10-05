@@ -159,7 +159,7 @@ multichip_adapter_mshr_encoder mshr_encoder(
     .addr(addr_S2),
     .mshrid(mshrid_S2),
     .cache_type(cache_type_S2),
-    .data_size(data_size_S2),
+    .data_size(msg_type_S2 == `MSG_TYPE_STORE_REQ ? `MSG_DATA_SIZE_16B : data_size_S2),
     .msg_type(msg_type_S2),
     .nc(nc_msg_S2),
     .src_chipid(src_chipid_S2),
